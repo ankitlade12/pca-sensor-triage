@@ -23,7 +23,7 @@ class UniformSampling:
 
         # Reconstruct via forward fill
         import pandas as pd
-        recon = pd.DataFrame(triaged).ffill().bfill().values
+        recon = pd.DataFrame(triaged).ffill().bfill().fillna(0.0).values
         return recon
 
     def get_rates(self, d: int) -> np.ndarray:

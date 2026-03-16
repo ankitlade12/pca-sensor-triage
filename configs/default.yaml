@@ -1,0 +1,42 @@
+# Default experiment configuration
+# PCA-Driven Adaptive Sensor Triage
+
+# PCA-Triage hyperparameters
+triage:
+  n_components: 10
+  window_size: 50
+  forgetting_factor: 1.0
+  min_rate: 0.05
+
+# Experiment settings
+experiment:
+  budgets: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  seeds: [42, 123, 456, 789, 1024]
+  n_estimators: 100  # Random Forest trees
+
+# Dataset settings
+datasets:
+  tep:
+    fault_types: [0, 1, 2, 4, 5]
+    train_runs: 20
+    test_start: 21
+    test_end: 30
+  skab:
+    test_size: 0.3
+  nasa:
+    test_size: 0.3
+
+# Methods to compare
+methods:
+  - PCA-Triage
+  - Uniform
+  - Threshold
+  - Variance
+  - Random Dropout
+  - Mutual Info
+
+# Output paths
+output:
+  results_dir: experiments/results
+  figures_dir: paper/figures
+  tables_dir: paper/tables

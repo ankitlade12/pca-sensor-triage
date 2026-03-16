@@ -55,7 +55,7 @@ class VarianceSampling:
 
             rates = self.allocator.allocate(importance)
             triaged = self.allocator.apply_rates(window, rates, seed=seed + w_idx)
-            recon = pd.DataFrame(triaged).ffill().bfill().values
+            recon = pd.DataFrame(triaged).ffill().bfill().fillna(0.0).values
             reconstructed[start:end] = recon
 
         remaining_n = n % self.window_size
@@ -63,6 +63,6 @@ class VarianceSampling:
             start = n_windows * self.window_size
             rates_last = np.full(d, self.budget)
             triaged = self.allocator.apply_rates(data[start:], rates_last, seed=seed + n_windows)
-            reconstructed[start:] = pd.DataFrame(triaged).ffill().bfill().values
+            reconstructed[start:] = pd.DataFrame(triaged).ffill().bfill().fillna(0.0).values
 
         return reconstructed

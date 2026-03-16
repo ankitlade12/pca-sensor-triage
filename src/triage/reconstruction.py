@@ -44,6 +44,9 @@ def reconstruct(
     else:
         raise ValueError(f"Unknown method: {method}")
 
+    # Fill any remaining NaNs (e.g., columns with zero samples) with 0
+    df = df.fillna(0.0)
+
     return df.values
 
 

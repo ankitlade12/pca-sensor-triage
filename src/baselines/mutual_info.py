@@ -60,7 +60,7 @@ class MutualInfoSampling:
 
         rates = self.allocator.allocate(self._mi_scores)
         triaged = self.allocator.apply_rates(data, rates, seed=seed)
-        recon = pd.DataFrame(triaged).ffill().bfill().values
+        recon = pd.DataFrame(triaged).ffill().bfill().fillna(0.0).values
         return recon
 
     @property

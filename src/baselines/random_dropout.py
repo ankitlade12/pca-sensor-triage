@@ -44,7 +44,7 @@ class RandomDropout:
             # Zero out dropped channels, then fill with column mean
             result = window.copy()
             result[:, ~mask] = np.nan
-            result = pd.DataFrame(result).ffill().bfill().values
+            result = pd.DataFrame(result).ffill().bfill().fillna(0.0).values
             # For fully NaN columns, use 0
             result = np.nan_to_num(result, nan=0.0)
             reconstructed[start:end] = result
@@ -57,7 +57,7 @@ class RandomDropout:
             mask[keep_idx] = True
             result = data[start:].copy().astype(float)
             result[:, ~mask] = np.nan
-            result = pd.DataFrame(result).ffill().bfill().values
+            result = pd.DataFrame(result).ffill().bfill().fillna(0.0).values
             result = np.nan_to_num(result, nan=0.0)
             reconstructed[start:] = result
 
