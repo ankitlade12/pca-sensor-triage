@@ -1,0 +1,26 @@
+{
+  "PCA-Triage": {
+    "ms_per_window_edge": 0.665061249746941,
+    "ms_per_window_laptop": 1.4609339599701343
+  },
+  "Uniform": {
+    "ms_per_window_edge": 0.05714583006920293,
+    "ms_per_window_laptop": 0.0656220850214595
+  },
+  "Threshold": {
+    "ms_per_window_edge": 0.16395584010751918,
+    "ms_per_window_laptop": 0.7480354150175117
+  },
+  "Variance": {
+    "ms_per_window_edge": 0.15258083993103355,
+    "ms_per_window_laptop": 0.6972354149911553
+  },
+  "Random Dropout": {
+    "ms_per_window_edge": 0.05645249999361113,
+    "ms_per_window_laptop": 0.11845708497276064
+  },
+  "Attention": {
+    "ms_per_window_edge": 0.17601625004317611,
+    "ms_per_window_laptop": 0.7014410450210562
+  }
+}

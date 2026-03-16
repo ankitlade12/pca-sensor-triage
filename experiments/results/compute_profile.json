@@ -1,0 +1,37 @@
+{
+  "PCA-Triage": {
+    "ms_per_window": 1.4609339599701343,
+    "peak_mb": 8.529928207397461,
+    "n_params": 520
+  },
+  "Uniform": {
+    "ms_per_window": 0.0656220850214595,
+    "peak_mb": 24.80027961730957,
+    "n_params": 0
+  },
+  "Threshold": {
+    "ms_per_window": 0.7480354150175117,
+    "peak_mb": 8.106389999389648,
+    "n_params": 0
+  },
+  "Variance": {
+    "ms_per_window": 0.6972354149911553,
+    "peak_mb": 8.10527515411377,
+    "n_params": 0
+  },
+  "Random Dropout": {
+    "ms_per_window": 0.11845708497276064,
+    "peak_mb": 8.106575012207031,
+    "n_params": 0
+  },
+  "Attention": {
+    "ms_per_window": 0.7014410450210562,
+    "peak_mb": 8.212716102600098,
+    "n_params": 9600
+  },
+  "Mutual Info": {
+    "ms_per_window": 7.725163334980607,
+    "peak_mb": 31.81846523284912,
+    "n_params": 0
+  }
+}
