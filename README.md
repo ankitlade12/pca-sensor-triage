@@ -219,7 +219,7 @@ The Tennessee Eastman Process simulates a real chemical plant with:
 
 ### 7.1 Scale
 
-**6 methods × 3 datasets × 9 bandwidth levels × 5 seeds = 810 Pareto runs**
+**6 methods × 7 datasets × 5-6 bandwidth levels × 3-5 seeds = 1,000+ Pareto runs**
 Plus: ablation studies (k, w, λ, score formula), compute profiling, adaptivity analysis, scalability
 
 ### 7.2 Fairness Guarantees
@@ -379,14 +379,21 @@ pip install -r requirements.txt
 ```bash
 # TEP (Harvard Dataverse — downloads ~520 MB)
 pip install pyreadr
-python -c "
-from src.utils import load_tep
-X_tr, y_tr, X_te, y_te, cols, scaler = load_tep()
-print(f'TEP loaded: {X_tr.shape}')
-"
+python -c "from src.utils import load_tep; X, y, _, _, cols, _ = load_tep(); print(f'TEP: {X.shape}')"
 
+# SMD (from OmniAnomaly GitHub repo)
+# MSL (from NASA telemanom / Google Drive)
+# PSM (from eBay RANSynCoders GitHub repo)
+# HAI (from icsdataset GitHub repo)
 # SKAB (auto-cloned from GitHub)
-# NASA Bearing (synthetic, auto-generated)
+# See src/utils/data_loader.py for download instructions per dataset
+
+# Verify all datasets
+python -c "from src.utils import list_datasets, get_dataset
+for name in list_datasets():
+    X, y, _, _, cols, _ = get_dataset(name)
+    print(f'{name:6s}: {len(cols)} channels, {X.shape[0]} samples')
+"
 ```
 
 ### Run Tests (53 tests, ~1 second)
@@ -459,8 +466,9 @@ src/                                        # Library layer
         mutual_info.py                      # Baseline 5: MI with fault labels (supervised)
         attention.py                        # Baseline 6: self-attention importance
     utils/
-        data_loader.py                      # load_tep(), load_skab(), load_nasa_bearing()
+        data_loader.py                      # load_tep(), load_smd(), load_msl(), load_psm(), load_hai(), etc.
         plotting.py                         # Publication figure generators
+        hybrid_scorer.py                    # PCA+Variance hybrid importance scorer
 
 configs/                                    # Experiment configurations
     default.yaml                            # Main experiment hyperparameters
@@ -473,9 +481,13 @@ experiments/                                # Experiment scripts
     run_ablation.py                         # Exp 4: Hyperparameter ablation studies
     run_scalability.py                      # Exp 5: Scaling vs channel count
     results/                                # CSV/JSON output files
-        pareto_tep.csv                      # 174 Pareto results (TEP)
-        pareto_skab.csv                     # 174 Pareto results (SKAB)
-        pareto_nasa.csv                     # 270 Pareto results (NASA)
+        pareto_tep.csv                      # TEP Pareto results
+        pareto_smd.csv                      # SMD Pareto results
+        pareto_msl.csv                      # MSL Pareto results
+        pareto_psm.csv                      # PSM Pareto results
+        pareto_hai.csv                      # HAI Pareto results
+        pareto_skab.csv                     # SKAB Pareto results
+        pareto_nasa.csv                     # NASA Pareto results
         compute_profile.json                # Laptop profiling
         compute_profile_edge.json           # Edge-simulated profiling
 
@@ -485,12 +497,25 @@ tests/                                      # Test suite (53 tests)
     test_integration.py                     # 11 integration tests: end-to-end + edge cases
 
 paper/                                      # Paper materials
+    main.tex                                # Full LaTeX paper (IEEEtran format)
+    references.bib                          # BibTeX bibliography (40 citations)
+    generate_all_figures.py                 # Regenerate all figures from data
     sections/
         introduction.md                     # ~940 words
         related_work.md                     # ~1526 words, 36 papers cited
         method.md                           # ~1156 words with pseudocode
     figures/                                # 14 publication-quality figures (300 DPI)
     tables/                                 # 3 result tables (CSV)
+
+scripts/                                    # Analysis and deployment
+    verify_paper_numbers.py                 # Validate paper claims vs data
+    analyze_results.py                      # Summary tables + Wilcoxon tests
+    smoke_test.sh                           # Quick health check (~10s)
+    run_full_benchmark.sh                   # Run all 5 experiments end-to-end
+
+docs/                                       # Documentation
+    DESIGN_DECISIONS.md                     # 9 key engineering decisions with rationale
+    CHANGELOG.md                            # Version history
 
 references/                                 # 36 annotated papers
     core_papers_week1.md                    # Papers 1–10
@@ -531,9 +556,13 @@ data/raw/                                   # Datasets (not tracked in git)
 - Ben-Aboud et al. (2021). *On Adaptive Sampling Algorithms for IoT Devices.* IEEE ICC.
 - Giordano et al. (2023). *Energy-Aware Adaptive Sampling for Self-Sustainability in IoT.* ACM ENSsys.
 
-### Process Monitoring
+### Process Monitoring & Datasets
 - Downs & Vogel (1993). *A Plant-Wide Industrial Process Control Problem.* Comp. & Chem. Eng. (TEP)
 - Rieth et al. (2017). *Additional TEP Simulation Data for Anomaly Detection.* Harvard Dataverse.
+- Su et al. (2019). *Robust Anomaly Detection for Multivariate Time Series.* KDD. (SMD)
+- Hundman et al. (2018). *Detecting Spacecraft Anomalies Using LSTMs.* KDD. (MSL/SMAP)
+- Abdulaal et al. (2021). *Practical Approach to Asynchronous Multivariate Time Series Anomaly Detection.* KDD. (PSM)
+- Shin et al. (2020). *HAI 1.0: HIL-based Augmented ICS Security Dataset.* USENIX CSET. (HAI)
 
 ### Edge AI
 - Gill et al. (2024). *Edge AI: A Taxonomy, Systematic Review and Future Directions.* arXiv.
