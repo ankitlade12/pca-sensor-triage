@@ -189,19 +189,98 @@ def load_nasa_bearing(
     return X_train, y_train, X_test, y_test, sensor_cols, scaler
 
 
+def _load_csv_dataset(
+    filename: str,
+    label_col: str = 'anomaly',
+    exclude_cols: List[str] = None,
+    test_size: float = 0.3,
+    scale: bool = True,
+    stratify: bool = True,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str], Optional[StandardScaler]]:
+    """Generic loader for CSV datasets with anomaly labels."""
+    csv_path = os.path.join(DATA_DIR, filename)
+    df = pd.read_csv(csv_path)
+
+    if exclude_cols is None:
+        exclude_cols = []
+    exclude = set([label_col] + exclude_cols)
+    sensor_cols = [c for c in df.columns if c not in exclude]
+
+    X = np.nan_to_num(df[sensor_cols].values.astype(float), nan=0.0)
+    y = df[label_col].values.astype(int)
+
+    if stratify and len(np.unique(y)) > 1:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, stratify=y, random_state=42
+        )
+    else:
+        split = int((1 - test_size) * len(X))
+        X_train, X_test = X[:split], X[split:]
+        y_train, y_test = y[:split], y[split:]
+
+    scaler = None
+    if scale:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+
+    return X_train, y_train, X_test, y_test, sensor_cols, scaler
+
+
+def load_smd(test_size: float = 0.3, scale: bool = True):
+    """Load Server Machine Dataset (38 features, 388K samples, anomaly detection).
+    Source: NetManAIOps/OmniAnomaly (KDD 2019).
+    """
+    return _load_csv_dataset('smd_combined.csv', test_size=test_size, scale=scale)
+
+
+def load_msl(test_size: float = 0.3, scale: bool = True):
+    """Load NASA Mars Science Laboratory telemetry (55 features, 132K samples).
+    Source: khundman/telemanom (KDD 2018).
+    """
+    return _load_csv_dataset('msl_combined.csv', test_size=test_size, scale=scale)
+
+
+def load_psm(test_size: float = 0.3, scale: bool = True):
+    """Load Pooled Server Metrics from eBay (25 features, 220K samples).
+    Source: eBay/RANSynCoders (KDD 2021).
+    """
+    return _load_csv_dataset('psm_combined.csv', test_size=test_size, scale=scale)
+
+
+def load_hai(test_size: float = 0.3, scale: bool = True):
+    """Load HIL-based Augmented ICS dataset (83 features, 259K samples).
+    Source: icsdataset/hai (CSET 2020).
+    """
+    return _load_csv_dataset('hai_combined.csv', exclude_cols=['time'],
+                             test_size=test_size, scale=scale)
+
+
+# Dataset registry — all real-world datasets
+DATASETS = {
+    'tep': load_tep,
+    'skab': load_skab,
+    'nasa': load_nasa_bearing,
+    'smd': load_smd,
+    'msl': load_msl,
+    'psm': load_psm,
+    'hai': load_hai,
+}
+
+
 def get_dataset(name: str, **kwargs):
     """Load a dataset by name.
 
     Parameters
     ----------
     name : str
-        One of 'tep', 'skab', 'nasa'.
+        One of: tep, skab, nasa, smd, msl, psm, hai
     """
-    loaders = {
-        'tep': load_tep,
-        'skab': load_skab,
-        'nasa': load_nasa_bearing,
-    }
-    if name.lower() not in loaders:
-        raise ValueError(f"Unknown dataset: {name}. Choose from {list(loaders.keys())}")
-    return loaders[name.lower()](**kwargs)
+    if name.lower() not in DATASETS:
+        raise ValueError(f"Unknown dataset: {name}. Choose from {list(DATASETS.keys())}")
+    return DATASETS[name.lower()](**kwargs)
+
+
+def list_datasets() -> List[str]:
+    """Return list of available dataset names."""
+    return list(DATASETS.keys())
