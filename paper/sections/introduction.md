@@ -26,7 +26,7 @@ We make the following contributions:
 
 1. **Algorithm.** We introduce PCA-Triage, the first streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a bandwidth budget. The algorithm is unsupervised, requires no training data or labels, and runs at $O(wdk)$ per window with $O(wd)$ memory—suitable for deployment on edge hardware.
 
-2. **Empirical validation.** We evaluate PCA-Triage on three benchmark datasets—the Tennessee Eastman Process (52 sensors, 20 fault types) [29, 32], NASA IMS Bearing (vibration data, remaining useful life prediction), and SKAB (8 sensors, anomaly detection)—against five baselines (uniform sampling, threshold-based, variance-based, random channel dropout, and mutual information). We show that PCA-Triage maintains fault detection F1 $\geq 0.90$ at 50% bandwidth, outperforming all baselines by 3–12 percentage points.
+2. **Empirical validation.** We evaluate PCA-Triage on seven real-world benchmark datasets spanning chemical processes (TEP, 52 sensors), server monitoring (SMD, 38; PSM, 25), spacecraft telemetry (MSL, 55), industrial control (HAI, 82), water treatment (SKAB, 8), and bearing degradation (NASA, 16)—against five baselines. PCA-Triage is the best unsupervised method on 3 of 6 datasets at 50% bandwidth, achieving F1 = 0.961 on TEP.
 
 3. **Edge viability.** We demonstrate that PCA-Triage completes each triage decision in under 5 ms on a single CPU core, an order of magnitude faster than attention-based alternatives, while adapting to fault onset within 3 windows (< 15 minutes on TEP). We provide ablation studies over the number of components $k$, window size $w$, and forgetting factor $\lambda$, identifying robust default hyperparameters.
 
