@@ -19,7 +19,7 @@
 \maketitle
 
 \begin{abstract}
-Multi-channel sensor networks in industrial IoT generate data volumes that often exceed available bandwidth. We propose \textbf{PCA-Triage}, a lightweight streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a total bandwidth budget. At each time window, PCA-Triage (1) updates an incremental PCA model, (2) computes channel importance via weighted loadings $s_j = \sum_i \sigma_i |V_{ij}|^2$, and (3) allocates sampling rates proportional to importance subject to a budget constraint and minimum rate floor. The algorithm runs at $O(wdk)$ per window with zero trainable parameters, requiring 0.67\,ms per decision on a single CPU core. We evaluate PCA-Triage on 7 real-world benchmark datasets spanning chemical processes (TEP, 52 sensors), server monitoring (SMD, 38 sensors; PSM, 25 sensors), spacecraft telemetry (MSL, 55 sensors), industrial control (HAI, 82 sensors), water treatment (SKAB, 8 sensors), and bearing degradation (NASA, 16 sensors), against 5 baselines. PCA-Triage is the best unsupervised method on 4 of 6 real-world datasets at 50\% bandwidth (with per-dataset tuning), ties on 1, and is within 0.2\% on the remaining, achieving F1\,=\,0.961 on TEP (matching full-data performance) while maintaining fault detection accuracy above 0.90 across bandwidth levels as low as 30\%. The algorithm adapts to fault onset within 1--3 windows and scales to 500 channels under the 5\,ms edge deployment target.
+Multi-channel sensor networks in industrial IoT generate data volumes that often exceed available bandwidth. We propose \textbf{PCA-Triage}, a lightweight streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a total bandwidth budget. At each time window, PCA-Triage (1) updates an incremental PCA model, (2) computes channel importance via weighted loadings $s_j = \sum_i \sigma_i |V_{ij}|^2$, and (3) allocates sampling rates proportional to importance subject to a budget constraint and minimum rate floor. The algorithm runs at $O(wdk)$ per window with zero trainable parameters, requiring 0.67\,ms per decision on a single CPU core. We evaluate PCA-Triage on 7 real-world benchmark datasets spanning chemical processes (TEP, 52 sensors), server monitoring (SMD, 38 sensors; PSM, 25 sensors), spacecraft telemetry (MSL, 55 sensors), industrial control (HAI, 82 sensors), water treatment (SKAB, 8 sensors), and bearing degradation (NASA, 16 sensors), against 5 baselines. PCA-Triage is the best unsupervised method on 3 of 6 real-world datasets at 50\% bandwidth, with statistically significant advantages (Wilcoxon $p < 0.05$, 5 seeds) on the high-channel datasets (TEP, MSL), achieving F1\,=\,0.961 on TEP (matching full-data performance) while maintaining fault detection accuracy above 0.90 across bandwidth levels as low as 30\%. The algorithm adapts to fault onset within 1--3 windows and scales to 500 channels under the 5\,ms edge deployment target.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -49,7 +49,7 @@ This problem sits at the intersection of three well-studied areas---yet none add
 \begin{enumerate}
 \item \textbf{Algorithm.} We introduce PCA-Triage, the first streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a bandwidth budget. The algorithm is unsupervised and runs at $O(wdk)$ per window.
 
-\item \textbf{Empirical validation.} We evaluate on 7 real-world datasets (8--82 sensors) against 5 baselines, showing PCA-Triage is the best unsupervised method on 4 of 6 datasets at 50\% bandwidth.
+\item \textbf{Empirical validation.} We evaluate on 7 real-world datasets (8--82 sensors) against 5 baselines, showing PCA-Triage is the best unsupervised method on 3 of 6 datasets at 50\% bandwidth with statistical significance on TEP and MSL.
 
 \item \textbf{Edge viability.} PCA-Triage completes each decision in 0.67\,ms on a single CPU core, adapts to fault onset within 1--3 windows, and scales to 500 channels under the 5\,ms edge target.
 \end{enumerate}
@@ -204,12 +204,12 @@ Table~\ref{tab:results50} shows F1 scores at 50\% bandwidth. PCA-Triage is the b
 \toprule
 & TEP & SMD & PSM & MSL & HAI & SKAB \\
 \midrule
-\textbf{PCA-Triage} & \textbf{.961} & \textbf{.983} & .959 & \textbf{.917} & \textbf{1.00} & \textbf{.593} \\
-Variance & .948 & .977 & .903 & .917 & \textbf{1.00} & .569 \\
-Threshold & .958 & .981 & .924 & .912 & 1.00 & .579 \\
-Uniform & .924 & .968 & .898 & .912 & .998 & .588 \\
-Rand.\ Drop & .788 & .980 & \textbf{.961} & .914 & 1.00 & .519 \\
-MI$\dagger$ & .914 & .986 & .996 & .929 & 1.00 & .586 \\
+\textbf{PCA-Triage} & \textbf{.961}$^*$ & \textbf{.982} & .959 & \textbf{.921}$^*$ & 1.00 & .583 \\
+Variance & .948 & .977 & .903 & .917 & \textbf{1.00} & .577 \\
+Threshold & .958 & .981 & .925 & .913 & 1.00 & .582 \\
+Uniform & .924 & .968 & .897 & .912 & .998 & \textbf{.586} \\
+Rand.\ Drop & .788 & .980 & \textbf{.962} & .914 & 1.00 & .524 \\
+MI$\dagger$ & .914 & .986 & .996 & .930 & 1.00 & .588 \\
 \bottomrule
 \end{tabular}
 \label{tab:results50}
@@ -245,7 +245,7 @@ PCA-Triage completes each decision in \textbf{0.67\,ms} (single-threaded), well 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented PCA-Triage, the first streaming algorithm that converts incremental PCA loadings into proportional per-channel bandwidth allocation for sensor networks. On 7 real-world benchmarks spanning chemical processes, server monitoring, spacecraft telemetry, and industrial control, PCA-Triage is the best unsupervised triage method on 4 of 6 datasets at 50\% bandwidth, achieving F1\,=\,0.961 on TEP while running in 0.67\,ms per decision. The algorithm adapts to fault onset within 1--3 windows and scales to 500 channels under the 5\,ms edge deployment target. PCA-Triage bridges the gap between PCA-based monitoring and adaptive data acquisition---enabling bandwidth-efficient sensor networks without sacrificing fault detection accuracy.
+We presented PCA-Triage, the first streaming algorithm that converts incremental PCA loadings into proportional per-channel bandwidth allocation for sensor networks. On 7 real-world benchmarks spanning chemical processes, server monitoring, spacecraft telemetry, and industrial control, PCA-Triage is the best unsupervised triage method on 3 of 6 datasets at 50\% bandwidth, achieving F1\,=\,0.961 on TEP while running in 0.67\,ms per decision. The algorithm adapts to fault onset within 1--3 windows and scales to 500 channels under the 5\,ms edge deployment target. PCA-Triage bridges the gap between PCA-based monitoring and adaptive data acquisition---enabling bandwidth-efficient sensor networks without sacrificing fault detection accuracy.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
