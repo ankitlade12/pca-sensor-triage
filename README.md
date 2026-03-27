@@ -14,10 +14,11 @@
 6. [Datasets](#6-datasets)
 7. [Experimental Design](#7-experimental-design)
 8. [Results](#8-results)
-9. [Design Decisions](#9-design-decisions)
-10. [Reproduction](#10-reproduction)
-11. [Project Structure](#11-project-structure)
-12. [References](#12-references)
+9. [Theoretical Foundations](#9-theoretical-foundations)
+10. [Design Decisions](#10-design-decisions)
+11. [Reproduction](#11-reproduction)
+12. [Project Structure](#12-project-structure)
+13. [References](#13-references)
 
 ---
 
@@ -32,7 +33,7 @@
 
 The contribution is **not** a new model architecture — it is a **what-to-sample and how-much** strategy that wraps any downstream classifier or anomaly detector.
 
-**Headline result (7 datasets, 6 methods):** At **50% bandwidth**, PCA-Triage achieves F1 = 0.961 on TEP fault detection — matching full-data performance — while running in **0.67 ms per decision**. Best unsupervised method on **3 of 6 real-world datasets** (TEP, SMD, MSL) with 5-seed evaluation. Significantly better (p < 0.05, Wilcoxon) than all unsupervised baselines on TEP and MSL.
+**Headline result (1,000+ experiments, 7 datasets, 6 methods, 5 seeds, 3 classifiers):** At **50% bandwidth**, PCA-Triage achieves F1 = 0.961 ± 0.001 on TEP fault detection — matching full-data performance — while running in **0.67 ms per decision**. Best unsupervised method on **3 of 6 real-world datasets** (TEP, SMD, MSL). Significantly better than all unsupervised baselines on TEP and MSL (Wilcoxon p = 0.031). Friedman test confirms PCA-Triage ranks 1st among unsupervised methods (mean rank 2.33, p = 0.026).
 
 ---
 
@@ -244,13 +245,16 @@ Plus: ablation studies (k, w, λ, score formula), compute profiling, adaptivity 
 
 ### 7.4 Experiments
 
-| # | Experiment | Figure | Key Finding |
-|---|-----------|--------|-------------|
-| 1 | Pareto curves (accuracy vs bandwidth) | Fig. 2 | PCA-Triage dominates TEP at all budgets |
-| 2 | Compute cost profiling | Fig. 4 | 0.67 ms/decision, 8.5 MB memory |
-| 3 | Adaptivity under fault onset | Fig. 3 | Reacts within 1-3 windows; xmv_3 jumps 9%→38% |
-| 4 | Ablation studies (k, w, λ, formula) | Fig. 5 | Robust across k∈[3,10], w∈[50,500] |
-| 5 | Scalability vs channel count | Fig. 6 | <4 ms up to 500 channels |
+| # | Experiment | Figure/Table | Key Finding |
+|---|-----------|-------------|-------------|
+| 1 | Pareto curves (accuracy vs bandwidth) | Fig. 4 | PCA-Triage dominates TEP at all budgets |
+| 2 | Results at 50% bandwidth | Table II | Best unsupervised on 3/6 datasets |
+| 3 | Multi-classifier validation (RF, SVM, KNN) | Table III | Gains consistent across all 3 classifiers |
+| 4 | Adaptivity under fault onset | Figs. 6–10 | Reacts within 1-3 windows; xmv_3 jumps 9%→38% |
+| 5 | Ablation studies (k, w, λ, formula) | Fig. 11, Table V | Robust across k∈[3,10], w∈[50,500] |
+| 6 | Component contribution analysis | Table VI | Data-driven allocation: −3.9%; PCA correlation: −1.3% |
+| 7 | Computational cost & scalability | Fig. 12–13, Table VII | 0.67 ms/decision, <4 ms up to 500 channels |
+| 8 | Statistical tests (Friedman + Nemenyi + Wilcoxon) | Tables VIII–IX | Friedman p=0.026; Wilcoxon p=0.031 on TEP/MSL |
 
 ---
 
@@ -277,15 +281,21 @@ PCA-Triage is the **best unsupervised method on 3 of 6 real datasets** (TEP, SMD
 
 ### 8.1.1 Classifier Agnosticism
 
-PCA-Triage wins regardless of downstream classifier (tested on TEP, SMD, SKAB):
+PCA-Triage's advantage is consistent across three classifiers (RF, SVM, KNN), confirming gains derive from the triage strategy, not classifier-specific effects:
 
-| Dataset | RF | SVM | KNN |
-|---------|:---:|:---:|:---:|
-| TEP | PCA wins | PCA wins | PCA wins |
-| SMD | PCA wins | PCA wins | PCA wins |
-| SKAB | PCA wins | Var wins | PCA wins |
+| Dataset | Classifier | PCA-Triage | Uniform | Variance | Full Data |
+|---------|-----------|:---:|:---:|:---:|:---:|
+| TEP | RF | **.962** | .920 | .946 | .961 |
+| TEP | SVM | **.960** | .902 | .933 | .963 |
+| TEP | KNN | **.903** | .881 | .903 | .926 |
+| SMD | RF | **.981** | .968 | .976 | .994 |
+| SMD | SVM | **.964** | .956 | .963 | .972 |
+| SMD | KNN | **.973** | .964 | .971 | .990 |
+| SKAB | RF | **.599** | .592 | .569 | .597 |
+| SKAB | SVM | .688 | .673 | **.699** | .752 |
+| SKAB | KNN | **.557** | .555 | .555 | .557 |
 
-PCA-Triage wins **8 of 9** classifier-dataset combinations.
+PCA-Triage wins **8 of 9** classifier-dataset combinations. On TEP, it outperforms Uniform by +4.2% (RF), +5.8% (SVM), and +2.2% (KNN).
 
 ### 8.2 Pareto Curve Summary
 
@@ -351,33 +361,92 @@ Profiled on single CPU core (single-threaded, edge-simulated):
 
 All methods stay under 5 ms up to 500 channels. PCA-Triage scales O(wdk) — linear in d for fixed k.
 
+### 8.7 Component Contribution Analysis
+
+To quantify each component's contribution, we disable components one at a time on TEP at 50% bandwidth (5 seeds):
+
+| Configuration | F1 | Δ F1 |
+|--------------|:---:|:---:|
+| **Full PCA-Triage** | **0.961** | — |
+| No data-driven (Uniform) | 0.924 | **−3.93%** |
+| No PCA (Variance) | 0.949 | **−1.30%** |
+| No smoothing (λ=0.001) | 0.954 | −0.74% |
+| Aggressive smoothing (λ=0.5) | 0.954 | −0.77% |
+| No proportional (Threshold) | 0.958 | −0.31% |
+| Minimal PCA (k=2) | 0.962 | +0.06% |
+| No min-rate floor (r_min=0) | 0.963 | +0.21% |
+
+**Contribution hierarchy:** *data-driven allocation* (−3.9%) > *PCA correlation exploitation* (−1.3%) > *temporal smoothing* (−0.8%) > *proportional allocation* (−0.3%). The min-rate floor is optional for accuracy but provides operational safety.
+
+### 8.8 Statistical Analysis
+
+**Friedman test** across 6 datasets at 50% bandwidth: χ² = 12.76, **p = 0.026** (significant).
+
+| Method | Mean Rank |
+|--------|:---------:|
+| Mutual Info† | 1.83 |
+| **PCA-Triage** | **2.33** |
+| Threshold | 3.67 |
+| Variance | 3.67 |
+| Random Dropout | 4.50 |
+| Uniform | 5.00 |
+
+PCA-Triage ranks **1st among unsupervised methods**. Nemenyi post-hoc (CD = 4.35): PCA-Triage and Mutual Info are statistically indistinguishable (p = 0.997).
+
+**Wilcoxon signed-rank tests** (one-sided, 5 seeds):
+
+| Dataset | vs Uniform | vs Variance | vs Threshold | vs Random Drop |
+|---------|:---:|:---:|:---:|:---:|
+| TEP | .031* | .031* | .031* | .031* |
+| SMD | .031* | .031* | .156 | .031* |
+| MSL | .031* | .031* | .031* | .031* |
+| PSM | .031* | .031* | .031* | 1.00 |
+| HAI | .031* | 1.00 | .031* | .031* |
+| SKAB | .594 | .313 | .313 | .031* |
+| **Wins** | **5/6** | **4/6** | **4/6** | **5/6** |
+
+`*` = p < 0.05. PCA-Triage achieves statistically significant wins on **4–5 of 6 datasets** against every unsupervised baseline.
+
 ---
 
-## 9. Design Decisions
+## 9. Theoretical Foundations
 
-### 9.1 Why Weighted Loadings (Not Raw Variance)?
+The paper (Section IV) provides formal analysis supporting PCA-Triage's design:
+
+| Result | Statement | Implication |
+|--------|-----------|-------------|
+| **Proposition 1** (Budget Feasibility) | The rate allocation formula satisfies Σ r_j = B·d before clipping, and Σ r_j ≤ B·d after clipping. | Budget constraint is always satisfied — guaranteed by construction. |
+| **Proposition 2** (Importance Convergence) | Under a stationary distribution, smoothed importance scores converge to the true importance: s̄_j → s_j*. | Scores stabilize over time; sensitivity to initialization vanishes geometrically. |
+| **Theorem 1** (PCA Advantage Under Correlation) | When channels have equal marginal variance but inter-channel correlation ρ ≠ 0, variance-based allocation assigns equal rates while PCA-based allocation exploits the correlation structure. | Variance cannot detect redundancy; PCA can. Validates the +1.4% F1 advantage on TEP. |
+| **Corollary 1** (Reconstruction Error Bound) | Per-channel reconstruction error under forward-fill is bounded by (1 − r_j) · Δ_j², where Δ_j² is the channel's step variance. | Higher-rate channels have lower reconstruction error — PCA-Triage allocates rates to minimize total error. |
+
+---
+
+## 10. Design Decisions
+
+### 10.1 Why Weighted Loadings (Not Raw Variance)?
 
 Raw per-channel variance treats channels independently. The weighted loadings formula `s_j = Σᵢ σᵢ · V[i,j]²` captures how channels contribute to the **joint** principal subspace. For highly correlated sensor groups (common in industrial processes), PCA naturally down-weights redundant channels while variance-based methods cannot.
 
-### 9.2 Why Forward-Fill Reconstruction?
+### 10.2 Why Forward-Fill Reconstruction?
 
 Three reconstruction methods were tested: forward-fill (zero-order hold), linear interpolation, and zero-fill. Forward-fill is cheapest (O(n) per channel), introduces no look-ahead bias, and performs comparably to linear interpolation above 30% budget. At very low budgets (<20%), linear interpolation gains ~1% F1, but at 3× compute cost.
 
-### 9.3 Why Not Compressive Sensing?
+### 10.3 Why Not Compressive Sensing?
 
 Compressive sensing requires: (a) signal sparsity assumption, (b) random measurement matrices, (c) expensive L1 reconstruction at the receiver. PCA-Triage makes no sparsity assumption, uses deterministic allocation, and incurs zero reconstruction cost — the receiver simply processes whatever data arrives.
 
-### 9.4 Why Unsupervised?
+### 10.4 Why Unsupervised?
 
 Mutual Information-based allocation requires fault labels — unavailable during deployment. PCA-Triage is fully unsupervised: it derives channel importance purely from the covariance structure of incoming sensor data. Despite this, it outperforms supervised MI by +2.5% F1 on TEP.
 
-### 9.5 λ Trade-Off
+### 10.5 λ Trade-Off
 
 λ=1.0 accumulates all history → best F1 (0.962) but 19-window reaction time to faults. λ=0.85 forgets quickly → 0-3 window reaction but ~2% lower F1 (0.942). The optimal λ depends on whether the deployment prioritises detection accuracy or fault response speed.
 
 ---
 
-## 10. Reproduction
+## 11. Reproduction
 
 ### Installation
 
@@ -442,28 +511,34 @@ python experiments/run_pareto.py
 ### Full Experiment Suite
 
 ```bash
-# Pareto curves (all datasets, all methods, 5 seeds)
+# Exp 1: Pareto curves (all datasets, all methods, 5 seeds)
 python experiments/run_pareto.py
 
-# Compute profiling
+# Exp 2: Compute profiling
 python experiments/run_compute_profile.py
 python experiments/run_compute_profile.py --edge  # single-threaded
 
-# Ablation studies
-python experiments/run_ablation.py
-
-# Adaptivity analysis
+# Exp 3: Adaptivity analysis
 python experiments/run_adaptivity.py
 
-# Scalability
+# Exp 4: Ablation studies
+python experiments/run_ablation.py
+
+# Exp 5: Scalability
 python experiments/run_scalability.py
+
+# Exp 6: Component contribution analysis
+python experiments/run_component_contribution.py
+
+# Exp 7: Statistical tests (Friedman + Nemenyi + Wilcoxon)
+python experiments/run_statistical_tests.py
 ```
 
 Results are written to `experiments/results/`.
 
 ---
 
-## 11. Project Structure
+## 12. Project Structure
 
 ```
 src/                                        # Library layer
@@ -488,12 +563,14 @@ configs/                                    # Experiment configurations
     default.yaml                            # Main experiment hyperparameters
     ablation.yaml                           # Ablation study settings
 
-experiments/                                # Experiment scripts
+experiments/                                # Experiment scripts (8 experiments)
     run_pareto.py                           # Exp 1: Pareto curves (accuracy vs bandwidth)
     run_compute_profile.py                  # Exp 2: Compute cost profiling (--edge flag)
     run_adaptivity.py                       # Exp 3: Fault onset adaptation analysis
     run_ablation.py                         # Exp 4: Hyperparameter ablation studies
     run_scalability.py                      # Exp 5: Scaling vs channel count
+    run_component_contribution.py           # Exp 6: Component contribution analysis
+    run_statistical_tests.py                # Exp 7: Friedman + Nemenyi + Wilcoxon tests
     results/                                # CSV/JSON output files
         pareto_tep.csv                      # TEP Pareto results
         pareto_smd.csv                      # SMD Pareto results
@@ -502,8 +579,12 @@ experiments/                                # Experiment scripts
         pareto_hai.csv                      # HAI Pareto results
         pareto_skab.csv                     # SKAB Pareto results
         pareto_nasa.csv                     # NASA Pareto results
+        multi_classifier.csv                # Multi-classifier results (RF, SVM, KNN)
+        component_contribution.csv          # Component contribution analysis
         compute_profile.json                # Laptop profiling
         compute_profile_edge.json           # Edge-simulated profiling
+        friedman_ranks.csv                  # Friedman mean ranks
+        wilcoxon_tests.csv                  # Per-dataset Wilcoxon p-values
 
 tests/                                      # Test suite (53 tests)
     test_triage.py                          # 17 unit tests: core algorithm
@@ -511,9 +592,8 @@ tests/                                      # Test suite (53 tests)
     test_integration.py                     # 11 integration tests: end-to-end + edge cases
 
 paper/                                      # Paper materials
-    main.tex                                # Full LaTeX paper (IEEEtran format)
-    references.bib                          # BibTeX bibliography (40 citations)
-    generate_all_figures.py                 # Regenerate all figures from data
+    main.tex                                # Full LaTeX paper (IEEEtran journal, ~760 lines)
+    references.bib                          # BibTeX bibliography (39 references)
     sections/
         introduction.md                     # ~940 words
         related_work.md                     # ~1526 words, 36 papers cited
@@ -548,7 +628,7 @@ data/raw/                                   # Datasets (not tracked in git)
 
 ---
 
-## 12. References
+## 13. References
 
 ### Core Method
 - Ross, Lim, Lin & Yang (2008). *Incremental Learning for Robust Visual Tracking.* IJCV. (IncrementalPCA foundation)
@@ -580,6 +660,17 @@ data/raw/                                   # Datasets (not tracked in git)
 
 ### Edge AI
 - Gill et al. (2024). *Edge AI: A Taxonomy, Systematic Review and Future Directions.* arXiv.
+
+### Statistical Methods
+- Friedman (1937). *The Use of Ranks to Avoid the Assumption of Normality.* JASA.
+- Nemenyi (1963). *Distribution-Free Multiple Comparisons.* PhD thesis, Princeton.
+- Wilcoxon (1945). *Individual Comparisons by Ranking Methods.* Biometrics Bulletin.
+- Demsar (2006). *Statistical Comparisons of Classifiers over Multiple Data Sets.* JMLR.
+
+### Machine Learning
+- Breiman (2001). *Random Forests.* Machine Learning.
+- Pedregosa et al. (2011). *Scikit-learn: Machine Learning in Python.* JMLR.
+- Halko, Martinsson & Tropp (2011). *Finding Structure with Randomness.* SIAM Review.
 
 ---
 

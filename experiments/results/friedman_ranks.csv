@@ -1,0 +1,7 @@
+method,mean_rank
+Mutual Info,1.8333333333333333
+PCA-Triage,2.3333333333333335
+Threshold,3.6666666666666665
+Variance,3.6666666666666665
+Random Dropout,4.5
+Uniform,5.0
