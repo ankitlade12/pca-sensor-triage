@@ -1,3 +1,5 @@
+from .adaptive_k import AdaptiveKPCATriage as AdaptiveKPCATriage
+from .ensemble_scorer import EnsembleScorer as EnsembleScorer
 from .hybrid_scorer import HybridScorer as HybridScorer
 from .pca_triage import PCATriage as PCATriage
 from .pipeline import TriagePipeline as TriagePipeline

@@ -15,6 +15,8 @@ import pyreadr
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+from .synthetic_datasets import generate_swat_like, generate_wadi_like
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'raw')
 
 
@@ -256,7 +258,7 @@ def load_hai(test_size: float = 0.3, scale: bool = True):
                              test_size=test_size, scale=scale)
 
 
-# Dataset registry — all real-world datasets
+# Dataset registry — all datasets (includes synthetic stand-ins for SWaT/WADI)
 DATASETS = {
     'tep': load_tep,
     'skab': load_skab,
@@ -265,6 +267,8 @@ DATASETS = {
     'msl': load_msl,
     'psm': load_psm,
     'hai': load_hai,
+    'swat': generate_swat_like,
+    'wadi': generate_wadi_like,
 }
 
 

@@ -8,6 +8,8 @@ pipeline that processes sensor data window-by-window.
 
 import numpy as np
 
+from .adaptive_k import AdaptiveKPCATriage
+from .ensemble_scorer import EnsembleScorer
 from .hybrid_scorer import HybridScorer
 from .pca_triage import PCATriage
 from .rate_allocator import RateAllocator
@@ -32,9 +34,15 @@ class TriagePipeline:
     reconstruction_method : str
         How to interpolate dropped samples.
     scorer : str
-        Scoring method: "pca" for pure PCA, "hybrid" for PCA+Variance blend.
+        Scoring method: "pca", "hybrid", "adaptive_k", or "ensemble".
     alpha : float
         Blending weight for hybrid scorer (1.0 = pure PCA, 0.0 = pure variance).
+    sharpness : float
+        Power-law exponent for rate allocation sharpening.
+    variance_threshold : float
+        Cumulative variance threshold for adaptive_k scorer.
+    k_values : list of int
+        Component counts for ensemble scorer.
     """
 
     def __init__(
@@ -48,11 +56,25 @@ class TriagePipeline:
         scorer: str = "pca",
         alpha: float = 0.7,
         sharpness: float = 1.0,
+        variance_threshold: float = 0.95,
+        k_values: list = None,
     ):
         self.scorer_type = scorer
         if scorer == "hybrid":
             self.triage = HybridScorer(
                 n_components=n_components, alpha=alpha,
+                forgetting_factor=forgetting_factor,
+            )
+        elif scorer == "adaptive_k":
+            self.triage = AdaptiveKPCATriage(
+                k_max=n_components,
+                variance_threshold=variance_threshold,
+                window_size=window_size,
+                forgetting_factor=forgetting_factor,
+            )
+        elif scorer == "ensemble":
+            self.triage = EnsembleScorer(
+                k_values=k_values or [3, 5, 10],
                 forgetting_factor=forgetting_factor,
             )
         else:
