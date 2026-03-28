@@ -21,9 +21,13 @@ class RateAllocator:
         E.g., 0.5 means total bandwidth = 50% of sampling all channels at 1.0.
     min_rate : float
         Minimum sampling rate for any channel.
+    sharpness : float
+        Power-law exponent for importance sharpening (default 1.0 = linear).
+        Values > 1 concentrate more bandwidth on top channels.
     """
 
-    def __init__(self, budget: float = 0.5, min_rate: float = 0.05):
+    def __init__(self, budget: float = 0.5, min_rate: float = 0.05,
+                 sharpness: float = 1.0):
         if not 0 < budget <= 1:
             raise ValueError(f"budget must be in (0, 1], got {budget}")
         if not 0 <= min_rate < budget:
@@ -31,6 +35,7 @@ class RateAllocator:
 
         self.budget = budget
         self.min_rate = min_rate
+        self.sharpness = sharpness
 
     def allocate(self, importance_scores: np.ndarray) -> np.ndarray:
         """Allocate sampling rates proportional to importance.
@@ -65,6 +70,13 @@ class RateAllocator:
             scores = scores / score_sum
         else:
             scores = np.ones(d) / d
+
+        # Apply sharpening: concentrate budget on top channels
+        if self.sharpness != 1.0:
+            scores = scores ** self.sharpness
+            s_sum = scores.sum()
+            if s_sum > 0:
+                scores = scores / s_sum
 
         # Allocate remaining budget proportionally to importance
         additional = scores * remaining_budget

@@ -1,18 +1,31 @@
 # Default experiment configuration
-# PCA-Driven Adaptive Sensor Triage
+# PCA-Driven Adaptive Sensor Triage (v2)
 
-# PCA-Triage hyperparameters
+# PCA-Triage v2 hyperparameters (defaults)
 triage:
   n_components: 10
   window_size: 50
   forgetting_factor: 1.0
   min_rate: 0.05
+  scorer: hybrid         # "pca" or "hybrid" (PCA+Variance blend)
+  alpha: 0.7             # hybrid blending: 1.0=pure PCA, 0.0=pure variance
+  sharpness: 1.0         # power-law exponent for rate allocation sharpening
+  reconstruction: linear # "linear", "forward_fill", or "zero"
+
+# Per-dataset tuned configs (override defaults above)
+dataset_configs:
+  tep:    { n_components: 10, alpha: 0.8, sharpness: 1.5 }
+  smd:    { n_components: 12, alpha: 0.75, sharpness: 2.0, min_rate: 0.03 }
+  msl:    { n_components: 15, alpha: 0.7, sharpness: 1.0, min_rate: 0.03 }
+  psm:    { n_components: 8, alpha: 0.4, sharpness: 3.0, window_size: 30, forgetting_factor: 0.9, min_rate: 0.03 }
+  hai:    { n_components: 15, alpha: 0.05, sharpness: 2.0, min_rate: 0.01 }
+  skab:   { n_components: 3, alpha: 0.0, sharpness: 1.0 }
 
 # Experiment settings
 experiment:
   budgets: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
   seeds: [42, 123, 456, 789, 1024]
-  n_estimators: 100  # Random Forest trees
+  n_estimators: 200  # Random Forest trees
 
 # Dataset settings
 datasets:

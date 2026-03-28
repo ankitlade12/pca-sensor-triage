@@ -22,13 +22,18 @@ class HybridScorer:
         Number of PCA components.
     alpha : float
         Blending weight. 1.0 = pure PCA, 0.0 = pure variance.
+    forgetting_factor : float
+        Exponential smoothing for importance scores over time.
     """
 
-    def __init__(self, n_components: int = 10, alpha: float = 0.7):
+    def __init__(self, n_components: int = 10, alpha: float = 0.7,
+                 forgetting_factor: float = 1.0):
         self.n_components = n_components
         self.alpha = alpha
+        self.forgetting_factor = forgetting_factor
         self.ipca = IncrementalPCA(n_components=n_components)
         self._fitted = False
+        self._importance_history = None
 
     def compute_importance(self, window: np.ndarray) -> np.ndarray:
         w, d = window.shape
@@ -53,8 +58,19 @@ class HybridScorer:
 
         # Blend
         blended = self.alpha * pca_scores + (1 - self.alpha) * var_scores
-        return blended / blended.sum()
+        scores = blended / blended.sum()
+
+        # Exponential smoothing over time
+        if self._importance_history is None:
+            self._importance_history = scores
+        else:
+            lam = self.forgetting_factor
+            self._importance_history = lam * self._importance_history + (1 - lam) * scores
+
+        smoothed = self._importance_history / self._importance_history.sum()
+        return smoothed
 
     def reset(self):
         self.ipca = IncrementalPCA(n_components=self.n_components)
         self._fitted = False
+        self._importance_history = None

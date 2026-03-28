@@ -8,6 +8,7 @@ pipeline that processes sensor data window-by-window.
 import numpy as np
 from typing import Optional
 from .pca_triage import PCATriage
+from .hybrid_scorer import HybridScorer
 from .rate_allocator import RateAllocator
 from .reconstruction import reconstruct
 
@@ -29,6 +30,10 @@ class TriagePipeline:
         Minimum per-channel sampling rate.
     reconstruction_method : str
         How to interpolate dropped samples.
+    scorer : str
+        Scoring method: "pca" for pure PCA, "hybrid" for PCA+Variance blend.
+    alpha : float
+        Blending weight for hybrid scorer (1.0 = pure PCA, 0.0 = pure variance).
     """
 
     def __init__(
@@ -38,15 +43,27 @@ class TriagePipeline:
         budget: float = 0.5,
         forgetting_factor: float = 0.95,
         min_rate: float = 0.05,
-        reconstruction_method: str = "forward_fill",
+        reconstruction_method: str = "linear",
+        scorer: str = "pca",
+        alpha: float = 0.7,
+        sharpness: float = 1.0,
     ):
-        self.triage = PCATriage(
-            n_components=n_components,
-            window_size=window_size,
-            forgetting_factor=forgetting_factor,
-            min_rate=min_rate,
+        self.scorer_type = scorer
+        if scorer == "hybrid":
+            self.triage = HybridScorer(
+                n_components=n_components, alpha=alpha,
+                forgetting_factor=forgetting_factor,
+            )
+        else:
+            self.triage = PCATriage(
+                n_components=n_components,
+                window_size=window_size,
+                forgetting_factor=forgetting_factor,
+                min_rate=min_rate,
+            )
+        self.allocator = RateAllocator(
+            budget=budget, min_rate=min_rate, sharpness=sharpness,
         )
-        self.allocator = RateAllocator(budget=budget, min_rate=min_rate)
         self.reconstruction_method = reconstruction_method
         self.window_size = window_size
 
