@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
 import pytest
-from src.triage import PCATriage, RateAllocator, reconstruct, compute_reconstruction_error, TriagePipeline
+from src.triage import PCATriage, HybridScorer, RateAllocator, reconstruct, compute_reconstruction_error, TriagePipeline
 
 
 class TestPCATriage:
@@ -133,6 +133,97 @@ class TestTriagePipeline:
         pipe.process_stream(data, seed=42)
         pipe.reset()
         assert len(pipe.importance_log) == 0
+
+
+class TestHybridScorer:
+    def test_scores_sum_to_one(self):
+        scorer = HybridScorer(n_components=3, alpha=0.7)
+        window = np.random.randn(50, 10)
+        scores = scorer.compute_importance(window)
+        assert scores.shape == (10,)
+        assert abs(scores.sum() - 1.0) < 1e-6
+
+    def test_pure_variance_mode(self):
+        scorer = HybridScorer(n_components=3, alpha=0.0)
+        window = np.random.randn(50, 10) * 0.1
+        window[:, 0] = np.random.randn(50) * 10
+        scores = scorer.compute_importance(window)
+        assert scores[0] == scores.max()
+
+    def test_pure_pca_mode(self):
+        scorer = HybridScorer(n_components=3, alpha=1.0)
+        window = np.random.randn(50, 10)
+        scores = scorer.compute_importance(window)
+        assert scores.shape == (10,)
+        assert abs(scores.sum() - 1.0) < 1e-6
+
+    def test_smoothing_over_windows(self):
+        scorer = HybridScorer(n_components=3, alpha=0.5, forgetting_factor=0.9)
+        for _ in range(5):
+            window = np.random.randn(50, 10)
+            scores = scorer.compute_importance(window)
+        assert abs(scores.sum() - 1.0) < 1e-6
+
+    def test_reset(self):
+        scorer = HybridScorer(n_components=3, alpha=0.7)
+        scorer.compute_importance(np.random.randn(50, 10))
+        scorer.reset()
+        assert not scorer._fitted
+        assert scorer._importance_history is None
+
+
+class TestSharpening:
+    def test_sharpness_concentrates_rates(self):
+        # Use 20 channels so no single channel hits the 1.0 cap
+        scores = np.random.dirichlet(np.ones(20))
+        alloc_flat = RateAllocator(budget=0.5, min_rate=0.01, sharpness=1.0)
+        alloc_sharp = RateAllocator(budget=0.5, min_rate=0.01, sharpness=3.0)
+        rates_flat = alloc_flat.allocate(scores)
+        rates_sharp = alloc_sharp.allocate(scores)
+        top = scores.argmax()
+        bot = scores.argmin()
+        # Sharpened should give more to top channel, less to bottom
+        assert rates_sharp[top] >= rates_flat[top]
+        assert rates_sharp[bot] <= rates_flat[bot]
+
+    def test_sharpness_one_is_identity(self):
+        alloc = RateAllocator(budget=0.5, min_rate=0.05, sharpness=1.0)
+        scores = np.random.dirichlet(np.ones(10))
+        rates = alloc.allocate(scores)
+        assert rates.mean() <= 0.5 + 1e-6
+
+
+class TestPipelineV2:
+    def test_hybrid_pipeline(self):
+        pipe = TriagePipeline(
+            n_components=3, window_size=25, budget=0.5,
+            scorer='hybrid', alpha=0.7,
+        )
+        data = np.random.randn(100, 10)
+        recon = pipe.process_stream(data, seed=42)
+        assert recon.shape == data.shape
+        assert not np.isnan(recon).any()
+
+    def test_linear_interpolation_default(self):
+        pipe = TriagePipeline(
+            n_components=3, window_size=25, budget=0.5,
+        )
+        assert pipe.reconstruction_method == 'linear'
+
+    def test_sharpened_pipeline(self):
+        pipe = TriagePipeline(
+            n_components=3, window_size=25, budget=0.5,
+            sharpness=2.0,
+        )
+        data = np.random.randn(100, 10)
+        recon = pipe.process_stream(data, seed=42)
+        assert recon.shape == data.shape
+        assert not np.isnan(recon).any()
+
+    def test_linear_recon(self):
+        data = np.array([[1.0, np.nan, 3.0], [np.nan, 2.0, np.nan]])
+        recon = reconstruct(data.T, method="linear")
+        assert not np.isnan(recon).any()
 
 
 if __name__ == "__main__":
