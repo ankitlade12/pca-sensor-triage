@@ -5,9 +5,10 @@ Supports multiple interpolation strategies for filling in missing samples
 after PCA-Triage has reduced per-channel sampling rates.
 """
 
+from typing import Literal
+
 import numpy as np
 import pandas as pd
-from typing import Literal
 
 
 def reconstruct(

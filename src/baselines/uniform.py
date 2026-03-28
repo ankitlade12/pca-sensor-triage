@@ -6,6 +6,7 @@ The simplest possible baseline — no intelligence in allocation.
 """
 
 import numpy as np
+
 from src.triage.rate_allocator import RateAllocator
 
 

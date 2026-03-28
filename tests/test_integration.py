@@ -4,8 +4,9 @@ Tests the full flow from raw data → triage → reconstruction → classificati
 to ensure all components work together correctly.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
@@ -13,11 +14,15 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
 
-from src.triage import TriagePipeline, compute_reconstruction_error
 from src.baselines import (
-    UniformSampling, ThresholdSampling, VarianceSampling,
-    RandomDropout, MutualInfoSampling, AttentionSampling,
+    AttentionSampling,
+    MutualInfoSampling,
+    RandomDropout,
+    ThresholdSampling,
+    UniformSampling,
+    VarianceSampling,
 )
+from src.triage import TriagePipeline, compute_reconstruction_error
 
 
 @pytest.fixture

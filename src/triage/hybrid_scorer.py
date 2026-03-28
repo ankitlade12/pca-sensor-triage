@@ -6,9 +6,9 @@ pure PCA may not capture enough structure. Blending PCA importance with
 raw variance importance can improve allocation on such datasets.
 """
 
+
 import numpy as np
 from sklearn.decomposition import IncrementalPCA
-from typing import Optional
 
 
 class HybridScorer:

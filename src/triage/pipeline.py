@@ -5,10 +5,11 @@ Combines PCATriage, RateAllocator, and reconstruction into a single
 pipeline that processes sensor data window-by-window.
 """
 
+
 import numpy as np
-from typing import Optional
-from .pca_triage import PCATriage
+
 from .hybrid_scorer import HybridScorer
+from .pca_triage import PCATriage
 from .rate_allocator import RateAllocator
 from .reconstruction import reconstruct
 

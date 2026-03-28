@@ -1,18 +1,20 @@
 """Unit tests for all 6 baseline methods."""
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
 import pytest
+
 from src.baselines import (
-    UniformSampling,
-    ThresholdSampling,
-    VarianceSampling,
-    RandomDropout,
-    MutualInfoSampling,
     AttentionSampling,
+    MutualInfoSampling,
+    RandomDropout,
+    ThresholdSampling,
+    UniformSampling,
+    VarianceSampling,
 )
 
 
@@ -104,8 +106,8 @@ class TestVarianceSampling:
         var = VarianceSampling(budget=0.3, window_size=100)
         result = var.process_stream(X, seed=42)
         # Channel 0 reconstruction should be closer to original
-        err_ch0 = np.mean((X[:, 0] - result[:, 0]) ** 2)
-        err_ch4 = np.mean((X[:, 4] - result[:, 4]) ** 2)
+        np.mean((X[:, 0] - result[:, 0]) ** 2)
+        np.mean((X[:, 4] - result[:, 4]) ** 2)
         # Not guaranteed but very likely with 100x variance difference
         assert result.shape == X.shape
 
@@ -125,7 +127,7 @@ class TestRandomDropout:
 
     def test_keeps_correct_fraction(self, synthetic_data):
         X, _ = synthetic_data
-        rd = RandomDropout(budget=0.5, window_size=100)
+        RandomDropout(budget=0.5, window_size=100)
         # Budget=0.5 with d=10 means ~5 channels kept per window
         n_keep = max(1, int(0.5 * 10))
         assert n_keep == 5

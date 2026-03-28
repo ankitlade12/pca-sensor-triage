@@ -7,6 +7,7 @@ This is the compute-expensive upper-bound comparison target.
 
 import numpy as np
 import pandas as pd
+
 from src.triage.rate_allocator import RateAllocator
 
 
@@ -71,7 +72,7 @@ class AttentionSampling:
         # Q, K, V projections: (d, w) @ (w, h) = (d, h)
         Q = X @ self.W_q  # (d, h)
         K = X @ self.W_k  # (d, h)
-        V = X @ self.W_v  # (d, h)
+        X @ self.W_v  # (d, h)
 
         # Attention scores: (d, d)
         h = self.hidden_dim

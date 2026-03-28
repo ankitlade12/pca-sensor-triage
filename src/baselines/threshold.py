@@ -7,6 +7,7 @@ Others get minimum rate. Inspired by Send-on-Delta approaches.
 
 import numpy as np
 import pandas as pd
+
 from src.triage.rate_allocator import RateAllocator
 
 

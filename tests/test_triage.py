@@ -1,12 +1,21 @@
 """Unit tests for PCA-Triage core modules."""
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
 import pytest
-from src.triage import PCATriage, HybridScorer, RateAllocator, reconstruct, compute_reconstruction_error, TriagePipeline
+
+from src.triage import (
+    HybridScorer,
+    PCATriage,
+    RateAllocator,
+    TriagePipeline,
+    compute_reconstruction_error,
+    reconstruct,
+)
 
 
 class TestPCATriage:

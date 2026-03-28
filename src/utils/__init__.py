@@ -1,5 +1,11 @@
-from .data_loader import (
-    load_tep, load_tep_single_fault, load_skab, load_nasa_bearing,
-    load_smd, load_msl, load_psm, load_hai,
-    get_dataset, list_datasets, DATASETS,
-)
+from .data_loader import DATASETS as DATASETS
+from .data_loader import get_dataset as get_dataset
+from .data_loader import list_datasets as list_datasets
+from .data_loader import load_hai as load_hai
+from .data_loader import load_msl as load_msl
+from .data_loader import load_nasa_bearing as load_nasa_bearing
+from .data_loader import load_psm as load_psm
+from .data_loader import load_skab as load_skab
+from .data_loader import load_smd as load_smd
+from .data_loader import load_tep as load_tep
+from .data_loader import load_tep_single_fault as load_tep_single_fault

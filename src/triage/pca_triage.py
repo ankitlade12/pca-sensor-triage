@@ -8,9 +8,10 @@ This converts PCA's subspace information into actionable channel-level
 importance rankings for bandwidth allocation.
 """
 
+from typing import Optional
+
 import numpy as np
 from sklearn.decomposition import IncrementalPCA
-from typing import Optional
 
 
 class PCATriage:

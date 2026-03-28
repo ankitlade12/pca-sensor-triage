@@ -11,6 +11,7 @@ instead of PCA for dimensionality reduction.
 
 import numpy as np
 import pandas as pd
+
 from src.triage.rate_allocator import RateAllocator
 
 
