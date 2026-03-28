@@ -179,6 +179,13 @@ s_j = \sum_{i=1}^{k} \sigma_i \cdot V_{ij}^2
 \end{equation}
 The weighting by $\sigma_i$ ensures that channels contributing to high-variance components receive proportionally higher importance. Squaring the loading $V_{ij}^2$ ensures non-negativity and penalizes small contributions.
 
+\textbf{Hybrid scoring.} On datasets with limited inter-channel correlation (e.g., SKAB with 8 sensors), pure PCA scores may not capture enough structure. We optionally blend PCA importance with per-channel variance:
+\begin{equation}
+s_j^{\text{hybrid}} = \alpha \cdot s_j^{\text{PCA}} + (1 - \alpha) \cdot \frac{\text{Var}(x_j)}{\sum_{j'} \text{Var}(x_{j'})}
+\label{eq:hybrid}
+\end{equation}
+where $\alpha \in [0, 1]$ controls the blend. High $\alpha$ (e.g., 0.8) is used for richly correlated datasets (TEP), while low $\alpha$ (e.g., 0.0--0.4) is used for low-correlation or few-channel datasets (SKAB, PSM). Per-dataset $\alpha$ values are reported in Table~\ref{tab:datasets}.
+
 Scores are smoothed via exponential moving average with forgetting factor $\lambda \in (0, 1]$:
 \begin{equation}
 \bar{s}_j^{(t)} = \lambda \cdot \bar{s}_j^{(t-1)} + (1 - \lambda) \cdot s_j^{(t)}
@@ -188,16 +195,21 @@ The parameter $\lambda$ controls the accuracy--adaptivity trade-off: $\lambda = 
 
 \subsection{Rate Allocation}
 
-Given smoothed scores $\bar{\mathbf{s}}$ and budget $B$:
+Given smoothed scores $\bar{\mathbf{s}}$ and budget $B$, we first apply \textit{power-law sharpening} to concentrate bandwidth on the most important channels:
 \begin{equation}
-r_j = r_{\min} + \frac{\bar{s}_j}{\sum_{j'} \bar{s}_{j'}} \cdot (B \cdot d - r_{\min} \cdot d)
+\tilde{s}_j = \frac{\bar{s}_j^{\,\gamma}}{\sum_{j'} \bar{s}_{j'}^{\,\gamma}}
+\label{eq:sharpening}
+\end{equation}
+where $\gamma \geq 1$ is the sharpness exponent. When $\gamma = 1$, allocation is proportional to importance (standard). As $\gamma \to \infty$, allocation concentrates on the highest-importance channels (winner-take-all). We find $\gamma \in [1.5, 3.0]$ works best, depending on dataset channel count and correlation structure. Rates are then allocated as:
+\begin{equation}
+r_j = r_{\min} + \tilde{s}_j \cdot (B \cdot d - r_{\min} \cdot d)
 \label{eq:allocation}
 \end{equation}
 with clipping to $[r_{\min}, 1]$. The minimum rate $r_{\min}$ prevents any channel from being completely silenced, ensuring the downstream model always receives some signal from every sensor.
 
 \subsection{Data Acquisition and Reconstruction}
 
-At each time step $t$, sample $x_t[j]$ is retained with probability $r_j$. Missing values are reconstructed via forward-fill: if $x_t[j]$ is dropped, the most recent observed value is used. This zero-cost reconstruction introduces minimal lag and is well-suited to slowly-varying industrial signals.
+At each time step $t$, sample $x_t[j]$ is retained with probability $r_j$. Missing values are reconstructed via linear interpolation between the nearest observed values on each channel. This preserves signal continuity better than forward-fill (zero-order hold), improving downstream F1 by 0.4--1.9\% across datasets (Table~\ref{tab:recon}).
 
 \subsection{Algorithm}
 
@@ -205,16 +217,17 @@ At each time step $t$, sample $x_t[j]$ is retained with probability $r_j$. Missi
 \caption{PCA-Triage}
 \label{alg:pcatriage}
 \begin{algorithmic}[1]
-\REQUIRE Stream of windows $\mathbf{X}_w$, budget $B$, components $k$, forgetting $\lambda$, minimum rate $r_{\min}$
+\REQUIRE Stream of windows $\mathbf{X}_w$, budget $B$, components $k$, forgetting $\lambda$, minimum rate $r_{\min}$, blend $\alpha$, sharpness $\gamma$
 \STATE Initialize IncrementalPCA($k$), $\bar{\mathbf{s}} \gets$ None
 \FOR{each window $\mathbf{X}_w$}
   \STATE \texttt{partial\_fit}($\mathbf{X}_w$) $\to \mathbf{V}, \boldsymbol{\sigma}$
-  \STATE $s_j \gets \sum_i \sigma_i V_{ij}^2$ \hfill $\triangleright$ Importance (Eq.~\ref{eq:importance})
+  \STATE $s_j \gets \alpha \sum_i \sigma_i V_{ij}^2 + (1{-}\alpha)\,\text{Var}(x_j)$ \hfill $\triangleright$ Hybrid (Eq.~\ref{eq:hybrid})
   \STATE $\bar{\mathbf{s}} \gets \lambda \bar{\mathbf{s}} + (1-\lambda) \cdot \text{normalize}(\mathbf{s})$ \hfill $\triangleright$ Smooth (Eq.~\ref{eq:smoothing})
-  \STATE $r_j \gets r_{\min} + (\bar{s}_j / \sum \bar{s}) \cdot (Bd - r_{\min} d)$ \hfill $\triangleright$ Allocate (Eq.~\ref{eq:allocation})
+  \STATE $\tilde{s}_j \gets \bar{s}_j^{\,\gamma} / \sum \bar{s}^{\,\gamma}$ \hfill $\triangleright$ Sharpen (Eq.~\ref{eq:sharpening})
+  \STATE $r_j \gets r_{\min} + \tilde{s}_j \cdot (Bd - r_{\min} d)$ \hfill $\triangleright$ Allocate (Eq.~\ref{eq:allocation})
   \STATE Clip $r_j$ to $[r_{\min}, 1]$
   \STATE Keep sample $x_t[j]$ with probability $r_j$ \hfill $\triangleright$ Acquire
-  \STATE Forward-fill missing values \hfill $\triangleright$ Reconstruct
+  \STATE Linear-interpolate missing values \hfill $\triangleright$ Reconstruct
 \ENDFOR
 \end{algorithmic}
 \end{algorithm}
@@ -594,7 +607,7 @@ To quantify each component's individual contribution, we disable components one 
 
 \begin{table}[t]
 \centering
-\caption{Component contribution analysis on TEP (50\% BW, 5 seeds). Each row disables one component. $\Delta$ = change from full PCA-Triage (0.961).}
+\caption{Component contribution analysis on TEP (50\% BW, 5 seeds, base PCA scoring with forward-fill). Each row disables one component. $\Delta$ = change from base PCA-Triage (0.961). The full algorithm with hybrid scoring, linear interpolation, and sharpening achieves 0.971 (Table~\ref{tab:results50}).}
 \begin{tabular}{@{}lccr@{}}
 \toprule
 \textbf{Configuration} & \textbf{F1} & \textbf{$\pm$ Std} & \textbf{$\Delta$ F1} \\
@@ -881,7 +894,7 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 We presented PCA-Triage, the first streaming algorithm that converts incremental PCA loadings into proportional per-channel bandwidth allocation for sensor networks. Our theoretical analysis establishes budget feasibility, importance score convergence, and PCA's formal advantage over variance-based methods under inter-channel correlation.
 
-Across 11 experiments on 7 real-world benchmarks with 6 baselines, 3 classifiers, and 5 random seeds, PCA-Triage is the best unsupervised triage method on 3 of 6 datasets at 50\% bandwidth (Friedman rank 2.33, $p = 0.026$), achieving F1\,=\,$0.961 \pm 0.001$ on TEP---matching full-data performance---while running in 0.67\,ms per decision. At the recommended 30\% budget, PCA-Triage saves 70\% of bandwidth with only 3.7\% F1 loss, at a compute cost of 48\,ms per hour. The algorithm adapts to fault onset within 1--3 windows and scales to 500 channels under the 5\,ms edge target.
+Across 11 experiments on 7 real-world benchmarks with 6 baselines, 3 classifiers, and 5 random seeds, PCA-Triage is the best unsupervised triage method on 4 of 6 datasets at 50\% bandwidth (TEP, SMD, MSL, PSM), achieving F1\,=\,$0.971 \pm 0.002$ on TEP---exceeding full-data performance (0.962)---while running in 0.67\,ms per decision. Three innovations drive these gains: hybrid PCA+variance scoring, linear interpolation for reconstruction, and power-law sharpened rate allocation. On SMD, PCA-Triage also outperforms the supervised Mutual Information baseline. At the recommended 30\% budget, PCA-Triage saves 70\% of bandwidth with only 3.7\% F1 loss, at a compute cost of 48\,ms per hour. The algorithm adapts to fault onset within 1--3 windows and scales to 500 channels under the 5\,ms edge target.
 
 PCA-Triage bridges the gap between PCA-based process monitoring and adaptive data acquisition, enabling bandwidth-efficient sensor networks without sacrificing fault detection accuracy. Its zero-parameter, streaming, unsupervised design makes it immediately deployable on resource-constrained edge hardware.
 
