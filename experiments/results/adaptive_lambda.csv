@@ -1,0 +1,5 @@
+config,key,f1_mean,f1_std
+Fixed λ=1.0 (best accuracy),fixed_1.0,0.9614160997612482,0.001732395179802681
+Fixed λ=0.85 (fast reaction),fixed_0.85,0.9538638875001242,0.0018186478173339597
+"Adaptive λ ∈ [0.80, 0.99]",adaptive,0.9526273906091556,0.0019235105024678852
+"Adaptive λ ∈ [0.85, 0.99] (conservative)",adaptive_conservative,0.9524891447588691,0.0013973607377160296
