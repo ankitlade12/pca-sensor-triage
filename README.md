@@ -1,8 +1,10 @@
 # PCA-Triage: Adaptive Sensor Triage for Edge AI Inference
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen.svg)](tests/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Tests](https://img.shields.io/badge/tests-28%20passed-brightgreen.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
+![Datasets](https://img.shields.io/badge/datasets-8-orange.svg)
 
 ## Table of Contents
 
@@ -103,27 +105,29 @@ Given smoothed scores `s̄` and budget `B`:
 ### 3.4 Full Algorithm
 
 ```
-Algorithm 1: PCA-Triage
+Algorithm 1: PCA-Triage v2
 ─────────────────────────────────────────────────────────
 Input:  Stream of sensor windows X_w ∈ ℝ^(w×d)
-        Budget B ∈ (0, 1], components k, forgetting factor λ
+        Budget B ∈ (0, 1], components k, forgetting λ
+        Blend α, sharpness γ
 
 Init:   IncrementalPCA(k), smoothed scores s̄ = None
 
 FOR each window X_w:
-  1. UPDATE:   partial_fit(X_w) → V, σ
-  2. SCORE:    s_j = Σᵢ σᵢ · V[i,j]²    ∀j ∈ {1,...,d}
-  3. SMOOTH:   s̄ = λ · s̄ + (1-λ) · normalize(s)
-  4. ALLOCATE: r_j = r_min + (s̄_j / Σs̄) · (B - r_min) · d
-               clip to [r_min, 1.0]
-  5. ACQUIRE:  keep sample x_t[j] with probability r_j
-  6. RECONSTRUCT: forward-fill NaN values
+  1. UPDATE:     partial_fit(X_w) → V, σ
+  2. PCA SCORE:  s_pca = Σᵢ σᵢ · V[i,j]²
+  3. HYBRID:     s_j = α · s_pca + (1-α) · Var(x_j)
+  4. SMOOTH:     s̄ = λ · s̄ + (1-λ) · normalize(s)
+  5. SHARPEN:    s̃_j = s̄_j^γ / Σ s̄^γ
+  6. ALLOCATE:   r_j = r_min + s̃_j · (B·d - r_min·d)
+                 clip to [r_min, 1.0]
+  7. ACQUIRE:    keep sample x_t[j] with probability r_j
+  8. RECONSTRUCT: linear interpolation
 
 Output: Triaged data, importance scores s̄, rates r
 ─────────────────────────────────────────────────────────
-Time:   O(wdk) per window
-Memory: O(wd + kd)
-Params: 0 (computed, not trained)
+Time:   O(wdk) per window  |  Memory: O(wd + kd)
+Trainable params: 0        |  Latency: 0.67 ms/decision
 ```
 
 ### 3.5 Hyperparameters
@@ -141,15 +145,19 @@ Params: 0 (computed, not trained)
 
 ### 4.1 PCA-Triage Pipeline
 
-```
-┌──────────┐     ┌──────────┐     ┌──────────────┐     ┌────────────┐     ┌──────────┐
-│  Sensor  │────▶│ Sliding  │────▶│ Incremental  │────▶│ Importance │────▶│   Rate   │
-│  Array   │ xₜ  │ Window   │ X_w │    PCA       │V, σ │  Scoring   │ sⱼ  │Allocator │
-│(d chan.) │     │ Buffer   │     │ (k comp.)    │     │Σσᵢ|Vᵢⱼ|² │     │(budget B)│
-└──────────┘     └──────────┘     └──────────────┘     └────────────┘     └─────┬────┘
-      ▲                                                                          │ rⱼ
-      │                    per-channel sampling rates                            │
-      └──────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    A["Sensor Array\n(d channels)"] -->|"x_t"| B["Sliding Window\nBuffer (w samples)"]
+    B -->|"X_w"| C["Incremental PCA\n(k components)"]
+    C -->|"V, sigma"| D["Importance Scoring\ns_j = Sum sigma_i V_ij^2"]
+    D -->|"s_j"| E["Hybrid Blending\nalpha * PCA + (1-alpha) * Var"]
+    E -->|"s_blend"| F["Sharpened Allocation\ns^gamma / Sum s^gamma"]
+    F -->|"r_j"| G["Sub-sample\n+ Linear Interp"]
+    G -->|"X_triaged"| H["Downstream\nClassifier"]
+    style A fill:#e1f5fe
+    style H fill:#e8f5e9
+    style D fill:#fff3e0
+    style F fill:#fce4ec
 ```
 
 ### 4.2 End-to-End Experiment Flow
@@ -542,8 +550,20 @@ We tested a time-varying λ that decreases when importance shifts are detected (
 ```bash
 git clone https://github.com/ankitlade12/pca-sensor-triage.git
 cd pca-sensor-triage
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev,stats]"
+pre-commit install
+```
+
+### Quick Start (Makefile)
+
+```bash
+make help           # Show all commands
+make smoke          # Quick smoke test (no data needed, ~2s)
+make test           # Run full test suite (28 tests, ~1s)
+make lint           # Run ruff linter
+make benchmark-quick  # Budget=0.5 comparison across 8 datasets (~15 min)
+make benchmark      # Full Pareto sweep: 8 datasets x 9 budgets (~2-4 hours)
+make figures        # Regenerate all publication figures
 ```
 
 ### Download Datasets
@@ -630,60 +650,44 @@ Results are written to `experiments/results/`.
 ## 12. Project Structure
 
 ```
-src/                                        # Library layer
-    triage/                                 # Core PCA-Triage algorithm
-        pca_triage.py                       # PCATriage class — weighted loadings importance
-        rate_allocator.py                   # RateAllocator — proportional budget allocation
-        reconstruction.py                   # Forward-fill / linear / zero reconstruction
-        pipeline.py                         # TriagePipeline — end-to-end streaming
-    baselines/                              # 6 comparison methods
-        uniform.py                          # Baseline 1: same rate all channels
-        threshold.py                        # Baseline 2: binary active/inactive
-        variance.py                         # Baseline 3: proportional to rolling variance
-        random_dropout.py                   # Baseline 4: randomly drop channels
-        mutual_info.py                      # Baseline 5: MI with fault labels (supervised)
-        attention.py                        # Baseline 6: self-attention importance
-        autoencoder.py                      # Baseline 7: autoencoder reconstruction error
+src/
+    triage/                          # Core algorithm
+        pca_triage.py                # Weighted loadings importance scorer
+        hybrid_scorer.py             # PCA+Variance hybrid scoring
+        adaptive_k.py                # Adaptive k via cumulative variance
+        ensemble_scorer.py           # Multi-k ensemble scoring
+        rate_allocator.py            # Sharpened proportional allocation
+        reconstruction.py            # Linear / forward-fill / zero interp
+        pipeline.py                  # TriagePipeline — end-to-end streaming
+    baselines/                       # 7 comparison methods
+        uniform.py                   # Same rate all channels
+        threshold.py                 # Binary active/inactive (Send-on-Delta)
+        variance.py                  # Proportional to rolling variance
+        random_dropout.py            # Randomly drop channels
+        mutual_info.py               # MI with labels (supervised)
+        attention.py                 # Self-attention importance
+        autoencoder.py               # Reconstruction error importance
     utils/
-        data_loader.py                      # load_tep(), load_smd(), load_msl(), load_psm(), load_hai(), etc.
-        plotting.py                         # Publication figure generators
-        hybrid_scorer.py                    # PCA+Variance hybrid importance scorer
+        data_loader.py               # Loaders for 8 datasets
+        synthetic_datasets.py        # SWaT/WADI synthetic generators
+        plotting.py                  # Publication figure generators
 
-configs/                                    # Experiment configurations
-    default.yaml                            # Main experiment hyperparameters
-    ablation.yaml                           # Ablation study settings
+configs/
+    default.yaml                     # Hyperparameters + per-dataset tuning
 
-experiments/                                # Experiment scripts (8 experiments)
-    run_pareto.py                           # Exp 1: Pareto curves (accuracy vs bandwidth)
-    run_compute_profile.py                  # Exp 2: Compute cost profiling (--edge flag)
-    run_adaptivity.py                       # Exp 3: Fault onset adaptation analysis
-    run_ablation.py                         # Exp 4: Hyperparameter ablation studies
-    run_scalability.py                      # Exp 5: Scaling vs channel count
-    run_component_contribution.py           # Exp 6: Component contribution analysis
-    run_statistical_tests.py                # Exp 7: Friedman + Nemenyi + Wilcoxon tests
-    run_reconstruction_comparison.py        # Exp 8: Forward-fill vs linear vs zero
-    run_per_fault.py                        # Exp 9: Per-fault-type breakdown (TEP)
-    run_correlation_validation.py           # Exp 10: Synthetic correlation validation
-    run_autoencoder_baseline.py             # Exp 11: Autoencoder baseline
-    run_adaptive_lambda.py                  # Exp 12: Adaptive lambda experiment
-    results/                                # CSV/JSON output files
-        pareto_tep.csv                      # TEP Pareto results
-        pareto_smd.csv                      # SMD Pareto results
-        pareto_msl.csv                      # MSL Pareto results
-        pareto_psm.csv                      # PSM Pareto results
-        pareto_hai.csv                      # HAI Pareto results
-        pareto_skab.csv                     # SKAB Pareto results
-        pareto_nasa.csv                     # NASA Pareto results
-        multi_classifier.csv                # Multi-classifier results (RF, SVM, KNN)
-        component_contribution.csv          # Component contribution analysis
-        compute_profile.json                # Laptop profiling
-        compute_profile_edge.json           # Edge-simulated profiling
-        friedman_ranks.csv                  # Friedman mean ranks
-        wilcoxon_tests.csv                  # Per-dataset Wilcoxon p-values
+experiments/
+    run_pareto_v2.py                 # Budget=0.5 comparison (quick)
+    run_pareto_v2_full.py            # Full Pareto sweep (all budgets)
+    run_pareto.py                    # Legacy Pareto experiment
+    run_ablation.py                  # Hyperparameter ablation
+    run_statistical_tests.py         # Friedman + Wilcoxon tests
+    run_*.py                         # 12 experiment scripts total
+    results/                         # CSV/JSON output files
 
-tests/                                      # Test suite (53 tests)
-    test_triage.py                          # 17 unit tests: core algorithm
-    test_baselines.py                       # 25 unit tests: all 6 baselines
+tests/                               # 28 tests
+    test_triage.py                   # Core algorithm + v2 features
+    test_baselines.py                # All 7 baselines
+    test_integration.py              # End-to-end pipeline tests
     test_integration.py                     # 11 integration tests: end-to-end + edge cases
 
 paper/                                      # Paper materials

@@ -1,47 +1,76 @@
-.PHONY: install test lint clean experiments figures all
+.PHONY: install test test-quick lint format benchmark benchmark-quick clean smoke figures help
 
+# ──────────────────────────────────────────────────────────────
 # Setup
-install:
-	python3 -m venv .venv
-	.venv/bin/pip install -r requirements.txt
-	.venv/bin/pip install pytest pyyaml pyreadr
+# ──────────────────────────────────────────────────────────────
+install:  ## Install all dependencies
+	pip install -e ".[dev,stats]"
+	pre-commit install
 
+# ──────────────────────────────────────────────────────────────
+# Code Quality
+# ──────────────────────────────────────────────────────────────
+lint:  ## Run ruff linter
+	ruff check src/ tests/
+
+format:  ## Auto-format code with ruff
+	ruff check src/ tests/ --fix
+	ruff format src/ tests/
+
+# ──────────────────────────────────────────────────────────────
 # Testing
-test:
-	.venv/bin/python -m pytest tests/ -v
+# ──────────────────────────────────────────────────────────────
+test:  ## Run full test suite
+	python -m pytest tests/ -v --tb=short
 
-test-quick:
-	.venv/bin/python -m pytest tests/test_triage.py -v
+test-quick:  ## Run core triage tests only
+	python -m pytest tests/test_triage.py -v --tb=short
 
+smoke:  ## Quick smoke test (no data needed)
+	python -c "\
+		from src.triage import TriagePipeline, HybridScorer; \
+		import numpy as np; \
+		X = np.random.randn(500, 20); \
+		p = TriagePipeline(n_components=5, window_size=50, budget=0.5, scorer='hybrid', alpha=0.7, sharpness=2.0); \
+		r = p.process_stream(X, seed=42); \
+		assert r.shape == X.shape and not np.isnan(r).any(); \
+		print(f'OK: {X.shape} -> {r.shape}, windows={len(p.importance_log)}')"
+
+# ──────────────────────────────────────────────────────────────
 # Experiments
-pareto:
-	.venv/bin/python experiments/run_pareto.py
+# ──────────────────────────────────────────────────────────────
+benchmark:  ## Full Pareto sweep: 8 datasets × 6 methods × 9 budgets × 3 seeds (~2-4 hours)
+	python -u experiments/run_pareto_v2_full.py
 
-ablation:
-	.venv/bin/python experiments/run_ablation.py
+benchmark-quick:  ## Quick benchmark: budget=0.5 only (~15 min)
+	python -u experiments/run_pareto_v2.py
 
-profile:
-	.venv/bin/python experiments/run_compute_profile.py
+pareto:  ## Legacy Pareto experiment
+	python experiments/run_pareto.py
 
-profile-edge:
-	.venv/bin/python experiments/run_compute_profile.py --edge
+ablation:  ## Ablation studies (k, w, lambda)
+	python experiments/run_ablation.py
 
-adaptivity:
-	.venv/bin/python experiments/run_adaptivity.py
+# ──────────────────────────────────────────────────────────────
+# Figures & Paper
+# ──────────────────────────────────────────────────────────────
+figures:  ## Regenerate all publication figures from results
+	python paper/generate_all_figures.py
 
-scalability:
-	.venv/bin/python experiments/run_scalability.py
-
-experiments: pareto ablation profile adaptivity scalability
-
+# ──────────────────────────────────────────────────────────────
 # Cleanup
-clean:
+# ──────────────────────────────────────────────────────────────
+clean:  ## Remove caches and build artifacts
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	rm -f .coverage
 
-# Smoke test
-smoke:
-	.venv/bin/python -c "from src.triage import TriagePipeline; import numpy as np; \
-		X = np.random.randn(500, 20); p = TriagePipeline(n_components=5, window_size=50, budget=0.5); \
-		r = p.process_stream(X, seed=42); print(f'OK: {X.shape} -> {r.shape}, windows={len(p.importance_log)}')"
+clean-data:  ## Remove generated result CSVs (keeps raw data)
+	rm -f experiments/results/pareto_*.csv
+
+# ──────────────────────────────────────────────────────────────
+# Help
+# ──────────────────────────────────────────────────────────────
+help:  ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
