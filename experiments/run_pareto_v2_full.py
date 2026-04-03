@@ -144,7 +144,7 @@ def run_dataset_pareto(dataset_name):
 
 
 if __name__ == "__main__":
-    datasets = ['tep', 'smd', 'msl', 'psm', 'hai', 'skab', 'swat', 'wadi']
+    datasets = ['tep', 'smd', 'msl', 'psm', 'hai', 'skab', 'swat']
     for ds in datasets:
         try:
             run_dataset_pareto(ds)

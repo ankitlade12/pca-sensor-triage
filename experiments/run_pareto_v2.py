@@ -105,16 +105,6 @@ DATASET_CONFIGS = {
         'sharpness': 1.5,
         'reconstruction_method': 'linear',
     },
-    'wadi': {  # 127 channels, water distribution — high channel count
-        'n_components': 20,
-        'window_size': 50,
-        'forgetting_factor': 1.0,
-        'min_rate': 0.03,
-        'scorer': 'hybrid',
-        'alpha': 0.7,
-        'sharpness': 2.0,
-        'reconstruction_method': 'linear',
-    },
 }
 
 

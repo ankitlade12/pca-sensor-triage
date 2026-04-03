@@ -6,6 +6,7 @@
 ![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
 ![Datasets](https://img.shields.io/badge/datasets-8-orange.svg)
 
+
 ## Table of Contents
 
 1. [Overview](#1-overview)
@@ -35,7 +36,7 @@
 
 The contribution is **not** a new model architecture — it is a **what-to-sample and how-much** strategy that wraps any downstream classifier or anomaly detector.
 
-**Headline result (1,000+ experiments, 9 datasets, 6 methods, 5 seeds, 3 classifiers):** At **50% bandwidth**, PCA-Triage achieves F1 = 0.970 ± 0.002 on TEP fault detection — exceeding full-data performance (0.962) — while running in **0.67 ms per decision**. Best unsupervised method on **4 of 7 Pareto-evaluated datasets** (TEP, SMD, MSL, PSM). Scales to 127 channels (WADI). On SMD, also outperforms the supervised Mutual Info baseline. Key innovations: hybrid PCA+variance scoring, linear interpolation, and power-law sharpened rate allocation.
+**Headline result (1,000+ experiments, 8 datasets, 6 methods, 5 seeds, 3 classifiers):** At **50% bandwidth**, PCA-Triage achieves F1 = 0.970 ± 0.002 on TEP fault detection — exceeding full-data performance (0.962) — while running in **0.67 ms per decision**. Best unsupervised method on **4 of 7 Pareto-evaluated datasets** (TEP, SMD, MSL, PSM). On SMD, also outperforms the supervised Mutual Info baseline. Key innovations: hybrid PCA+variance scoring, linear interpolation, and power-law sharpened rate allocation.
 
 ---
 

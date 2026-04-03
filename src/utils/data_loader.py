@@ -15,7 +15,7 @@ import pyreadr
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from .synthetic_datasets import generate_swat_like, generate_wadi_like
+from .synthetic_datasets import generate_swat_like
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'raw')
 
@@ -268,7 +268,6 @@ DATASETS = {
     'psm': load_psm,
     'hai': load_hai,
     'swat': generate_swat_like,
-    'wadi': generate_wadi_like,
 }
 
 
