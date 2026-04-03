@@ -11,7 +11,6 @@ achieves higher bandwidth savings than either alone.
 
 import numpy as np
 import pandas as pd
-from src.triage.rate_allocator import RateAllocator
 
 
 class SendOnDelta:
