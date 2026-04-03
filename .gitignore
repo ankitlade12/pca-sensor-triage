@@ -51,6 +51,12 @@ paper/*.synctex.gz
 # Claude config
 .claude/
 
+# Compressed/duplicate figure directories
+paper/figures_compressed/
+paper/figures_overleaf/
+paper/figures_small/
+paper/figures_tiny/
+
 # Misc
 *.pkl
 *.h5
