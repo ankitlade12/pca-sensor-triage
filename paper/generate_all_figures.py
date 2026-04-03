@@ -40,13 +40,18 @@ FIGURES_DIR = os.path.join(os.path.dirname(__file__), 'figures')
 
 
 def fig_pareto_curves():
-    """Figure 2: Pareto curves across all real datasets."""
-    datasets = ['tep', 'smd', 'psm', 'msl', 'hai', 'skab']
+    """Figure 2: Pareto curves across all datasets."""
+    # Include all datasets that have pareto CSVs
+    all_datasets = ['tep', 'smd', 'psm', 'msl', 'hai', 'skab', 'swat', 'wadi']
+    datasets = [ds for ds in all_datasets
+                if os.path.exists(os.path.join(RESULTS_DIR, f'pareto_{ds}.csv'))]
     methods = list(COLORS.keys())
 
-    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
+    ncols = 4 if len(datasets) > 6 else 3
+    nrows = (len(datasets) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(20, 6 * nrows))
     for idx, ds in enumerate(datasets):
-        ax = axes[idx // 3, idx % 3]
+        ax = axes[idx // ncols, idx % ncols] if nrows > 1 else axes[idx % ncols]
         path = os.path.join(RESULTS_DIR, f'pareto_{ds}.csv')
         if not os.path.exists(path):
             ax.set_title(f'{ds.upper()} — NO DATA')
@@ -68,6 +73,12 @@ def fig_pareto_curves():
         if idx == 0:
             ax.legend(fontsize=7, loc='lower right')
         ax.set_xlim(5, 95)
+
+    # Hide unused axes
+    total_axes = nrows * ncols
+    for idx in range(len(datasets), total_axes):
+        ax = axes[idx // ncols, idx % ncols] if nrows > 1 else axes[idx % ncols]
+        ax.set_visible(False)
 
     plt.suptitle('Pareto Curves: Accuracy vs Bandwidth', fontsize=15, fontweight='bold')
     plt.tight_layout()
