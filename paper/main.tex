@@ -146,7 +146,9 @@ Our method optimizes the \textit{data side}---complementary to model compression
 
 \subsection{Positioning}
 
-\begin{table}[t]
+Table~\ref{tab:positioning} summarizes the positioning of PCA-Triage relative to existing approaches across two axes: static vs.\ streaming and fixed-rule vs.\ data-driven. PCA-Triage is the first method to occupy the bottom-right cell---a streaming, data-driven, proportional allocation strategy.
+
+\begin{table}[!htbp]
 \centering
 \caption{Positioning matrix: PCA-Triage fills the bottom-right cell---streaming, data-driven, proportional allocation.}
 \begin{tabular}{@{}lcc@{}}
@@ -390,24 +392,27 @@ NASA & Bearing degradation & 16 & 1K & NASA IMS \\
 
 \subsection{Baselines}
 
-We compare against six methods spanning the spectrum from trivial to learned to supervised:
+We compare against nine methods spanning the spectrum from trivial to learned to supervised:
 
 \begin{enumerate}[leftmargin=*]
 \item \textbf{Uniform}: Same sampling rate $r_j = B$ for all channels.
 \item \textbf{Threshold}: Binary active/inactive based on rolling variance exceeding a percentile threshold.
 \item \textbf{Variance}: Proportional to rolling variance $\text{Var}_w(X_j)$.
 \item \textbf{Random Dropout}: Randomly drop channels with probability $1-B$.
-\item \textbf{Autoencoder}: A single-hidden-layer autoencoder ($d \to 10 \to d$, trained per window with 50 SGD epochs) uses per-channel reconstruction error as importance. Channels harder to reconstruct from the bottleneck carry more unique information. This is a learned, unsupervised alternative to PCA that can capture nonlinear structure.
-\item \textbf{Mutual Information (supervised)}: Proportional to mutual information with fault labels. Requires labeled data---included as an upper bound on data-driven methods.
+\item \textbf{Autoencoder}: A single-hidden-layer autoencoder ($d \to 10 \to d$, trained per window with 50 SGD epochs) uses per-channel reconstruction error as importance.
+\item \textbf{Mutual Information (supervised)}: Proportional to mutual information with fault labels. Requires labeled data---included as an upper bound.
+\item \textbf{LSTM-Attention}: An LSTM with channel attention (14K params on TEP), trained per-window via reconstruction loss. Attention weights serve as channel importance scores.
+\item \textbf{Transformer-Attention}: A single Transformer encoder layer where channels are tokens (12K params). Mean self-attention received per channel serves as importance.
+\item \textbf{OGD (Online Gradient Descent)}: A regret-optimal online allocation baseline that updates rates via gradient steps on per-channel reconstruction error.
 \end{enumerate}
 
-All methods use identical downstream classifiers and forward-fill reconstruction to ensure fair comparison. The downstream classifier is Random Forest~\cite{breiman2001random} ($n=100$ trees) unless otherwise noted. All implementations use scikit-learn~\cite{pedregosa2011scikit}.
+Methods 1--6 are used in the main Pareto comparison (Experiments~1--3). Methods 7--9 are evaluated in dedicated experiments (Experiments~14, 17). All methods use identical downstream classifiers (Random Forest~\cite{breiman2001random}, $n=200$ trees) unless otherwise noted. All implementations use scikit-learn~\cite{pedregosa2011scikit}.
 
 \subsection{Evaluation Protocol}
 
 \textbf{Metrics:} F1 score (harmonic mean of precision and recall) for fault detection.
 
-\textbf{Seeds:} All experiments are repeated with 5 random seeds. We report mean $\pm$ standard deviation.
+\textbf{Seeds:} All experiments are repeated with 3--5 random seeds (3 for Pareto sweeps, 5 for ablations). We report mean $\pm$ standard deviation.
 
 \textbf{Statistical tests:} Wilcoxon signed-rank test~\cite{wilcoxon1945individual} (paired, per-dataset) with significance threshold $p < 0.05$. Friedman test~\cite{friedman1937comparison} for overall ranking across datasets, with Nemenyi post-hoc~\cite{nemenyi1963distribution} following the protocol of Dem{\v{s}}ar~\cite{demsar2006statistical}.
 
@@ -1087,7 +1092,7 @@ PCA-Triage bridges the gap between PCA-based process monitoring and adaptive dat
 % ============================================================
 \section*{Reproducibility}
 
-All code, datasets, and experiment configurations are publicly available.\footnote{\url{https://github.com/ankitlade12/pca-sensor-triage}} The repository includes 28 unit and integration tests, 13 experiment scripts with fixed random seeds, and all result CSVs for independent verification. The complete evaluation suite runs in approximately 30 minutes on commodity hardware (single CPU, 8\,GB RAM).
+All code, datasets, and experiment configurations are publicly available.\footnote{\url{https://github.com/ankitlade12/pca-sensor-triage}} The repository includes 28 unit and integration tests, 17 experiment scripts with fixed random seeds, and all result CSVs for independent verification. The complete evaluation suite runs in approximately 30 minutes on commodity hardware (single CPU, 8\,GB RAM).
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
