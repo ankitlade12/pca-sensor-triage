@@ -869,15 +869,16 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 \begin{enumerate}[leftmargin=*]
 \item \textbf{Correlation assumption.} PCA-Triage assumes inter-channel correlations exist. On channels that are mutually independent, it reduces to approximately variance-based allocation (Theorem~\ref{thm:correlation}).
 \item \textbf{Minimum rate overhead.} The floor $r_{\min}$ consumes fixed bandwidth: $r_{\min} \cdot d$ out of $B \cdot d$ total, reducing the budget available for proportional allocation. With $r_{\min} = 0.05$ and $d = 52$, this overhead is 2.6 out of 26 bandwidth units (10\%).
-\item \textbf{Forward-fill lag.} At very low budgets ($< 20\%$), forward-fill reconstruction introduces lag for rapidly-changing signals. Alternative reconstruction (linear interpolation, model-based) could mitigate this (Corollary~\ref{cor:recon}).
+\item \textbf{Reconstruction lag.} At very low budgets ($< 20\%$), even linear interpolation introduces lag for rapidly-changing signals. Model-based reconstruction (e.g., Kalman smoothing) could further mitigate this, at the cost of additional compute.
 \item \textbf{Stationarity assumption.} The theoretical guarantees (Propositions~\ref{prop:budget}--\ref{prop:convergence}) assume a stationary or slowly-varying distribution. Under abrupt regime changes, transient suboptimality is expected until the PCA model re-converges.
+\item \textbf{Offline evaluation only.} All experiments replay pre-recorded datasets. Real-time effects (network jitter, sensor clock drift, processing pipeline latency) are not captured. The 0.67\,ms latency measurement is per-window compute time, not end-to-end system latency.
 \end{enumerate}
 
 \subsection{Threats to Validity}
 
 \textbf{Internal validity.} All experiments use identical data splits, seeds, classifiers, and reconstruction across methods, minimizing confounds. However, Random Forest may favor certain allocation patterns over others; the multi-classifier analysis (Table~\ref{tab:multiclassifier}) mitigates this concern.
 
-\textbf{External validity.} We evaluate on 7 real-world datasets across 5 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation).
+\textbf{External validity.} We evaluate on 9 benchmarks (7 real-world + 2 synthetic) across 6 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation). The SWaT and WADI datasets are synthetic stand-ins calibrated to match published testbed properties; validation on real SWaT/WADI data (which requires institutional access agreements) is needed.
 
 \textbf{Construct validity.} F1 score captures detection performance but not other deployment-relevant metrics (e.g., false alarm rate, detection delay). The per-fault analysis (Table~\ref{tab:perfault}) provides finer granularity but does not cover all 20 TEP fault types.
 
@@ -885,8 +886,11 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 \begin{itemize}[leftmargin=*]
 \item \textbf{Federated PCA:} Extend to distributed edge nodes with privacy-preserving aggregation of covariance matrices.
-\item \textbf{Adaptive $k$:} Automatically select the number of components via cumulative variance thresholding (e.g., retain 95\% variance).
+\item \textbf{Adaptive $k$:} Automatically select the number of components via cumulative variance thresholding (e.g., retain 95\% variance). Our codebase includes a preliminary \texttt{AdaptiveKPCATriage} implementation; systematic evaluation across datasets is future work.
 \item \textbf{Adaptive $\lambda$:} A time-varying forgetting factor that increases during stable periods (favoring accuracy) and decreases after detected importance shifts (favoring adaptivity). Preliminary experiments with shift-triggered $\lambda$ adaptation ($\lambda \in [0.80, 0.99]$, triggered when $\|\mathbf{s}^{(t)} - \mathbf{s}^{(t-1)}\|_2 > 0.05$) achieve F1\,=\,0.953 on TEP---matching $\lambda{=}0.85$ but not yet closing the gap to $\lambda{=}1.0$ (0.961). On stationary TEP data, the adaptive $\lambda$ converges to ${\sim}0.99$ (near-fixed), suggesting the value lies in deployment scenarios with intermittent regime changes, which our aggregated evaluation does not capture.
+\item \textbf{Ensemble scoring:} Blend importance scores from multiple $k$ values for more robust channel rankings. A preliminary \texttt{EnsembleScorer} (averaging $k \in \{3, 5, 10\}$) is implemented but not yet systematically evaluated.
+\item \textbf{Deep learning baselines:} Compare with LSTM- and Transformer-based channel importance methods (e.g., temporal attention weights as importance proxies). These may capture non-linear temporal dependencies that PCA misses, at the cost of trainable parameters and higher compute.
+\item \textbf{Real-time deployment:} All experiments are offline replay evaluations. A real-time deployment study on embedded hardware (e.g., Raspberry Pi, NVIDIA Jetson) with live sensor streams would validate the edge viability claims in production conditions.
 \item \textbf{Joint spatial-temporal optimization:} Combine PCA-Triage (spatial) with DSRA or Send-on-Delta (temporal) for joint bandwidth allocation.
 \item \textbf{Open-source contribution:} Package the algorithm as a \texttt{StreamingPCASelector} transformer for the Feature-engine library~\cite{galli2022feature}.
 \end{itemize}
