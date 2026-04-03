@@ -773,10 +773,3 @@ data/raw/                                   # Datasets (not tracked in git)
 - Pedregosa et al. (2011). *Scikit-learn: Machine Learning in Python.* JMLR.
 - Halko, Martinsson & Tropp (2011). *Finding Structure with Randomness.* SIAM Review.
 
----
-
-*Paper in preparation for IEEE IoT Journal / arXiv preprint.*
-
-*Author: Ankit Hemant Lade*
-
-*License: MIT*
