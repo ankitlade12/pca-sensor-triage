@@ -107,7 +107,7 @@ Given smoothed scores `s̄` and budget `B`:
 ### 3.4 Full Algorithm
 
 ```
-Algorithm 1: PCA-Triage v2
+Algorithm 1: PCA-Triage
 ─────────────────────────────────────────────────────────
 Input:  Stream of sensor windows X_w ∈ ℝ^(w×d)
         Budget B ∈ (0, 1], components k, forgetting λ
@@ -687,7 +687,7 @@ experiments/
     results/                         # CSV/JSON output files
 
 tests/                               # 28 tests
-    test_triage.py                   # Core algorithm + v2 features
+    test_triage.py                   # Core algorithm + all features
     test_baselines.py                # All 7 baselines
     test_integration.py              # End-to-end pipeline tests
     test_integration.py                     # 11 integration tests: end-to-end + edge cases

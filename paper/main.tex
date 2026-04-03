@@ -691,7 +691,7 @@ The choice of reconstruction method (how to fill dropped samples) affects downst
 \label{tab:recon}
 \end{table}
 
-\textbf{Findings.} Linear interpolation consistently outperforms forward-fill by +0.4\% to +1.9\% F1, with the largest gain at low budgets where more samples are dropped and interpolation quality matters most. Zero-fill (replacing dropped samples with 0) is catastrophic below 50\% budget because it introduces artificial zero-valued samples that the classifier mistakes for sensor readings. Based on these findings, we adopt linear interpolation as the default reconstruction method in PCA-Triage v2. The improvement is consistent across all budget levels and comes at negligible additional compute cost.
+\textbf{Findings.} Linear interpolation consistently outperforms forward-fill by +0.4\% to +1.9\% F1, with the largest gain at low budgets where more samples are dropped and interpolation quality matters most. Zero-fill (replacing dropped samples with 0) is catastrophic below 50\% budget because it introduces artificial zero-valued samples that the classifier mistakes for sensor readings. Based on these findings, we adopt linear interpolation as the default reconstruction method. The improvement is consistent across all budget levels and comes at negligible additional compute cost.
 
 \subsection{Experiment 9: Computational Cost and Scalability}
 
@@ -809,7 +809,7 @@ Adaptive $k$ (99\% var.) & .952 & .003 \\
 \label{tab:adaptive_k}
 \end{table}
 
-\textbf{Findings.} Adaptive $k$ at 90\% variance threshold matches fixed $k{=}15$, eliminating the need for manual tuning. Multi-dataset evaluation (Table~\ref{tab:multi_ablation}) reveals that fixed $k{=}5$ wins on 4 of 7 datasets (MSL, HAI, SKAB, SWaT), while Hybrid v2 wins on the remaining 3 (TEP, SMD, PSM). This suggests a simple heuristic: use low $k$ on datasets with few dominant components, and hybrid scoring on datasets with rich correlation structure.
+\textbf{Findings.} Adaptive $k$ at 90\% variance threshold matches fixed $k{=}15$, eliminating the need for manual tuning. Multi-dataset evaluation (Table~\ref{tab:multi_ablation}) reveals that fixed $k{=}5$ wins on 4 of 7 datasets (MSL, HAI, SKAB, SWaT), while Hybrid PCA+Var wins on the remaining 3 (TEP, SMD, PSM). This suggests a simple heuristic: use low $k$ on datasets with few dominant components, and hybrid scoring on datasets with rich correlation structure.
 
 \subsection{Experiment 13: Ensemble Scoring}
 
@@ -817,7 +817,7 @@ To reduce sensitivity to the choice of $k$, we blend importance scores from mult
 
 \begin{table}[t]
 \centering
-\caption{Ensemble scoring on TEP (50\% BW, 3 seeds). Ensemble reduces variance but the hybrid v2 scorer remains best.}
+\caption{Ensemble scoring on TEP (50\% BW, 3 seeds). Ensemble reduces variance but the hybrid PCA+Var scorer remains best.}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 \textbf{Config} & \textbf{F1 Mean} & \textbf{F1 Std} \\
@@ -828,7 +828,7 @@ Ensemble $[3,5,10]$ & .968 & .002 \\
 Ensemble $[5,10,15]$ & .967 & .002 \\
 Ensemble $[3,5,10,15]$ & .968 & .002 \\
 \midrule
-Hybrid $\alpha{=}0.8$ + sharpening (v2) & \textbf{.970} & .001 \\
+Hybrid $\alpha{=}0.8$ + sharpening & \textbf{.970} & .001 \\
 \bottomrule
 \end{tabular}
 \label{tab:ensemble}
@@ -838,15 +838,15 @@ Hybrid $\alpha{=}0.8$ + sharpening (v2) & \textbf{.970} & .001 \\
 
 \begin{table}[t]
 \centering
-\caption{Best PCA-Triage scorer per dataset (50\% BW, 3 seeds). Hybrid v2 excels on high-correlation datasets; fixed $k{=}5$ excels on low-correlation or few-channel datasets.}
+\caption{Best PCA-Triage scorer per dataset (50\% BW, 3 seeds). Hybrid PCA+Var excels on high-correlation datasets; fixed $k{=}5$ excels on low-correlation or few-channel datasets.}
 \begin{tabular}{@{}llcc@{}}
 \toprule
-\textbf{Dataset} & \textbf{Best Scorer} & \textbf{F1} & \textbf{vs Hybrid v2} \\
+\textbf{Dataset} & \textbf{Best Scorer} & \textbf{F1} & \textbf{vs Hybrid PCA+Var} \\
 \midrule
-TEP & Hybrid v2 & .970 & --- \\
-SMD & Hybrid v2 & .987 & --- \\
+TEP & Hybrid PCA+Var & .970 & --- \\
+SMD & Hybrid PCA+Var & .987 & --- \\
 MSL & All tied & .919 & $\pm$0 \\
-PSM & Hybrid v2 & .965 & --- \\
+PSM & Hybrid PCA+Var & .965 & --- \\
 HAI & Fixed $k{=}5$ & \textbf{1.000} & $+$0.0004 \\
 SKAB & Fixed $k{=}5$ & \textbf{.562} & $+$0.013 \\
 SWaT$^\dagger$ & Fixed $k{=}5$ & \textbf{.990} & $+$0.003 \\
@@ -986,7 +986,7 @@ On datasets with high inter-channel correlation (TEP: 52 channels, SMD: 38 chann
 
 The multi-classifier results (Table~\ref{tab:multiclassifier}) confirm that the advantage is method-driven, not classifier-dependent: PCA-Triage outperforms Uniform by +2.2\% to +5.8\% across RF, SVM, and KNN on TEP.
 
-\textbf{PCA vs.\ Autoencoder.} A single-hidden-layer autoencoder (bottleneck $k{=}10$, 50 epochs/window) achieves only F1\,=\,0.921 on TEP at 50\% bandwidth---below both PCA-Triage (0.970 with v2, 0.961 base) and Variance (0.949). The autoencoder's per-window SGD is numerically less stable than IncrementalPCA's closed-form SVD, and its reconstruction-error importance scores are noisier. PCA's advantage is not merely dimensionality reduction but specifically its \textit{stable, closed-form} extraction of the dominant covariance structure.
+\textbf{PCA vs.\ Autoencoder.} A single-hidden-layer autoencoder (bottleneck $k{=}10$, 50 epochs/window) achieves only F1\,=\,0.921 on TEP at 50\% bandwidth---below both PCA-Triage (0.970 with hybrid scoring, 0.961 base) and Variance (0.949). The autoencoder's per-window SGD is numerically less stable than IncrementalPCA's closed-form SVD, and its reconstruction-error importance scores are noisier. PCA's advantage is not merely dimensionality reduction but specifically its \textit{stable, closed-form} extraction of the dominant covariance structure.
 
 \subsection{When PCA-Triage Struggles}
 
@@ -1063,7 +1063,7 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 \begin{itemize}[leftmargin=*]
 \item \textbf{Federated PCA:} Extend to distributed edge nodes with privacy-preserving aggregation of covariance matrices, enabling multi-gateway deployments without centralizing raw sensor data.
-\item \textbf{Automatic scorer selection:} Our multi-dataset ablation (Table~\ref{tab:multi_ablation}) shows hybrid v2 excels on high-correlation datasets while fixed low-$k$ wins elsewhere. An automatic meta-selector that chooses the scorer based on dataset properties (channel count, correlation structure) would eliminate manual configuration.
+\item \textbf{Automatic scorer selection:} Our multi-dataset ablation (Table~\ref{tab:multi_ablation}) shows hybrid PCA+Var excels on high-correlation datasets while fixed low-$k$ wins elsewhere. An automatic meta-selector that chooses the scorer based on dataset properties (channel count, correlation structure) would eliminate manual configuration.
 \item \textbf{Adaptive $\lambda$:} A time-varying forgetting factor that increases during stable periods and decreases after detected importance shifts. Preliminary experiments ($\lambda \in [0.80, 0.99]$, shift-triggered) achieve F1\,=\,0.953 on TEP---matching $\lambda{=}0.85$ but not yet closing the gap to $\lambda{=}1.0$. Deployment scenarios with intermittent regime changes may benefit most.
 \item \textbf{Learned blending:} Rather than fixing $\alpha$ per dataset, learn the PCA-variance blend weight from a validation window, combining the benefits of hybrid and low-$k$ scoring automatically.
 \item \textbf{Hardware deployment:} While our real-time simulation (Experiment~15) validates robustness to deployment perturbations and our scalability test (Experiment~16) confirms $O(wdk)$ scaling, a physical deployment on embedded hardware (e.g., Raspberry Pi, NVIDIA Jetson) with live sensor streams remains future work.
