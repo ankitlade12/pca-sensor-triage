@@ -45,6 +45,9 @@
 % --- Proof environment ---
 \renewenvironment{proof}[1][Proof]{\noindent\textit{#1.}\space}{\hfill$\blacksquare$\par\medskip}
 
+% --- Reduce white space gaps ---
+\raggedbottom
+
 \begin{document}
 
 \title{PCA-Driven Adaptive Sensor Triage for Edge AI Inference}
@@ -90,7 +93,7 @@ This problem sits at the intersection of three well-studied areas---yet none add
 
 The core insight behind PCA-Triage is that PCA naturally captures inter-channel correlations that variance-based methods miss. Fig.~\ref{fig:correlation} shows the TEP sensor correlation matrix during fault-free operation. Several sensor clusters exhibit $|r| > 0.7$ correlation (e.g., temperature sensors xmeas\_9--xmeas\_11, flow sensors xmeas\_1--xmeas\_4). When channels A and B are highly correlated, PCA detects the redundancy and concentrates importance on the more informative channel, freeing bandwidth for independent sensors. Variance-based allocation, by contrast, treats each channel independently and cannot exploit this structure.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/tep_correlation_matrix.png}
 \caption{TEP sensor correlation matrix during fault-free operation. Highly correlated clusters (dark red/blue blocks) represent redundancy that PCA-Triage exploits for efficient bandwidth allocation.}
@@ -165,7 +168,7 @@ Our method optimizes the \textit{data side}---complementary to model compression
 
 Fig.~\ref{fig:architecture} shows the PCA-Triage pipeline. Raw sensor data flows through a sliding window buffer into IncrementalPCA, which produces loadings and singular values. The importance scorer converts these into per-channel scores, and the rate allocator distributes the bandwidth budget proportionally. The full procedure is summarized in Algorithm~\ref{alg:pcatriage}.
 
-\begin{figure*}[t]
+\begin{figure*}[!htbp]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/architecture_diagram.png}
 \caption{PCA-Triage system architecture. Sensor data passes through a sliding window into IncrementalPCA, which extracts loadings $\mathbf{V}$ and singular values $\boldsymbol{\sigma}$. Importance scores $s_j$ are computed from weighted loadings and fed to the rate allocator, which distributes the bandwidth budget $B$ across channels. Time: $O(wdk)$; Memory: $O(wd + kd)$; Trainable parameters: 0.}
@@ -378,7 +381,7 @@ NASA & Bearing degradation & 16 & 1K & NASA IMS \\
 \label{tab:datasets}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/tep_sensor_overview.png}
 \caption{TEP fault-free operation: 6 representative sensor channels showing diverse signal characteristics---smooth trends (Reactor Pressure), noisy oscillations (Separator Level), and step-like control signals (Stripper Steam Valve).}
@@ -429,7 +432,7 @@ Fig.~\ref{fig:pareto} shows F1 vs.\ bandwidth trade-off across all 7 Pareto-eval
 \item \textbf{SWaT (synthetic):} PCA-Triage is second-best unsupervised (F1 = 0.986), close to Random Dropout (0.998). The synthetic correlation structure favors binary dropout over proportional allocation on this dataset.
 \end{itemize}
 
-\begin{figure*}[t]
+\begin{figure*}[!htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/pareto_curves.png}
 \caption{Pareto curves: F1 vs.\ bandwidth budget across 7 datasets (3-seed average). PCA-Triage (blue) dominates on high-channel datasets with rich correlation structure (TEP, SMD, MSL, PSM). Error bands show $\pm 1$ standard deviation.}
@@ -484,7 +487,7 @@ Mutual Info$^\dagger$ & $.914 \pm .003$ & $.986 \pm .000^\dagger$ & $.996 \pm .0
 
 Fig.~\ref{fig:method_comparison} visualizes the TEP results as a bar chart, comparing PCA-Triage against full-data performance and all baselines.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.95\columnwidth]{figures/method_comparison_50pct.png}
 \caption{TEP fault detection F1 at 50\% bandwidth. PCA-Triage (0.970) exceeds full-data performance (0.962) and outperforms all unsupervised baselines.}
@@ -524,14 +527,14 @@ On TEP, PCA-Triage outperforms Uniform by +4.2\% (RF), +5.8\% (SVM), and +2.2\% 
 
 A key property of PCA-Triage is its ability to shift bandwidth toward fault-relevant channels as operating conditions change. Fig.~\ref{fig:adaptivity_multi} shows channel importance heatmaps under three different TEP faults, and Fig.~\ref{fig:importance_fault1} provides a detailed view for Fault~1.
 
-\begin{figure*}[t]
+\begin{figure*}[!htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/adaptivity_heatmap.png}
 \caption{Channel importance adaptation under three TEP faults ($\lambda=0.85$, $w=25$). Top: Fault~1 (A/C Feed Ratio)---importance shifts to flow-related sensors. Middle: Fault~4 (Reactor CW Temp)---temperature sensors gain importance. Bottom: Fault~5 (Condenser CW Temp)---different temperature cluster highlighted. Each fault triggers a distinct importance pattern within 1--3 windows of onset.}
 \label{fig:adaptivity_multi}
 \end{figure*}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/importance_heatmap_fault1.png}
 \caption{Detailed view: channel importance over time for TEP Fault~1 (A/C Feed Ratio disturbance). Top: full heatmap showing all 52 channels. Bottom: top-5 channel importance traces. The fault onset (dashed line) triggers a clear shift in the importance distribution.}
@@ -540,7 +543,7 @@ A key property of PCA-Triage is its ability to shift bandwidth toward fault-rele
 
 When TEP Fault~1 (A/C feed ratio disturbance) occurs, PCA-Triage shifts bandwidth toward the responsible channels within 1--3 windows ($\lambda{=}0.85$). Fig.~\ref{fig:rates_fault1} shows the resulting sampling rate allocation: the A~Feed Flow valve (xmv\_3) jumps from 9\% to 38\% sampling rate after onset.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/rates_heatmap_fault1.png}
 \caption{Allocated sampling rates over time for TEP Fault~1 at 50\% budget. After fault onset (dashed line), bandwidth shifts toward fault-relevant channels (darker blue = higher rate).}
@@ -565,7 +568,7 @@ IDV(5): Condenser CW & 19 & 19 & 19 \\
 \label{tab:reaction}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/reaction_time_vs_lambda.png}
 \caption{Reaction time vs.\ forgetting factor $\lambda$ for four TEP faults. Lower $\lambda$ yields faster reaction (0--3 windows at $\lambda=0.80$) but at the cost of noisier importance estimates. $\lambda = 0.85$ offers a practical balance.}
@@ -574,7 +577,7 @@ IDV(5): Condenser CW & 19 & 19 & 19 \\
 
 \textbf{Cross-domain adaptivity.} Fig.~\ref{fig:nasa} demonstrates that PCA-Triage's adaptivity generalizes beyond chemical processes. On the NASA bearing degradation dataset, importance shifts from Bearing~1 to Bearing~3 as degradation progresses, correctly tracking the failing component.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/nasa_adaptivity_heatmap.png}
 \caption{Channel importance on NASA bearing dataset. As Bearing~3 degrades (failure onset marked), PCA-Triage shifts importance toward the failing component's sensors, demonstrating cross-domain adaptivity.}
@@ -586,7 +589,7 @@ IDV(5): Condenser CW & 19 & 19 & 19 \\
 
 We ablate four hyperparameters on TEP at 50\% bandwidth (5 seeds each). Fig.~\ref{fig:ablation} shows the full ablation grid; Table~\ref{tab:ablation} provides numerical details.
 
-\begin{figure*}[t]
+\begin{figure*}[!htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/ablation_grid.png}
 \caption{Ablation studies on TEP at 50\% bandwidth. (a) Effect of $k$: robust for $k \in [3, 10]$, degrades above 15 as noise components are included. (b) Effect of $w$: stable across $w \in [50, 500]$. (c) Effect of $\lambda$: $\lambda = 1.0$ gives best F1 but slowest reaction. (d) Score formula comparison: weighted and unweighted loadings outperform reconstruction-based scoring.}
@@ -716,7 +719,7 @@ Mutual Info & 7.73 & 31.8 & 0 \\
 \label{tab:compute}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/compute_cost.png}
 \caption{Compute cost per triage decision (left) and peak memory usage (right). PCA-Triage (1.46\,ms laptop / 0.67\,ms edge) is well under the 5\,ms edge target. Mutual Info is an order of magnitude slower.}
@@ -725,7 +728,7 @@ Mutual Info & 7.73 & 31.8 & 0 \\
 
 \textbf{Scalability.} Fig.~\ref{fig:scalability} shows compute time vs.\ number of channels on a log-log scale. PCA-Triage's $O(wdk)$ scaling keeps it under the 5\,ms edge target for up to 500 channels. The Variance baseline ($O(wd)$) scales better, but cannot exploit correlation structure. Attention-based methods ($O(d^2w)$) become prohibitive above 100 channels.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/scalability.png}
 \caption{Scalability: compute time vs.\ number of channels (log-log). PCA-Triage ($O(wdk)$, blue) stays under the 5\,ms edge target up to 500 channels. Attention ($O(d^2w)$, red dashed) exceeds the target above 50 channels.}
@@ -992,7 +995,7 @@ The multi-classifier results (Table~\ref{tab:multiclassifier}) confirm that the 
 
 \textbf{Low-channel datasets.} On SKAB (8 sensors, Fig.~\ref{fig:skab}), channels exhibit limited inter-channel correlation, and the margin over simpler baselines vanishes. With only 8 channels, even uniform allocation provides each channel with a reasonable rate.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/skab_sensor_overview.png}
 \caption{SKAB sensor traces with anomaly regions (pink). With only 8 channels and limited correlation, all triage methods perform similarly---PCA-Triage's correlation-exploitation advantage is minimal.}
