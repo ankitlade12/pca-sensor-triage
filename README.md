@@ -60,7 +60,7 @@ Variance-based allocation treats each channel independently. PCA-Triage captures
 | **Fixed Rules** | Uniform sampling; Send-on-Delta | DSRA; Energy-aware AIMD |
 | **Data-Driven** | Batch PCA detection; Offline FS | **PCA-Triage (Ours)** |
 
-No existing method occupies the bottom-right cell: a streaming, data-driven approach that converts PCA loadings into proportional per-channel bandwidth allocation under a total budget constraint.
+PCA-Triage occupies the bottom-right cell: a streaming, data-driven approach that uses incremental PCA specifically as the importance engine for proportional per-channel bandwidth allocation. Prior work has explored correlation-aware sensor selection (Bacciu 2016, Ghosh et al. 2021) and adaptive sampling-rate allocation (FreqSense 2023), but in batch or binary settings.
 
 ---
 
@@ -302,16 +302,16 @@ F1 across all methods and bandwidth levels (5-seed mean). **Bold** = best unsupe
 
 | Method | TEP | SMD | PSM | MSL | HAI | SKAB |
 |--------|:---:|:---:|:---:|:---:|:---:|:---:|
-| **PCA-Triage** | **0.961*** | **0.982** | 0.959 | **0.921*** | 1.000 | 0.583 |
+| **PCA-Triage** | **0.961** | **0.982** | 0.959 | **0.921** | 1.000 | 0.583 |
 | Threshold | 0.958 | 0.981 | 0.925 | 0.913 | 1.000 | 0.582 |
 | Variance | 0.948 | 0.977 | 0.903 | 0.917 | **1.000** | 0.577 |
 | Uniform | 0.924 | 0.968 | 0.897 | 0.912 | 0.998 | **0.586** |
 | Random Dropout | 0.788 | 0.980 | **0.962** | 0.914 | 1.000 | 0.524 |
-| Mutual Info** | 0.914 | 0.986 | 0.996 | 0.930 | 1.000 | 0.588 |
+| Mutual Info† | 0.914 | 0.986 | 0.996 | 0.930 | 1.000 | 0.588 |
 
-`*` = significantly better than all unsupervised baselines (Wilcoxon p < 0.05, 5 seeds). `**` = supervised (requires labels).
+**Bold** = best unsupervised. † = supervised (requires labels). Source: `paper/tables/table2_results_50pct.csv` (V1 base, RF n=100, forward-fill, no per-dataset tuning).
 
-PCA-Triage is the **best unsupervised method on 3 of 6 real datasets** (TEP, SMD, MSL) — specifically the high-channel datasets (52, 38, 55 sensors) where inter-channel correlation is rich. On TEP and MSL, the advantage is **statistically significant** (p < 0.05) against all baselines.
+PCA-Triage is the **best unsupervised method on 3 of 6 datasets** (TEP, SMD, MSL) — the high-channel datasets where inter-channel correlation is rich. Wins 5/6 or 6/6 against every baseline with large effect sizes (r=0.71–1.00), though none survive Holm correction for multiple comparisons (see paper for full statistical analysis).
 
 ### 8.2.1 Classifier Agnosticism
 
@@ -430,32 +430,30 @@ To quantify each component's contribution, we disable components one at a time o
 
 ### 8.10 Statistical Analysis
 
-**Friedman test** across 6 datasets at 50% bandwidth: χ² = 12.76, **p = 0.026** (significant).
+Source: `paper/tables/table2_results_50pct.csv` via `experiments/run_statistical_tests_v1.py`.
+
+**Friedman test** (5 unsupervised methods × 6 datasets, seed-averaged F1 at 50%): χ² = 9.33, p = 0.053 (borderline, not significant at α=0.05), Kendall's W = 0.389.
 
 | Method | Mean Rank |
 |--------|:---------:|
-| Mutual Info† | 1.83 |
-| **PCA-Triage** | **2.33** |
-| Threshold | 3.67 |
-| Variance | 3.67 |
-| Random Dropout | 4.50 |
-| Uniform | 5.00 |
+| **PCA-Triage** | **1.50** |
+| Threshold | 2.83 |
+| Variance | 3.00 |
+| Random Dropout | 3.50 |
+| Uniform | 4.17 |
 
-PCA-Triage ranks **1st among unsupervised methods**. Nemenyi post-hoc (CD = 4.35): PCA-Triage and Mutual Info are statistically indistinguishable (p = 0.997).
+PCA-Triage ranks **1st among all unsupervised methods**.
 
-**Wilcoxon signed-rank tests** (one-sided, 5 seeds):
+**Wilcoxon signed-rank tests** (one-sided, Holm-corrected for 4 comparisons):
 
-| Dataset | vs Uniform | vs Variance | vs Threshold | vs Random Drop |
-|---------|:---:|:---:|:---:|:---:|
-| TEP | .031* | .031* | .031* | .031* |
-| SMD | .031* | .031* | .156 | .031* |
-| MSL | .031* | .031* | .031* | .031* |
-| PSM | .031* | .031* | .031* | 1.00 |
-| HAI | .031* | 1.00 | .031* | .031* |
-| SKAB | .594 | .313 | .313 | .031* |
-| **Wins** | **5/6** | **4/6** | **4/6** | **5/6** |
+| Baseline | W / L | p (raw) | Effect r | Holm sig. |
+|----------|:-----:|:-------:|:--------:|:---------:|
+| Threshold | 6/0 | .016 | 1.00 | n.s. |
+| Variance | 5/1 | .031 | 0.91 | n.s. |
+| Uniform | 5/1 | .047 | 0.81 | n.s. |
+| Random Dropout | 5/1 | .078 | 0.71 | n.s. |
 
-`*` = p < 0.05. PCA-Triage achieves statistically significant wins on **4–5 of 6 datasets** against every unsupervised baseline.
+No comparison survives Holm correction (minimum corrected threshold = 0.0125 with n=6 datasets). Effect sizes are consistently large (r=0.71–1.00), indicating practical significance despite limited statistical power.
 
 ### 8.11 Per-Fault-Type Breakdown (TEP)
 

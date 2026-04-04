@@ -1,12 +1,14 @@
 """
-Statistical tests on V1 base results (6 datasets, 3 seeds, no per-dataset tuning).
+Statistical tests on V1 base results (6 datasets, no per-dataset tuning).
 
 Computes:
 1. Friedman test with Kendall's W effect size
 2. Wilcoxon signed-rank (PCA-Triage vs each baseline) with Holm correction
 3. Rank-biserial effect sizes for Wilcoxon
 
-Reads from: experiments/results/pareto_{tep,smd,msl,psm,hai,skab}.csv
+Canonical source: paper/tables/table2_results_50pct.csv (V1 base, 5-seed averages, RF-100)
+NOT from experiments/results/pareto_{ds}.csv (which contain V2 tuned results)
+
 Writes to: experiments/results/friedman_ranks_v1.csv, wilcoxon_tests_v1.csv
 """
 
