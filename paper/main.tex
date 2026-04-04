@@ -63,7 +63,7 @@
 \begin{abstract}
 Multi-channel sensor networks in industrial IoT generate data volumes that often exceed available bandwidth. We propose \textbf{PCA-Triage}, a lightweight streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a total bandwidth budget. At each time window, the algorithm (1)~updates an incremental PCA model, (2)~computes channel importance via variance-weighted loadings $s_j = \sum_i \sigma_i |V_{ij}|^2$, (3)~applies exponential smoothing, and (4)~allocates sampling rates proportional to importance subject to a budget constraint and minimum rate floor. PCA-Triage runs in $O(wdk)$ time per window with zero trainable parameters, requiring only 0.67\,ms per decision on a single CPU core.
 
-We evaluate PCA-Triage on 7 benchmarks (8--82 channels) against 9 baselines including unsupervised, learned, supervised, and deep learning methods (LSTM-Attention, Transformer-Attention). Across 17 experiments with 3--5 random seeds, PCA-Triage is the best unsupervised method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth (TEP, SMD, MSL), with statistically significant advantages (Wilcoxon $p < 0.05$) against Uniform and Variance baselines. On TEP, PCA-Triage achieves F1\,=\,$0.961 \pm 0.001$---within 0.1\% of full-data performance (0.962)---while maintaining F1\,$>$\,0.90 at budgets as low as 30\%. Targeted extensions (hybrid PCA+variance scoring, linear interpolation, power-law sharpened allocation) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment conditions (packet loss, sensor noise, clock drift), degrading by only 3.7--4.8\% under combined worst-case perturbations.
+We evaluate PCA-Triage on 7 benchmarks (8--82 channels) against 9 baselines including unsupervised, learned, supervised, and deep learning methods (LSTM-Attention, Transformer-Attention). Across 17 experiments with 3--5 random seeds, PCA-Triage is the best unsupervised method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth (TEP, SMD, MSL), winning 5 of 6 datasets against every baseline with large effect sizes (rank-biserial $r = 0.71$--$0.91$). On TEP, PCA-Triage achieves F1\,=\,$0.961 \pm 0.001$---within 0.1\% of full-data performance (0.962)---while maintaining F1\,$>$\,0.90 at budgets as low as 30\%. Targeted extensions (hybrid PCA+variance scoring, linear interpolation, power-law sharpened allocation) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment conditions (packet loss, sensor noise, clock drift), degrading by only 3.7--4.8\% under combined worst-case perturbations.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -930,36 +930,38 @@ Uniform & .922 & --- & .898 \\
 
 \subsection{Statistical Summary}
 
-\textbf{Friedman test.} We rank 5 unsupervised methods across 6 Pareto-evaluated datasets (seed-averaged F1 at 50\% bandwidth). The Friedman test statistics will be recomputed on the 6-dataset base results. Table~\ref{tab:statistical} reports mean ranks.
+\textbf{Friedman test.} We rank 5 unsupervised methods across 6 datasets (seed-averaged F1 at 50\% bandwidth). The Friedman test yields $\chi^2 = 8.27$, $p = 0.082$ (not significant at $\alpha = 0.05$), with Kendall's concordance $W = 0.344$ (moderate agreement). Table~\ref{tab:statistical} reports mean ranks; PCA-Triage ranks first (1.67). The lack of significance reflects the limited number of datasets ($n = 6$) rather than inconsistent performance---PCA-Triage places 1st or 2nd on 5 of 6 datasets.
 
 \begin{table}[t]
 \centering
-\caption{Friedman ranking across 6 datasets at 50\% bandwidth. Lower rank = better. Mutual Info excluded (supervised). Statistics to be recomputed on base results.}
+\caption{Friedman ranking across 6 datasets at 50\% bandwidth ($\chi^2 = 8.27$, $p = 0.082$, Kendall's $W = 0.344$). Lower rank = better. Mutual Info excluded (supervised).}
 \begin{tabular}{@{}lc@{}}
 \toprule
 \textbf{Method} & \textbf{Mean Rank} \\
 \midrule
-\textbf{PCA-Triage} & \textbf{1.71} \\
-Variance & 2.86 \\
-Threshold & 3.00 \\
-Random Dropout & 3.14 \\
-Uniform & 4.29 \\
+\textbf{PCA-Triage} & \textbf{1.67} \\
+Threshold & 2.83 \\
+Variance & 2.83 \\
+Random Dropout & 3.50 \\
+Uniform & 4.17 \\
 \bottomrule
 \end{tabular}
 \label{tab:statistical}
 \end{table}
 
-\textbf{Wilcoxon signed-rank tests.} Table~\ref{tab:wilcoxon} reports one-sided tests (H$_1$: PCA-Triage $>$ baseline, 6 datasets). Significance values to be recomputed on the 6-dataset base results.
+\textbf{Wilcoxon signed-rank tests.} Table~\ref{tab:wilcoxon} reports one-sided tests (H$_1$: PCA-Triage $>$ baseline) across 6 datasets with Holm correction for 4 comparisons. PCA-Triage wins 5 of 6 datasets against every baseline (raw $p = 0.031$), with large rank-biserial effect sizes ($r = 0.71$--$0.91$). However, after Holm correction, no comparison reaches formal significance---a known limitation of the $n$-of-datasets design where the minimum achievable corrected $p$-value with $n = 6$ observations and 4 comparisons exceeds 0.0125.
 
 \begin{table}[t]
 \centering
-\caption{Wilcoxon one-sided $p$-values (PCA-Triage $>$ baseline, 6 datasets). $^*$ = $p < 0.05$. To be recomputed on base results.}
+\caption{Wilcoxon one-sided tests (PCA-Triage $>$ baseline, 6 datasets, Holm-corrected). No comparison reaches formal significance after correction, but effect sizes are consistently large.}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 & \textbf{Uniform} & \textbf{Variance} & \textbf{Threshold} & \textbf{Rand.\ Drop} \\
 \midrule
-$p$-value & $.039^*$ & $.023^*$ & $.016^*$ & .109 \\
-W / L / T & 6/1/0 & 6/1/0 & 6/1/0 & 5/2/0 \\
+$p$ (raw) & .078 & .031 & .031 & .031 \\
+Holm sig. & n.s. & n.s. & n.s. & n.s. \\
+W / L / T & 5/1/0 & 5/1/0 & 5/1/0 & 5/1/0 \\
+Effect $r$ & 0.71 & 0.91 & 0.91 & 0.91 \\
 \bottomrule
 \end{tabular}
 \label{tab:wilcoxon}
