@@ -1,6 +1,6 @@
 method,mean_rank
-PCA-Triage,1.6666666666666667
+PCA-Triage,1.5
 Threshold,2.8333333333333335
-Variance,2.8333333333333335
+Variance,3.0
 Random Dropout,3.5
 Uniform,4.166666666666667

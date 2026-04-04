@@ -393,7 +393,7 @@ We compare against nine methods spanning the spectrum from trivial to learned to
 \item \textbf{OGD (Online Gradient Descent)}: A regret-optimal online allocation baseline that updates rates via gradient steps on per-channel reconstruction error.
 \end{enumerate}
 
-Methods 1--6 are used in the main Pareto comparison (Experiments~1--3). Methods 7--9 are evaluated in dedicated experiments (Experiments~14, 17). All methods use identical downstream classifiers (Random Forest~\cite{breiman2001random}, $n=200$ trees) unless otherwise noted. All implementations use scikit-learn~\cite{pedregosa2011scikit}.
+Methods 1--6 are used in the main Pareto comparison (Experiments~1--3). Methods 7--9 are evaluated in dedicated experiments (Experiments~14, 17). The main comparison uses Random Forest~\cite{breiman2001random} with $n{=}100$ trees as the downstream classifier for all methods; dedicated experiments may use $n{=}200$ (noted where applicable). All implementations use scikit-learn~\cite{pedregosa2011scikit}.
 
 \subsection{Evaluation Protocol}
 
@@ -401,7 +401,7 @@ Methods 1--6 are used in the main Pareto comparison (Experiments~1--3). Methods 
 
 \textbf{Seeds:} All experiments are repeated with 3--5 random seeds (3 for Pareto sweeps, 5 for ablations). We report mean $\pm$ standard deviation.
 
-\textbf{Statistical tests:} Wilcoxon signed-rank test~\cite{wilcoxon1945individual} (paired, per-dataset) with significance threshold $p < 0.05$. Friedman test~\cite{friedman1937comparison} for overall ranking across datasets, with Nemenyi post-hoc~\cite{nemenyi1963distribution} following the protocol of Dem{\v{s}}ar~\cite{demsar2006statistical}.
+\textbf{Statistical tests:} Wilcoxon signed-rank test~\cite{wilcoxon1945individual} (one-sided, paired by dataset) with Holm correction for multiple comparisons. Friedman test~\cite{friedman1937comparison} for overall ranking across datasets, with Kendall's $W$ as effect size. We follow the pairwise testing protocol of Dem{\v{s}}ar~\cite{demsar2006statistical}.
 
 \textbf{Bandwidth levels:} $B \in \{0.1, 0.2, 0.3, 0.5, 0.7, 0.9\}$ for Pareto analysis; $B = 0.5$ as the primary comparison point.
 
@@ -459,20 +459,20 @@ $B$ & \textbf{PCA-T} & \textbf{Var} & \textbf{Thr} & \textbf{Uni} & \textbf{R.D.
 
 \subsection{Experiment 3: Results at 50\% Bandwidth (All Datasets)}
 
-Table~\ref{tab:results50} presents F1 scores at 50\% bandwidth with standard deviations and significance indicators across all 6 Pareto-evaluated datasets. All methods use identical default hyperparameters (no per-dataset tuning) and the same evaluation pipeline (forward-fill reconstruction, Random Forest with $n{=}100$ trees). PCA-Triage achieves the best unsupervised F1 on 3 of 6 datasets (TEP, SMD, MSL), winning 5 of 6 datasets against every baseline (raw Wilcoxon $p = 0.031$; see Sec.~\ref{sec:discussion} for Holm-corrected analysis). On the remaining datasets, PSM is narrowly second to Random Dropout, HAI is tied (F1 $\approx 1.0$), and SKAB is bounded by low full-data performance (F1 $\approx 0.58$).
+Table~\ref{tab:results50} presents F1 scores at 50\% bandwidth with standard deviations and significance indicators across all 6 Pareto-evaluated datasets. All methods use identical default hyperparameters (no per-dataset tuning) and the same evaluation pipeline (forward-fill reconstruction, Random Forest with $n{=}100$ trees). PCA-Triage achieves the best unsupervised F1 on 3 of 6 datasets (TEP, SMD, MSL) and wins 5 of 6 or 6 of 6 against every baseline (see Sec.~\ref{sec:discussion} for full statistical analysis). On the remaining datasets, PSM is narrowly second to Random Dropout, HAI is tied (F1 $\approx 1.0$), and SKAB is bounded by low full-data performance (F1 $\approx 0.58$).
 
 \begin{table*}[t]
 \centering
-\caption{F1 at 50\% bandwidth (mean $\pm$ std, 5 seeds). \textbf{Bold} = best unsupervised. $^*$ = PCA-Triage significantly better ($p < 0.05$, Wilcoxon). $^\dagger$ = supervised method or method that outperforms PCA-Triage. All methods use default parameters with no per-dataset tuning.}
+\caption{F1 at 50\% bandwidth (mean $\pm$ std, 5 seeds, RF $n{=}100$, forward-fill, no per-dataset tuning). \textbf{Bold} = best unsupervised per column. $^\dagger$ = supervised or outperforms PCA-Triage. Cross-dataset Wilcoxon tests reported in Sec.~\ref{sec:discussion}.}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
 \textbf{Method} & \textbf{TEP} & \textbf{SMD} & \textbf{PSM} & \textbf{MSL} & \textbf{HAI} & \textbf{SKAB} \\
 \midrule
-\textbf{PCA-Triage} & $\mathbf{.961 \pm .001}^*$ & $\mathbf{.982 \pm .001}^*$ & $.959 \pm .001^*$ & $\mathbf{.921 \pm .004}^*$ & $1.000 \pm .000$ & $.583 \pm .013$ \\
-Variance & $.948 \pm .001^*$ & $.977 \pm .000^*$ & $.903 \pm .000^*$ & $.917 \pm .001^*$ & $\mathbf{1.000 \pm .000}$ & $.577 \pm .024$ \\
-Threshold & $.958 \pm .004^*$ & $.981 \pm .000$ & $.925 \pm .001^*$ & $.913 \pm .001^*$ & $1.000 \pm .000$ & $.582 \pm .012$ \\
-Uniform & $.924 \pm .002^*$ & $.967 \pm .000^*$ & $.897 \pm .001^*$ & $.912 \pm .001^*$ & $.998 \pm .000^*$ & $\mathbf{.586 \pm .009}$ \\
-Random Dropout & $.788 \pm .003^*$ & $.980 \pm .000^*$ & $\mathbf{.962 \pm .000}^\dagger$ & $.914 \pm .000^*$ & $1.000 \pm .000$ & $.524 \pm .009^*$ \\
+\textbf{PCA-Triage} & $\mathbf{.961 \pm .001}$ & $\mathbf{.982 \pm .001}$ & $.959 \pm .001$ & $\mathbf{.921 \pm .004}$ & $1.000 \pm .000$ & $.583 \pm .013$ \\
+Variance & $.948 \pm .001$ & $.977 \pm .000$ & $.903 \pm .000$ & $.917 \pm .001$ & $\mathbf{1.000 \pm .000}$ & $.577 \pm .024$ \\
+Threshold & $.958 \pm .004$ & $.981 \pm .000$ & $.925 \pm .001$ & $.913 \pm .001$ & $1.000 \pm .000$ & $.582 \pm .012$ \\
+Uniform & $.924 \pm .002$ & $.967 \pm .000$ & $.897 \pm .001$ & $.912 \pm .001$ & $.998 \pm .000$ & $\mathbf{.586 \pm .009}$ \\
+Random Dropout & $.788 \pm .003$ & $.980 \pm .000$ & $\mathbf{.962 \pm .000}^\dagger$ & $.914 \pm .000$ & $1.000 \pm .000$ & $.524 \pm .009$ \\
 Mutual Info$^\dagger$ & $.914 \pm .003$ & $.986 \pm .000^\dagger$ & $.996 \pm .000^\dagger$ & $.930 \pm .001^\dagger$ & $1.000 \pm .000$ & $.588 \pm .008$ \\
 \bottomrule
 \end{tabular}
@@ -931,18 +931,18 @@ Uniform & .922 & --- & .898 \\
 
 \subsection{Statistical Summary}
 
-\textbf{Friedman test.} We rank 5 unsupervised methods across 6 datasets (seed-averaged F1 at 50\% bandwidth). The Friedman test yields $\chi^2 = 8.27$, $p = 0.082$ (not significant at $\alpha = 0.05$), with Kendall's concordance $W = 0.344$ (moderate agreement). Table~\ref{tab:statistical} reports mean ranks; PCA-Triage ranks first (1.67). The lack of significance reflects the limited number of datasets ($n = 6$) rather than inconsistent performance---PCA-Triage places 1st or 2nd on 5 of 6 datasets.
+\textbf{Friedman test.} We rank 5 unsupervised methods across 6 datasets (seed-averaged F1 at 50\% bandwidth, sourced from \texttt{table2\_results\_50pct.csv}). The Friedman test yields $\chi^2 = 9.33$, $p = 0.053$ (borderline, not significant at $\alpha = 0.05$), with Kendall's concordance $W = 0.389$ (moderate agreement). Table~\ref{tab:statistical} reports mean ranks; PCA-Triage ranks first (1.50). The lack of significance reflects the limited number of datasets ($n = 6$) rather than inconsistent performance---PCA-Triage places 1st or 2nd on 5 of 6 datasets.
 
 \begin{table}[t]
 \centering
-\caption{Friedman ranking across 6 datasets at 50\% bandwidth ($\chi^2 = 8.27$, $p = 0.082$, Kendall's $W = 0.344$). Lower rank = better. Mutual Info excluded (supervised).}
+\caption{Friedman ranking across 6 datasets at 50\% bandwidth ($\chi^2 = 9.33$, $p = 0.053$, Kendall's $W = 0.389$). Lower rank = better. Mutual Info excluded (supervised).}
 \begin{tabular}{@{}lc@{}}
 \toprule
 \textbf{Method} & \textbf{Mean Rank} \\
 \midrule
-\textbf{PCA-Triage} & \textbf{1.67} \\
+\textbf{PCA-Triage} & \textbf{1.50} \\
 Threshold & 2.83 \\
-Variance & 2.83 \\
+Variance & 3.00 \\
 Random Dropout & 3.50 \\
 Uniform & 4.17 \\
 \bottomrule
@@ -950,19 +950,19 @@ Uniform & 4.17 \\
 \label{tab:statistical}
 \end{table}
 
-\textbf{Wilcoxon signed-rank tests.} Table~\ref{tab:wilcoxon} reports one-sided tests (H$_1$: PCA-Triage $>$ baseline) across 6 datasets with Holm correction for 4 comparisons. PCA-Triage wins 5 of 6 datasets against every baseline (raw $p = 0.031$), with large rank-biserial effect sizes ($r = 0.71$--$0.91$). However, after Holm correction, no comparison reaches formal significance---a known limitation of the $n$-of-datasets design where the minimum achievable corrected $p$-value with $n = 6$ observations and 4 comparisons exceeds 0.0125.
+\textbf{Wilcoxon signed-rank tests.} Table~\ref{tab:wilcoxon} reports one-sided tests (H$_1$: PCA-Triage $>$ baseline) across 6 datasets with Holm correction for 4 comparisons. PCA-Triage wins 6 of 6 datasets against Threshold ($p = 0.016$, $r = 1.0$) and 5 of 6 against the other three baselines. However, after Holm correction, no comparison reaches formal significance---a known limitation when $n = 6$ paired observations yield a minimum corrected threshold of 0.0125. The consistently large effect sizes ($r = 0.71$--$1.00$) indicate practical significance despite the lack of formal statistical power.
 
 \begin{table}[t]
 \centering
-\caption{Wilcoxon one-sided tests (PCA-Triage $>$ baseline, 6 datasets, Holm-corrected). No comparison reaches formal significance after correction, but effect sizes are consistently large.}
+\caption{Wilcoxon one-sided tests (PCA-Triage $>$ baseline, 6 datasets, Holm-corrected). Effect sizes are consistently large despite limited statistical power.}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-& \textbf{Uniform} & \textbf{Variance} & \textbf{Threshold} & \textbf{Rand.\ Drop} \\
+& \textbf{Threshold} & \textbf{Variance} & \textbf{Uniform} & \textbf{Rand.\ Drop} \\
 \midrule
-$p$ (raw) & .078 & .031 & .031 & .031 \\
+$p$ (raw) & .016 & .031 & .047 & .078 \\
 Holm sig. & n.s. & n.s. & n.s. & n.s. \\
-W / L / T & 5/1/0 & 5/1/0 & 5/1/0 & 5/1/0 \\
-Effect $r$ & 0.71 & 0.91 & 0.91 & 0.91 \\
+W / L / T & 6/0/0 & 5/1/0 & 5/1/0 & 5/1/0 \\
+Effect $r$ & 1.00 & 0.91 & 0.81 & 0.71 \\
 \bottomrule
 \end{tabular}
 \label{tab:wilcoxon}

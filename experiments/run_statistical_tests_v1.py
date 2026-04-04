@@ -16,34 +16,53 @@ import pandas as pd
 from scipy import stats
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), 'results')
+PAPER_TABLES_DIR = os.path.join(os.path.dirname(__file__), '..', 'paper', 'tables')
 DATASETS = ['tep', 'smd', 'msl', 'psm', 'hai', 'skab']
 UNSUPERVISED = ['PCA-Triage', 'Uniform', 'Threshold', 'Variance', 'Random Dropout']
 
+# Canonical source: paper/tables/table2_results_50pct.csv (V1 base, 5 seeds, RF-100)
+# NOT experiments/results/pareto_{ds}.csv (which contains V2 tuned results)
+CANONICAL_SOURCE = 'paper/tables/table2_results_50pct.csv'
+
 
 def load_v1_50pct():
+    """Load canonical V1 base results from table2_results_50pct.csv.
+
+    This CSV contains seed-averaged F1 values (not per-seed). For Wilcoxon
+    tests we use dataset-level pairing (6 paired observations).
+    """
+    path = os.path.join(PAPER_TABLES_DIR, 'table2_results_50pct.csv')
+    df = pd.read_csv(path)
+
+    col_map = {
+        'PCA-Triage': 'PCA_f1_mean',
+        'Uniform': 'Uniform_f1',
+        'Threshold': 'Threshold_f1',
+        'Variance': 'Variance_f1',
+        'Random Dropout': 'Random Dropout_f1',
+        'Mutual Info': 'Mutual Info_f1',
+    }
+
     rows = []
-    for ds in DATASETS:
-        path = os.path.join(RESULTS_DIR, f'pareto_{ds}.csv')
-        df = pd.read_csv(path)
-        b50 = df[df['budget'] == 0.5]
-        for _, row in b50.iterrows():
+    for _, row in df.iterrows():
+        ds = row['dataset'].upper()
+        for method, col in col_map.items():
             rows.append({
-                'dataset': ds.upper(),
-                'method': row['method'],
-                'seed': int(row['seed']),
-                'f1': row['f1'],
+                'dataset': ds,
+                'method': method,
+                'f1': row[col],
             })
     return pd.DataFrame(rows)
 
 
 def friedman_analysis(df):
     print("=" * 70)
-    print("FRIEDMAN TEST (5 unsupervised methods x 6 datasets, seed-averaged)")
+    print(f"FRIEDMAN TEST (5 unsupervised methods x 6 datasets)")
+    print(f"Source: {CANONICAL_SOURCE}")
     print("=" * 70)
 
     unsup = df[df['method'].isin(UNSUPERVISED)]
-    avg = unsup.groupby(['dataset', 'method'])['f1'].mean().reset_index()
-    pivot = avg.pivot(index='dataset', columns='method', values='f1')
+    pivot = unsup.pivot(index='dataset', columns='method', values='f1')
 
     methods = list(pivot.columns)
     arrays = [pivot[m].values for m in methods]
@@ -82,8 +101,9 @@ def wilcoxon_analysis(df):
     print("=" * 70)
 
     baselines = ['Uniform', 'Variance', 'Threshold', 'Random Dropout']
-    avg = df.groupby(['dataset', 'method'])['f1'].mean().reset_index()
-    pivot = avg.pivot(index='dataset', columns='method', values='f1')
+    pivot = df[df['method'].isin(UNSUPERVISED)].pivot(
+        index='dataset', columns='method', values='f1'
+    )
 
     results = []
     for bl in baselines:
@@ -157,7 +177,8 @@ def wilcoxon_analysis(df):
 def main():
     df = load_v1_50pct()
     print(f"Loaded {len(df)} rows: {df['dataset'].nunique()} datasets, "
-          f"{df['method'].nunique()} methods, {df['seed'].nunique()} seeds\n")
+          f"{df['method'].nunique()} methods")
+    print(f"Source: {CANONICAL_SOURCE}\n")
 
     pivot, ranks, chi2, p_fried, w_fried = friedman_analysis(df)
     wilcox_df = wilcoxon_analysis(df)

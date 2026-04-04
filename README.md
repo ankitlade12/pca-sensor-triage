@@ -1,10 +1,10 @@
 # PCA-Triage: Adaptive Sensor Triage for Edge AI Inference
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Tests](https://img.shields.io/badge/tests-28%20passed-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-64%20passed-brightgreen.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
-![Datasets](https://img.shields.io/badge/datasets-8-orange.svg)
+![Datasets](https://img.shields.io/badge/datasets-7-orange.svg)
 
 **Authors:** Ankit Hemant Lade, Sai Krishna Jasti, Indar Kumar, Akanksha Tiwari, Nikhil Sinha
 
@@ -37,7 +37,7 @@
 
 The contribution is **not** a new model architecture — it is a **what-to-sample and how-much** strategy that wraps any downstream classifier or anomaly detector.
 
-**Headline result (17 experiments, 8 datasets, 9 baselines, 3 classifiers):** At **50% bandwidth**, PCA-Triage achieves F1 = 0.970 ± 0.002 on TEP — exceeding full-data performance (0.962) — with **0.67 ms per decision** and **zero trainable parameters**. Best unsupervised method on **4/7 datasets**. Beats LSTM-Attention and Transformer-Attention on **5/7 datasets**. Beats regret-optimal OGD on all tested datasets (+1.1–4.7%). Robust to edge deployment perturbations (3.7–4.8% degradation under combined worst-case).
+**Headline result (17 experiments, 7 benchmarks, 9 baselines, 3 classifiers):** At **50% bandwidth** with default parameters (no per-dataset tuning), PCA-Triage achieves F1 = 0.961 +/- 0.001 on TEP — within 0.1% of full-data performance (0.962) — with **0.67 ms per decision** and **zero trainable parameters**. Best unsupervised method on **3/6 canonical datasets** (TEP, SMD, MSL). Targeted extensions (hybrid scoring, linear interpolation, sharpening) push TEP F1 to 0.970. Robust to packet loss and moderate sensor noise (3.7–4.8% degradation under combined worst-case on TEP/SMD).
 
 ---
 
@@ -46,7 +46,7 @@ The contribution is **not** a new model architecture — it is a **what-to-sampl
 When multi-channel sensor data must be transmitted under bandwidth constraints, using streaming PCA to *dynamically allocate per-channel sampling rates proportional to importance* yields better downstream task performance than fixed or heuristic allocation strategies. Specifically:
 
 1. **Correlated sensor networks** (TEP, 52 channels): PCA captures inter-channel correlations that variance-based methods miss. PCA-Triage outperforms Variance-based allocation by +2.1% F1 and Uniform by +4.6% F1 at 50% bandwidth.
-2. **Fault onset adaptation**: When a fault activates new sensor channels, PCA loadings shift within 1-3 windows. On TEP Fault 1, the A Feed Flow valve (xmv_3) jumps from 9% to 38% sampling rate after fault onset.
+2. **Fault onset adaptation**: When a fault activates new sensor channels, PCA loadings shift — adaptation speed controlled by lambda (0-3 windows at lambda <= 0.80, up to 19 windows at lambda = 1.0). On TEP Fault 1, the A Feed Flow valve (xmv_3) jumps from 9% to 38% sampling rate after fault onset.
 3. **Edge viability**: The algorithm runs at O(wdk) with zero trainable parameters, completing each triage decision in 0.67 ms on a single CPU core — well under the 5 ms edge deployment target.
 
 ### Why PCA-Triage > Variance-Based
@@ -91,7 +91,7 @@ s̄_j^(t) = λ · s̄_j^(t-1) + (1 - λ) · s_j^(t)
 | λ | Behaviour | Best For |
 |---|-----------|----------|
 | 1.0 | No forgetting, cumulative PCA | Static/slowly-changing systems |
-| 0.85 | Fast adaptation, 0-3 window reaction | Fault onset detection |
+| 0.80 | Fast adaptation, 0-3 window reaction | Fault onset detection |
 | 0.95 | Balanced | General use |
 
 ### 3.3 Rate Allocation
@@ -167,7 +167,7 @@ flowchart LR
 ```
 Phase 1: Data Loading           Phase 2: Triage              Phase 3: Evaluation
 ─────────────────────           ──────────────────            ──────────────────
-Load TEP/SKAB/NASA   ────▶   For each window:              Train RF on triaged data
+Load TEP/SKAB/etc   ────▶   For each window:              Train RF on triaged data
 StandardScaler                  1. PCA update                Compare F1 vs full data
 Train/Test split                2. Score channels            Wilcoxon significance test
                                 3. Allocate rates            Generate Pareto curves
@@ -216,7 +216,9 @@ The 6 methods form a **controlled comparison** spanning the design space:
 | **PSM** | Server metrics (eBay) | 25 | 220K | Anomaly detection | RANSynCoders, KDD 2021 |
 | **HAI** | Industrial control system | 82 | 259K | Attack detection | CSET 2020 |
 | **SKAB** | Water circulation testbed | 8 | 47K | Anomaly detection | Skoltech, 2020 |
-| **NASA** | Bearing degradation | 16 | 1K | Degradation detection | NASA IMS |
+| **SWaT*** | Water treatment | 51 | 500K | Attack detection | Synthetic stand-in |
+
+*SWaT is a synthetic dataset calibrated to match the real SWaT testbed properties.
 
 ### 6.2 TEP Sensor Description
 
@@ -344,7 +346,7 @@ Reaction time (windows until top-5 channel importance changes) on TEP:
 | IDV(4) Reactor CW | 3 | 5 | 9 | 19 |
 | IDV(5) Condenser CW | 3 | 4 | 8 | 19 |
 
-λ=0.85 reacts within 0-3 windows across all fault types. λ=1.0 (no forgetting) gives best F1 but slowest reaction — users choose based on accuracy vs adaptivity priority.
+λ<=0.80 reacts within 0-3 windows. λ=0.85 reacts in up to 19 windows. λ=1.0 (no forgetting) gives best F1 but slowest reaction — users choose based on accuracy vs adaptivity priority.
 
 **Fault 1 narrative:** After A/C feed ratio disturbance onset, PCA-Triage shifts bandwidth toward the directly responsible channels:
 - `xmv_3` (A Feed Flow valve): **9% → 38% sampling rate** (+42%)
@@ -528,7 +530,7 @@ Mutual Information-based allocation requires fault labels — unavailable during
 
 ### 10.5 λ Trade-Off
 
-λ=1.0 accumulates all history → best F1 (0.962) but 19-window reaction time to faults. λ=0.85 forgets quickly → 0-3 window reaction but ~2% lower F1 (0.942). The optimal λ depends on whether the deployment prioritises detection accuracy or fault response speed.
+λ=1.0 accumulates all history → best F1 (0.962) but 19-window reaction time to faults. Lower λ (<=0.80) forgets quickly → 0-3 window reaction but ~2% lower F1. The optimal λ depends on whether the deployment prioritises detection accuracy or fault response speed.
 
 ### 10.6 Adaptive λ (Preliminary)
 
@@ -537,7 +539,7 @@ We tested a time-varying λ that decreases when importance shifts are detected (
 | Configuration | F1 | Notes |
 |---|:---:|---|
 | Fixed λ=1.0 | **0.961** | Best accuracy, 19-window reaction |
-| Fixed λ=0.85 | 0.954 | Fast reaction (0-3 windows) |
+| Fixed λ=0.85 | 0.954 | Moderate reaction (~19 windows) |
 | Adaptive λ ∈ [0.80, 0.99] | 0.953 | Converges to ~0.99 on stationary TEP |
 | Adaptive λ ∈ [0.85, 0.99] | 0.953 | Similar — no advantage on stationary data |
 
@@ -563,8 +565,8 @@ make help           # Show all commands
 make smoke          # Quick smoke test (no data needed, ~2s)
 make test           # Run full test suite (28 tests, ~1s)
 make lint           # Run ruff linter
-make benchmark-quick  # Budget=0.5 comparison across 8 datasets (~15 min)
-make benchmark      # Full Pareto sweep: 8 datasets x 9 budgets (~2-4 hours)
+make benchmark-quick  # Budget=0.5 comparison across 7 datasets (~15 min)
+make benchmark      # Full Pareto sweep: 7 datasets x 9 budgets (~2-4 hours)
 make figures        # Regenerate all publication figures
 ```
 
@@ -670,7 +672,7 @@ src/
         attention.py                 # Self-attention importance
         autoencoder.py               # Reconstruction error importance
     utils/
-        data_loader.py               # Loaders for 8 datasets
+        data_loader.py               # Loaders for 7 datasets
         synthetic_datasets.py        # SWaT/WADI synthetic generators
         plotting.py                  # Publication figure generators
 
