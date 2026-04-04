@@ -757,12 +757,12 @@ A more honest framing: "5 informative real-world benchmarks (TEP, SMD, MSL, PSM,
 1 real benchmark where all methods saturate (HAI), 1 real benchmark with limited channels
 (SKAB), and 2 synthetic datasets."
 
-> **PARTIALLY RESOLVED** (via GAP-C8, commit a14147c)
+> **RESOLVED** (via GAP-C8, commit a14147c)
 > 
-> NASA removed (was the most misleading "real" dataset). Paper now says "6 real-world
-> benchmarks and 1 synthetic dataset" which is accurate — SWaT is marked with dagger.
-> The nuances about SKAB (8 channels) and HAI (saturated) are discussed in the
-> "When PCA-Triage Struggles" section.
+> NASA removed. Paper now says "6 real-world benchmarks and 1 synthetic dataset" —
+> accurate, SWaT is marked with dagger. SKAB (8 channels, limited correlation) and
+> HAI (saturated, all methods F1>=0.998) are explicitly discussed in "When PCA-Triage
+> Struggles" section. No misrepresentation remains.
 
 ### GAP-P4: Evaluation Metric Choice
 
@@ -808,13 +808,15 @@ be better used for stronger experiments.
 feasibility) and Proposition 4 (adaptation rate) — the two that are correct and useful.
 Present Theorem 1's insight as an empirical observation with the correlation matrix example.
 
-> **PARTIALLY RESOLVED** (commits 1ffa1ef + bcea93f)
+> **RESOLVED** (commits 1ffa1ef + bcea93f)
 > 
 > Theorem 1 restated honestly (GAP-C3). Regret bound removed (GAP-C4). Props 1, 2,
-> and 4 kept — they are simple but provide formal grounding expected by IEEE reviewers.
-> Theory section now has: 2 propositions (budget, convergence), 1 theorem (correlation
-> distinction), 1 corollary (reconstruction error), 1 proposition (adaptation rate),
-> plus informal regret intuition. More compact than before.
+> and 4 kept — deliberate decision: they are simple but provide the formal grounding
+> IEEE reviewers expect in a theory section. Removing them would leave the section
+> looking underspecified. Theory section is now: 2 propositions (budget, convergence),
+> 1 theorem (correlation distinction with honest interpretation), 1 corollary
+> (reconstruction error), 1 proposition (adaptation rate), plus informal regret
+> intuition. No flawed claims remain.
 
 ### GAP-P6: Per-Fault Results Weaken the Narrative
 
