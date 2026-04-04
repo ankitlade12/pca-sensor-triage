@@ -87,3 +87,13 @@ for ds in ['tep', 'smd', 'msl', 'psm', 'hai', 'skab']:
     X_train, y_train, X_test, y_test, cols, _ = get_dataset(ds)
     print(f"{ds}: train={X_train.shape}, test={X_test.shape}, channels={len(cols)}")
 ```
+
+## Cold-Start Status
+
+- Repository health checks are maintained and currently pass (`pytest`, paper-number verification).
+- End-to-end experiment reruns still require manual dataset acquisition/preprocessing for
+  TEP, SMD, MSL, PSM, and HAI.
+- A full clean-machine reproduction of every paper experiment has not yet been documented in
+  this repository.
+- The intended source of truth for the paper is `paper/ARTIFACT_MAP.md` plus the canonical
+  table files under `paper/tables/`.

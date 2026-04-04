@@ -641,7 +641,7 @@ python experiments/run_scalability.py
 # Exp 6: Component contribution analysis
 python experiments/run_component_contribution.py
 
-# Exp 7: Statistical tests (Friedman + Nemenyi + Wilcoxon)
+# Exp 7: Statistical tests (canonical Friedman + Wilcoxon from table2)
 python experiments/run_statistical_tests_v1.py  # Canonical stats from table2
 ```
 
@@ -661,7 +661,7 @@ src/
         rate_allocator.py            # Sharpened proportional allocation
         reconstruction.py            # Linear / forward-fill / zero interp
         pipeline.py                  # TriagePipeline — end-to-end streaming
-    baselines/                       # 7 comparison methods
+    baselines/                       # Comparison baselines and helpers
         uniform.py                   # Same rate all channels
         threshold.py                 # Binary active/inactive (Send-on-Delta)
         variance.py                  # Proportional to rolling variance
@@ -678,22 +678,21 @@ configs/
     default.yaml                     # Hyperparameters + per-dataset tuning
 
 experiments/
-    run_pareto_v2.py                 # Budget=0.5 comparison (quick)
-    run_pareto_v2_full.py            # Full Pareto sweep (all budgets)
-    run_pareto.py                    # Legacy Pareto experiment
+    run_pareto.py                    # Canonical V1/base main comparison
+    run_pareto_v2.py                 # Tuned V2 extension comparison
     run_ablation.py                  # Hyperparameter ablation
     run_statistical_tests_v1.py      # Canonical Friedman + Wilcoxon (from table2)
-    run_*.py                         # 12 experiment scripts total
+    run_statistical_tests.py         # Legacy exploratory stats (not for paper)
+    run_*.py                         # Additional experiment runners
     results/                         # CSV/JSON output files
 
 tests/                               # 64 tests
     test_triage.py                   # Core algorithm + all features
     test_baselines.py                # All 7 baselines
     test_integration.py              # End-to-end pipeline tests
-    test_integration.py                     # 11 integration tests: end-to-end + edge cases
 
 paper/                                      # Paper materials
-    main.tex                                # Full LaTeX paper (IEEEtran journal, ~760 lines)
+    main.tex                                # Full LaTeX paper
     references.bib                          # BibTeX bibliography (39 references)
     sections/
         introduction.md                     # ~940 words
@@ -768,4 +767,3 @@ data/raw/                                   # Datasets (not tracked in git)
 - Breiman (2001). *Random Forests.* Machine Learning.
 - Pedregosa et al. (2011). *Scikit-learn: Machine Learning in Python.* JMLR.
 - Halko, Martinsson & Tropp (2011). *Finding Structure with Randomness.* SIAM Review.
-

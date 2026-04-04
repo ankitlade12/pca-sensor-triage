@@ -1,7 +1,15 @@
 """
-Statistical Analysis: Friedman test, Nemenyi post-hoc, and Wilcoxon signed-rank tests.
+LEGACY statistical analysis script.
 
-Produces publication-ready statistical results for the paper.
+This file preserves an older exploratory workflow based on
+`experiments/results/pareto_{dataset}.csv` and includes Nemenyi post-hoc tests.
+It is NOT the canonical paper statistics path.
+
+For the paper's current results, use:
+    experiments/run_statistical_tests_v1.py
+
+Canonical source for the paper:
+    paper/tables/table2_results_50pct.csv
 """
 
 import sys
