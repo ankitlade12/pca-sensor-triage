@@ -1,8 +1,12 @@
 """
-Baseline 6: Attention-Based Channel Importance.
+Baseline 6: Random-Projection Attention Channel Importance.
 
-Single-head self-attention over channels to compute importance weights.
-This is the compute-expensive upper-bound comparison target.
+Single-head self-attention over channels using FIXED random projection
+matrices (W_q, W_k, W_v are initialized once and never trained).
+This is NOT a learned attention model — it computes attention scores
+via random projections, serving as a compute-cost comparison baseline
+for the O(d^2) attention pattern. For trained attention baselines,
+see lstm_attention.py (LSTM-Attention and Transformer-Attention).
 """
 
 import numpy as np
@@ -12,10 +16,15 @@ from src.triage.rate_allocator import RateAllocator
 
 
 class AttentionSampling:
-    """Self-attention based channel importance scoring.
+    """Random-projection attention channel importance scoring.
 
     Computes single-head self-attention over channels per window
-    to derive importance weights for bandwidth allocation.
+    using FIXED random projection matrices (not trained). This serves
+    as a compute-cost baseline for the O(d^2w) attention pattern,
+    not as a learned importance model.
+
+    For learned attention baselines, see LSTMAttentionSampling and
+    TransformerAttentionSampling in lstm_attention.py.
 
     Parameters
     ----------

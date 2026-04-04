@@ -695,7 +695,7 @@ Uniform & 0.06 & 24.8 & 0 \\
 Threshold & 0.16 & 8.1 & 0 \\
 Variance & 0.15 & 8.1 & 0 \\
 Random Dropout & 0.06 & 8.1 & 0 \\
-Attention & 0.18 & 8.2 & 9,600 \\
+Random Proj. & 0.18 & 8.2 & 9,600 \\
 Mutual Info & 7.73 & 31.8 & 0 \\
 \bottomrule
 \end{tabular}
@@ -709,12 +709,12 @@ Mutual Info & 7.73 & 31.8 & 0 \\
 \label{fig:compute}
 \end{figure}
 
-\textbf{Scalability.} Fig.~\ref{fig:scalability} shows compute time vs.\ number of channels on a log-log scale. PCA-Triage's $O(wdk)$ scaling keeps it under the 5\,ms edge target for up to 500 channels. The Variance baseline ($O(wd)$) scales better, but cannot exploit correlation structure. Attention-based methods ($O(d^2w)$) become prohibitive above 100 channels.
+\textbf{Scalability.} Fig.~\ref{fig:scalability} shows compute time vs.\ number of channels on a log-log scale. PCA-Triage's $O(wdk)$ scaling keeps it under the 5\,ms edge target for up to 500 channels. The Variance baseline ($O(wd)$) scales better, but cannot exploit correlation structure. Random-projection attention ($O(d^2w)$) becomes prohibitive above 100 channels; trained attention (LSTM/Transformer) is even slower.
 
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/scalability.png}
-\caption{Scalability: compute time vs.\ number of channels (log-log). PCA-Triage ($O(wdk)$, blue) stays under the 5\,ms edge target up to 500 channels. Attention ($O(d^2w)$, red dashed) exceeds the target above 50 channels.}
+\caption{Scalability: compute time vs.\ number of channels (log-log). PCA-Triage ($O(wdk)$, blue) stays under the 5\,ms edge target up to 500 channels. Random projection ($O(d^2w)$, red dashed) exceeds the target above 50 channels.}
 \label{fig:scalability}
 \end{figure}
 
