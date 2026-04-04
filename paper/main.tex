@@ -349,7 +349,7 @@ After the regime change, the EMA update gives $\bar{s}_j^{(t_0+\tau)} = \lambda^
 
 \subsection{Datasets}
 
-We evaluate on 7 benchmark datasets spanning 5 application domains (Table~\ref{tab:datasets}), including 6 real-world benchmarks and 1 synthetic dataset calibrated to match the SWaT testbed properties. Fig.~\ref{fig:tep_overview} shows representative TEP sensor traces during fault-free operation, illustrating the diversity of signal characteristics across channels.
+We evaluate on 7 benchmark datasets spanning 7 application domains (Table~\ref{tab:datasets}), including 6 real-world benchmarks and 1 synthetic dataset calibrated to match the SWaT testbed properties. Fig.~\ref{fig:tep_overview} shows representative TEP sensor traces during fault-free operation, illustrating the diversity of signal characteristics across channels.
 
 \begin{table}[t]
 \centering
@@ -459,7 +459,7 @@ $B$ & \textbf{PCA-T} & \textbf{Var} & \textbf{Thr} & \textbf{Uni} & \textbf{R.D.
 
 \subsection{Experiment 3: Results at 50\% Bandwidth (All Datasets)}
 
-Table~\ref{tab:results50} presents F1 scores at 50\% bandwidth with standard deviations and significance indicators across all 6 Pareto-evaluated datasets. All methods use identical default hyperparameters (no per-dataset tuning) and the same evaluation pipeline (forward-fill reconstruction, Random Forest with $n{=}100$ trees). PCA-Triage achieves the best unsupervised F1 on 3 of 6 datasets (TEP, SMD, MSL), with statistically significant advantages on TEP, MSL, and most baselines. On the remaining datasets, PSM is narrowly second to Random Dropout, HAI is tied (F1 $\approx 1.0$), and SKAB is bounded by low full-data performance (F1 $\approx 0.58$).
+Table~\ref{tab:results50} presents F1 scores at 50\% bandwidth with standard deviations and significance indicators across all 6 Pareto-evaluated datasets. All methods use identical default hyperparameters (no per-dataset tuning) and the same evaluation pipeline (forward-fill reconstruction, Random Forest with $n{=}100$ trees). PCA-Triage achieves the best unsupervised F1 on 3 of 6 datasets (TEP, SMD, MSL), winning 5 of 6 datasets against every baseline (raw Wilcoxon $p = 0.031$; see Sec.~\ref{sec:discussion} for Holm-corrected analysis). On the remaining datasets, PSM is narrowly second to Random Dropout, HAI is tied (F1 $\approx 1.0$), and SKAB is bounded by low full-data performance (F1 $\approx 0.58$).
 
 \begin{table*}[t]
 \centering
@@ -1047,7 +1047,7 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 \textbf{Internal validity.} All experiments use identical data splits, seeds, classifiers, and reconstruction across methods, minimizing confounds. However, Random Forest may favor certain allocation patterns over others; the multi-classifier analysis (Table~\ref{tab:multiclassifier}) mitigates this concern.
 
-\textbf{External validity.} We evaluate on 7 benchmarks (6 real-world + 1 synthetic) across 5 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation). The SWaT dataset is a synthetic stand-in calibrated to match published testbed properties; validation on real SWaT data (which requires institutional access agreement) is needed.
+\textbf{External validity.} We evaluate on 7 benchmarks (6 real-world + 1 synthetic) across 7 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation). The SWaT dataset is a synthetic stand-in calibrated to match published testbed properties; validation on real SWaT data (which requires institutional access agreement) is needed.
 
 \textbf{Construct validity.} We use point-wise weighted F1 as the primary metric. While recent work~\cite{processmonitoring2024survey} has questioned point-adjust F1 for anomaly detection, our setup differs: the detector (Random Forest) is fixed and identical across all methods---only the input data changes. F1 therefore measures the triage strategy's impact on a fixed classifier, not detector quality. Nonetheless, F1 does not capture deployment-relevant metrics such as false alarm rate or detection delay. The per-fault analysis (Table~\ref{tab:perfault}) provides finer granularity but does not cover all 20 TEP fault types.
 
