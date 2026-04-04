@@ -109,6 +109,27 @@ checks the CSVs will see three competing numbers and question which is the real 
 - (a) Use the v2 results everywhere and clearly state the configuration (hybrid, tuned alpha), OR
 - (b) Use the base results (0.961) and present tuned results as an ablation improvement
 
+> **RESOLVED** (commit a14147c, 2026-04-03)
+> 
+> Chose option (b): V1 base (0.961) is now the canonical main result.
+> 
+> **What changed in paper/main.tex:**
+> - Abstract: F1 0.970 → 0.961, "exceeding" → "matching" full-data. V2 innovations
+>   reframed as "targeted extensions" that push to 0.970.
+> - Table IV: Replaced all V2 numbers with V1 base from table2_results_50pct.csv.
+>   Removed SWaT column (not in V1 experiments). Now 6 datasets, 5 seeds.
+> - Win count corrected: 4/7 → 3/6 (TEP, SMD, MSL). PSM goes to Random Dropout
+>   with V1 numbers (0.959 vs 0.962).
+> - Contributions: "the first streaming algorithm" → "a streaming algorithm";
+>   innovations reframed as extensions validated via ablation.
+> - Figure caption, discussion, conclusion all updated consistently.
+> - DL baselines caveated as subsampled conditions (20K, 2 seeds).
+> - Robustness/joint experiment tables labeled as using tuned configuration.
+> - Statistical section text updated to 6 datasets, flagged for recomputation.
+> 
+> **Verification:** Every cell in Table IV cross-checked against source CSV.
+> Multi-classifier (0.962) and ablation (0.961) now consistent with main table.
+
 ### GAP-C2: Adaptivity Claim Directly Contradicts Paper's Own Table
 
 **Severity: CRITICAL**
@@ -138,6 +159,26 @@ setup than what's recorded in the table. The table may have been generated with 
 the table and the claim to be consistent. If the figure (reaction_time_vs_lambda.png) shows
 0-3 windows at lambda=0.85 correctly, the table data needs to match that lambda value.
 
+> **RESOLVED** (commit 1ffa1ef, 2026-04-03)
+> 
+> The table data (19 windows) was kept as-is — it accurately reflects what lambda=0.85
+> produces at the 20% shift threshold. The text was corrected to match the table.
+> 
+> **What changed in paper/main.tex:**
+> - Removed the unqualified "within 1-3 windows (lambda=0.85)" claim from adaptivity text
+> - Reaction time analysis text now says "up to 19 windows (one full window cycle)"
+>   and points to figure for lower lambda behavior
+> - All "0-3 windows" claims now qualified with "lambda <= 0.80" and reference the figure
+> - Edge viability contribution: "adapts to fault onset within 1-3 windows" → "with speed
+>   controlled by lambda (0-3 windows at lambda <= 0.80)"
+> - Discussion lambda trade-off: lambda=0.85 no longer claimed as 0-3 windows; changed
+>   to "lambda <= 0.80"
+> - Ablation text: same correction applied
+> - Adaptivity heatmap caption: removed specific "1-3 windows" claim
+> 
+> **Verification:** Grepped for all "1--3 windows" and "0--3 windows" — all remaining
+> instances are properly qualified with lambda <= 0.80 or reference the figure.
+
 ### GAP-C3: Theorem 1 Proof Contradicts Its Own Conclusion
 
 **Severity: CRITICAL**
@@ -163,6 +204,24 @@ the problem but not fixing the theorem statement.
   moderate k selection." OR
 - (b) Remove the theorem and replace with an empirical observation about correlation exploitation
 
+> **RESOLVED** (commit 1ffa1ef, 2026-04-03)
+> 
+> Chose option (a): Theorem restated honestly.
+> 
+> **What changed in paper/main.tex:**
+> - Theorem title: "PCA Advantage Under Correlation" → "PCA Distinguishes Correlated
+>   from Independent Channels"
+> - Statement item 2 rewritten: now honestly states that with k < d, PCA assigns s_c = 0
+>   to channels outside the top-k eigenspace (instead of claiming it "frees bandwidth for c")
+> - Proof kept as-is (the math was always correct)
+> - Added new "Interpretation" paragraph after the proof that explicitly discusses both
+>   the power (detects correlation) and the risk (starves independent channels with low k)
+> - Interpretation motivates two design choices: moderate k and hybrid scorer
+> - Theory section intro updated: "five properties" → "four properties", removed regret
+>   bound reference
+> 
+> **Verification:** The theorem statement now matches its own proof. No contradictions.
+
 ### GAP-C4: Regret Bound Lacks Rigorous Derivation
 
 **Severity: HIGH**
@@ -180,6 +239,13 @@ is hand-waved.
 
 **Required fix:** Either provide a complete derivation with all intermediate steps, or
 demote this to a "heuristic bound" / "empirical observation" and remove the Proposition label.
+
+> **RESOLVED** (commit 1ffa1ef, 2026-04-03)
+> 
+> Demoted from formal Proposition to informal "Regret intuition" paragraph. Removed
+> the Proposition label, the unproven bound equation, and the handwaved proof. Kept the
+> key insight: as k increases and epsilon_k decreases, allocation approaches oracle.
+> TEP example (epsilon_k ~ 0.05) retained as empirical support.
 
 ### GAP-C5: Attention Baseline Uses Random Projections, Not Learned Attention
 
@@ -212,6 +278,30 @@ this baseline. But those are only used in Experiment 14 on subsampled data (see 
 - (b) Rename to "Random Projection" and remove "attention-based" superiority claims from
   the main comparison, OR
 - (c) Move the real LSTM-Attention/Transformer-Attention into the main comparison
+
+> **RESOLVED** (commit 7ef2488, 2026-04-03)
+> 
+> Chose option (b): Renamed to "Random Projection" in the paper, clarified docstrings in code.
+> 
+> **What changed in paper/main.tex:**
+> - Compute cost table (Table IX): "Attention" row → "Random Proj."
+> - Scalability text: "Attention-based methods" → "Random-projection attention"
+> - Scalability figure caption: "Attention" → "Random projection"
+> 
+> **What changed in code (src/baselines/attention.py):**
+> - Module docstring updated: now explicitly says "FIXED random projection matrices"
+>   and "NOT a learned attention model"
+> - Class docstring updated: "Self-attention based" → "Random-projection attention"
+> - Points readers to lstm_attention.py for trained attention baselines
+> - Class name kept as AttentionSampling for backward compatibility
+> 
+> **Key clarification:** The attention baseline only appeared in the compute cost
+> table (Table IX), never in the main F1 comparison (Table IV). The paper's DL
+> attention claims (Experiment 14) refer to LSTM-Attention and Transformer-Attention
+> in lstm_attention.py, which ARE properly trained per-window via PyTorch.
+> 
+> **Verification:** 64 tests pass. No "beats attention" claims reference the
+> random-projection baseline.
 
 ### GAP-C6: Deep Learning Comparison Is Not Comparable to Main Results
 
@@ -278,6 +368,27 @@ NASA benchmark misrepresents the evaluation breadth.
 
 **Required fix:** Add dagger marker to NASA in the paper's table, or replace with genuinely
 real NASA IMS data (publicly available from NASA's Prognostics Data Repository).
+
+> **RESOLVED** (commit a14147c, 2026-04-03)
+> 
+> Decision: Removed NASA from the paper entirely.
+> 
+> Rationale: The data file (nasa_bearing_synthetic.csv) does not exist in the repo,
+> no generation script exists, NASA was not in any main experiment (run_pareto_v2.py
+> uses 6 datasets excluding NASA), and it only contributed one qualitative adaptivity
+> figure. Real NASA IMS data is high-frequency vibration — domain-mismatched with the
+> paper's process/telemetry focus.
+> 
+> **What changed in paper/main.tex:**
+> - Removed NASA row from dataset table (was line 380)
+> - Removed cross-domain adaptivity paragraph + nasa_adaptivity_heatmap figure
+> - Updated all counts: "8 benchmarks" → "7 benchmarks" (abstract, contributions,
+>   setup, threats, conclusion)
+> - Updated "6 application domains" → "5 application domains"
+> - Updated "7 real-world benchmarks" → "6 real-world benchmarks"
+> 
+> **Verification:** Grepped for "NASA", "bearing", "8 benchmark", "fig:nasa" — zero
+> orphaned references remain.
 
 ---
 
@@ -400,6 +511,23 @@ adaptive allocation is not new.
 **Required fix:** Cite these papers, soften "first" to "novel combination" or "first to use
 incremental PCA specifically," and position the contribution as system-level integration
 rather than a fundamentally new idea.
+
+> **RESOLVED** (commit 1ffa1ef, 2026-04-03)
+> 
+> **What changed in paper/references.bib:**
+> - Added 4 references: Bacciu 2016, Ghosh et al. 2021 (Sensors J), Ghosh et al. 2021
+>   (TGCN), Yang et al. 2023 (FreqSense)
+> 
+> **What changed in paper/main.tex:**
+> - Contributions: "the first streaming algorithm" → "a streaming algorithm"
+> - Positioning section: Added paragraph acknowledging prior correlation-aware sensor
+>   selection work, positions PCA-Triage as building on it with incremental PCA,
+>   proportional (not binary) rates, and zero-parameter streaming
+> - Positioning table caption: Added citation to Bacciu and Ghosh noting their batch/binary
+>   approach vs our streaming/proportional approach
+> - Conclusion: "the first streaming algorithm" → "a streaming algorithm"
+> 
+> **Verification:** "first streaming" and "first method" no longer appear in the paper.
 
 ### GAP-M4: Benchmark Quality Concerns
 
