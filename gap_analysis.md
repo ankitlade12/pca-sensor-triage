@@ -1,9 +1,11 @@
 # PCA-Triage: Comprehensive Gap Analysis for IEEE Publication
 
 **Date:** 2026-04-03
+**Last updated:** 2026-04-04
 **Paper:** PCA-Driven Adaptive Sensor Triage for Edge AI Inference
 **Authors:** Ankit Hemant Lade, Sai Krishna Jasti, Indar Kumar, Akanksha Tiwari, Nikhil Sinha
-**Status:** Not publication-ready — requires targeted fixes before submission
+**Status:** Improving, but not publication-ready — main remaining blockers are result
+provenance, README/paper drift, and incomplete reproducibility closure
 
 ---
 
@@ -40,10 +42,12 @@ sampling rates. Per window, it:
 
 ### 1.4 Claimed Contributions
 
-1. First streaming algorithm converting PCA loadings to per-channel bandwidth allocation
-2. Theoretical guarantees (budget feasibility, convergence, PCA advantage, regret bounds)
-3. 17 experiments on 8 benchmarks against 9 baselines; best unsupervised on 4/7 datasets
-4. 0.67 ms/decision, edge-deployable, robust to deployment perturbations
+1. A streaming algorithm converting incremental PCA loadings to per-channel bandwidth allocation
+2. Theoretical properties covering budget feasibility, convergence, correlation structure,
+   reconstruction error, and adaptation behavior
+3. 17 experiments on 7 benchmarks against 9 baselines; best unsupervised on 3/6 canonical
+   datasets at 50% bandwidth, with targeted extensions improving TEP further
+4. 0.67 ms/decision, edge-deployable, robust to packet loss and moderate sensor noise
 
 ---
 
@@ -56,28 +60,28 @@ sampling rates. Per window, it:
 | Core algorithm             | Complete  | PCATriage, HybridScorer, RateAllocator, Reconstruction |
 | Baseline implementations   | Partial   | Most claimed baselines implemented; OGD missing from public baseline package |
 | Paper (LaTeX)              | Draft     | ~1100 lines, IEEEtran format, all sections present   |
-| Experiments                | Complete  | 15+ scripts, results CSVs saved                      |
-| Unit tests                 | Good      | 28+ tests, all passing                               |
+| Experiments                | Broad     | 17 scripts plus saved result CSVs                    |
+| Unit tests                 | Good      | 64 tests, all passing                                |
 | Figures                    | Complete  | 14 publication-quality figures at 300 DPI             |
 | References                 | 39 cited  | Mix of foundational and recent (up to 2025)           |
 | Raw data                   | Missing   | data/raw/ contains only .gitkeep                      |
 
-### 2.2 Headline Results (as claimed in paper)
+### 2.2 Headline Results (current paper framing)
 
-Note: the repository supports the headline mean/std values below, but it does **not**
-contain per-dataset significance test artifacts for this table. The saved statistical files
-support cross-dataset pairwise comparisons, not the exact per-dataset p-values one might
-infer from the paper text.
+Note: the manuscript now uses the V1/base story as the canonical main result, but the repo
+still does **not** provide a perfectly clean artifact path proving that every canonical paper
+number is generated from one unambiguous source file set. Treat the table below as the
+paper's current framing, not as fully closed provenance.
 
-| Dataset | PCA-Triage F1 | Best Baseline F1 | Margin  | Significant? |
-|---------|---------------|-------------------|---------|--------------|
-| TEP     | 0.970 +/- 0.002 | Threshold 0.958 | +1.2%  | Claimed yes in paper |
-| SMD     | 0.988 +/- 0.000 | Threshold 0.981 | +0.7%  | Claimed yes in paper |
-| MSL     | 0.918 +/- 0.000 | Variance 0.917  | +0.2%  | Claimed yes in paper |
-| PSM     | 0.968 +/- 0.001 | Rand Drop 0.961 | +0.7%  | Mixed / unclear      |
-| HAI     | 0.999 +/- 0.000 | Variance 1.000  | -0.1%  | No                   |
-| SKAB    | 0.574 +/- 0.015 | Uniform 0.592   | -1.8%  | No                   |
-| SWaT    | 0.986 +/- 0.000 | Rand Drop 0.998 | -1.2%  | No                   |
+| Dataset | PCA-Triage F1 | Best Baseline F1 | Margin  | Current reading |
+|---------|---------------|-------------------|---------|-----------------|
+| TEP     | 0.961 +/- 0.001 | Threshold 0.958 | +0.3%  | Best unsupervised |
+| SMD     | 0.982 +/- 0.001 | Threshold 0.981 | +0.1%  | Best unsupervised |
+| MSL     | 0.921 +/- 0.004 | Variance 0.917  | +0.4%  | Best unsupervised |
+| PSM     | 0.959 +/- 0.001 | Rand Drop 0.962 | -0.3%  | Narrow second     |
+| HAI     | 1.000 +/- 0.000 | Variance 1.000  | Tie     | Saturated         |
+| SKAB    | 0.583 +/- 0.013 | Uniform 0.586   | -0.3%  | Slight loss       |
+| SWaT    | 0.986 +/- 0.000 | Rand Drop 0.998 | -1.2%  | Extension-only synthetic comparison |
 
 ---
 
@@ -109,11 +113,11 @@ checks the CSVs will see three competing numbers and question which is the real 
 - (a) Use the v2 results everywhere and clearly state the configuration (hybrid, tuned alpha), OR
 - (b) Use the base results (0.961) and present tuned results as an ablation improvement
 
-> **RESOLVED** (commit a14147c, 2026-04-03)
+> **PARTIALLY RESOLVED** (commit a14147c, 2026-04-03; audited again 2026-04-04)
 > 
 > Chose option (b): V1 base (0.961) is now the canonical main result.
 > 
-> **What changed in paper/main.tex:**
+> **What is genuinely fixed in paper/main.tex:**
 > - Abstract: F1 0.970 → 0.961, "exceeding" → "matching" full-data. V2 innovations
 >   reframed as "targeted extensions" that push to 0.970.
 > - Table IV: Replaced all V2 numbers with V1 base from table2_results_50pct.csv.
@@ -127,8 +131,12 @@ checks the CSVs will see three competing numbers and question which is the real 
 > - Robustness/joint experiment tables labeled as using tuned configuration.
 > - Statistical section text updated to 6 datasets, flagged for recomputation.
 > 
-> **Verification:** Every cell in Table IV cross-checked against source CSV.
-> Multi-classifier (0.962) and ablation (0.961) now consistent with main table.
+> **What remains unresolved after direct repo audit:**
+> - `experiments/run_statistical_tests_v1.py` still reads from `experiments/results/pareto_{dataset}.csv`
+>   as if those are the canonical V1/base artifacts.
+> - But `experiments/results/pareto_tep.csv` still contains ~0.97 TEP values at 50% bandwidth,
+>   which look like tuned/V2-style outputs rather than the canonical 0.961 base result.
+> - So the manuscript framing is much cleaner, but the artifact provenance is still not fully closed.
 
 ### GAP-C2: Adaptivity Claim Directly Contradicts Paper's Own Table
 
@@ -357,10 +365,10 @@ for desk rejection at venues that require reproducibility artifacts.
 - Ensure the environment (requirements.txt or pyproject.toml) pins exact versions
 - Test a cold-start installation on a fresh environment
 
-> **RESOLVED** (commit 3107d94, 2026-04-03)
+> **PARTIALLY RESOLVED** (commit 3107d94, 2026-04-03; audited again 2026-04-04)
 > 
 > **What was created:**
-> - `requirements-lock.txt`: Frozen dependency versions from current working environment
+> - `uv.lock`: Lock file for the current dependency set
 > - `data/download_datasets.sh`: Download script with URLs for all 6 real datasets
 >   (SKAB automated via git clone; TEP, SMD, MSL, PSM, HAI require manual download
 >   with documented URLs and preprocessing steps)
@@ -373,8 +381,9 @@ for desk rejection at venues that require reproducibility artifacts.
 >   available, datasets downloadable from original sources via provided script,
 >   with lock file and download instructions
 > 
-> **Note:** Full end-to-end cold-start validation not yet performed (requires
-> downloading all datasets). The infrastructure is in place.
+> **What remains unresolved:** Full end-to-end cold-start validation has still not been
+> performed, and most datasets still require manual download/manual preprocessing. The
+> reproducibility claim is now much more honest, but not fully closed.
 
 ### GAP-C8: NASA Dataset Mislabeled
 
@@ -460,7 +469,7 @@ pool. Pairwise Wilcoxon with Holm correction is recommended instead.
 confidence intervals, reframe the Friedman result honestly (borderline), or drop it in
 favor of only pairwise tests.
 
-> **RESOLVED** (commit 8454f3f, 2026-04-03)
+> **PARTIALLY RESOLVED** (commit 8454f3f, 2026-04-03; audited again 2026-04-04)
 > 
 > Recomputed all statistics from V1 base per-seed data (3 seeds × 6 datasets).
 > 
@@ -486,6 +495,10 @@ favor of only pairwise tests.
 > **Remaining limitation:** Only 3 seeds available (2 of original 5 missing from
 > V1 pareto CSVs). More seeds would increase power but require re-running
 > experiments with the actual datasets.
+> 
+> **What remains unresolved:** The statistical section is much more honest now, but the
+> main 50% results table still uses significance stars and `p < 0.05` wording, which
+> conflicts with the Holm-corrected interpretation.
 
 ### GAP-M2: Baseline Fairness — Unequal Hyperparameter Tuning
 
@@ -510,13 +523,17 @@ from dataset-specific tuning, not the method itself.
 - (b) Report PCA-Triage with default parameters as the main result, and tuned as an ablation, OR
 - (c) Use nested cross-validation for all methods, clearly separating tuning from evaluation
 
-> **RESOLVED** (via GAP-C1 fix, commit a14147c)
+> **PARTIALLY RESOLVED** (via GAP-C1 fix, commit a14147c; audited again 2026-04-04)
 > 
 > Chose option (b): V1 base PCA-Triage (no per-dataset tuning) is now the canonical
 > main result. All methods use identical default parameters. The V2 innovations
 > (hybrid scoring, linear interp, sharpening) are presented as ablation improvements.
 > Table IV caption explicitly states: "All methods use default parameters with no
 > per-dataset tuning."
+> 
+> **What remains unresolved:** The fairness story in the paper is better, but the repo
+> still has unresolved canonical-artifact ambiguity and the manuscript still contains an
+> RF-100 vs RF-200 mismatch elsewhere.
 
 ### GAP-M2b: Documentation and Experiment Protocol Mismatch
 
@@ -536,12 +553,17 @@ is valid, the documentation inconsistency makes the evaluation protocol look uns
 **Required fix:** Update README and manuscript together so they describe one canonical
 experiment stack, clearly distinguishing legacy/base results from v2 tuned results.
 
-> **RESOLVED** (via GAP-C1 fix, commit a14147c)
+> **NOT RESOLVED** (audited 2026-04-04)
 > 
-> The canonical experiment now uses V1 base (RF-100, forward-fill, pure PCA) which
-> matches what the README describes. Paper Table IV caption states "All methods use
-> default parameters with no per-dataset tuning." README's description (RF n=100,
-> forward-fill) is consistent with the paper's canonical results.
+> The paper moved toward a cleaner V1/base canonical story, but the README still reflects
+> the older repo state:
+> - still leads with the `0.970` headline story,
+> - still claims 4/7 wins,
+> - still includes NASA,
+> - still states 0-3 window reaction at `lambda = 0.85`,
+> - still uses the older stronger novelty framing.
+> 
+> This gap remains open and should be treated as an active documentation issue.
 
 ### GAP-M3: Novelty Claim Is Overstated
 
@@ -896,8 +918,7 @@ code isn't in the repo.
 > run but the code is missing from the repository. Would need to recover or reimplement.
 
 ### GAP-N2: No Environment Lock File
-pyproject.toml exists but no lock file (uv.lock, poetry.lock). Exact dependency versions
-for reproducibility are not pinned.
+Historical note: this gap is now closed. It is retained here for audit completeness.
 
 > **RESOLVED** (commit 511a7cd, 2026-04-03)
 > 
@@ -991,7 +1012,10 @@ will be familiar with TEP and sensor network literature.
 
 ---
 
-## 9. FIX PRIORITY MATRIX
+## 9. HISTORICAL FIX PRIORITY MATRIX (Pre-2026-04-04 Snapshot)
+
+This matrix reflects the original prioritization before the 2026-04-04 direct repo audit.
+For the current working priority list, use Section 12 instead.
 
 ### Tier 1 — Must-fix before submission (blocks acceptance)
 
@@ -1038,7 +1062,11 @@ will be familiar with TEP and sensor network literature.
 
 ---
 
-## 10. ESTIMATED REVIEWER OUTCOME (Current State)
+## 10. ESTIMATED REVIEWER OUTCOME (Historical Snapshot)
+
+This section reflects the earlier pre-fix state of the project and is left here mainly as
+context for how much risk has already been reduced. It does **not** supersede the current
+audit in Section 12.
 
 If submitted as-is to IEEE Sensors Journal:
 
@@ -1067,18 +1095,169 @@ If Tier 1 + Tier 2 fixes are applied:
 ## 11. SUMMARY
 
 The core research idea is solid: using incremental PCA to drive per-channel bandwidth
-allocation is a practical and defensible contribution. The codebase is thorough (8 datasets,
-9 baselines, 17 experiments, 28 tests) and shows significant engineering effort.
+allocation is a practical and defensible contribution. The codebase shows significant
+engineering effort and is in better shape than the earliest draft state reflected above.
 
-However, the paper has critical integrity issues (conflicting numbers, theorem error,
-fake attention baseline, adaptivity contradiction) that would lead to rejection in current
-form. These are fixable — none require rethinking the method — but they require careful,
-systematic resolution.
+Several of the most serious manuscript issues have already been improved: theorem/proof
+alignment is better, the fake-attention ambiguity is clarified, the adaptivity contradiction
+is fixed, NASA has been removed from the paper story, and the novelty framing is more honest.
+
+The main remaining blockers are now narrower but still important: conflicting artifact
+provenance for the canonical result story, README/paper drift, inconsistent statistical
+signaling in the main table, and incomplete reproducibility closure.
 
 **The strongest publishable version of this paper** is not "we proved new theory and we're
 first in the world" but rather: "a lightweight, unsupervised, correlation-aware channel-rate
 allocation method that is empirically strong across diverse benchmarks, with honest
 positioning relative to prior work."
 
-The work is worth pursuing. With 3-4 weeks of focused effort on the Tier 1 and Tier 2
-fixes, this can be a competitive submission to IEEE Sensors Journal.
+The work is worth pursuing. With focused effort on the execution checklist in Section 12,
+this can still become a competitive submission to IEEE Sensors Journal.
+
+---
+
+## 12. CURRENT-STATE AUDIT AND EXECUTION CHECKLIST (2026-04-04)
+
+This section is based on a direct repo audit of code, paper text, scripts, result CSVs,
+README, and tests. It should be treated as more authoritative than older `RESOLVED`
+comments above when the two disagree.
+
+### 12.1 What Is Genuinely in Better Shape
+
+- The manuscript framing is substantially improved:
+  - Abstract now uses the conservative `0.961 +- 0.001` canonical TEP result and treats
+    `0.970` as an extension result, not the main headline.
+  - Novelty language is softened from "first" to a more defensible system-level claim.
+  - NASA has been removed from the paper's benchmark story.
+- The theorem section is materially safer:
+  - The main PCA/variance theorem now matches the proof structure.
+  - The formal regret proposition was removed and replaced with "Regret intuition."
+- The adaptivity section is improved:
+  - The paper no longer claims 0-3 window reaction at `lambda = 0.85`.
+  - It now correctly ties the 0-3 window result to lower `lambda` values such as `0.80`.
+- The synthetic-correlation discussion is more honest:
+  - The paper explicitly admits PCA-Triage does not beat Variance on that simple synthetic task.
+- The random-projection attention baseline is now labeled clearly as non-learned.
+- Reproducibility scaffolding is stronger:
+  - `uv.lock` exists.
+  - `data/README.md` exists with dataset setup notes.
+  - `data/download_datasets.sh` exists.
+- Tests are in good shape mechanically:
+  - Direct repo audit on 2026-04-04: `64 passed` via `pytest`.
+
+### 12.2 What Is Still Not Fully Resolved (updated 2026-04-04 evening)
+
+- ~~Canonical result source ambiguity~~ **FIXED:** `run_statistical_tests_v1.py` now reads
+  from `paper/tables/table2_results_50pct.csv` (the canonical V1 base source), not from
+  `experiments/results/pareto_{ds}.csv` (which contain V2 tuned results). All statistical
+  tables in the paper now match this canonical source.
+- ~~README contradicts paper~~ **FIXED:** README headline updated to 0.961/3 of 6, NASA
+  removed from dataset table, lambda=0.85 claims corrected, dataset/test counts updated.
+- ~~RF-100 vs RF-200 conflict~~ **FIXED:** Paper baselines section now says n=100 for main
+  comparison, n=200 for dedicated experiments.
+- ~~Significance stars contradict Holm~~ **FIXED:** All per-cell significance stars removed
+  from Table IV. Caption now says "Cross-dataset Wilcoxon tests reported in Sec. Discussion."
+  Statistical method description updated: Nemenyi removed, Holm correction described.
+- Reproducibility is improved but not fully closed:
+  - most datasets still require manual download and manual preprocessing,
+  - no explicit cold-start reproduction validation is documented yet.
+- `experiments/results/pareto_{ds}.csv` files still contain V2 tuned results. They are NOT
+  the canonical source for any paper table but remain in the repo. A future cleanup could
+  archive them to `experiments/results/v2_tuned/` to prevent confusion.
+
+### 12.3 Priority-Ordered Execution Checklist
+
+#### Must Fix Before Any More Reruns
+
+1. ~~Establish one canonical result source.~~ **DONE** (commit 1a43a3f)
+   - Canonical source: `paper/tables/table2_results_50pct.csv` (V1 base, RF-100)
+   - `run_statistical_tests_v1.py` reads from this file, not pareto CSVs
+   - Stats recomputed: Friedman chi^2=9.33 p=0.053, PCA-Triage rank 1.50
+
+2. ~~Freeze one canonical experiment stack.~~ **DONE** (commit 1a43a3f)
+   - V1 base: pure PCA scorer, forward-fill, RF-100, no per-dataset tuning
+   - Paper, README, stats script all aligned to this stack
+   - V2 extensions (hybrid, linear, sharpening) clearly labeled as ablation
+
+3. ~~Resolve the RF-100 vs RF-200 conflict.~~ **DONE** (commit 1a43a3f)
+   - Baselines section: "n=100 trees" for main comparison, "n=200 noted where applicable"
+   - Table IV caption: "RF n=100"
+
+4. ~~Remove or rewrite significance-star language.~~ **DONE** (commit 1a43a3f)
+   - All per-cell stars removed from Table IV
+   - Caption says "Cross-dataset Wilcoxon tests reported in Sec. Discussion"
+   - Nemenyi reference removed from evaluation protocol; Holm described instead
+
+5. ~~Update README to match canonical manuscript story.~~ **DONE** (commit 1a43a3f)
+   - Headline: 0.961, 3/6, 7 benchmarks
+   - NASA removed, SWaT* added with synthetic note
+   - Lambda claims corrected (0-3 windows at <=0.80, not 0.85)
+   - Test count 28→64, dataset count 8→7
+
+6. ~~Clean this document's stale RESOLVED claims.~~ **DONE** (this update)
+   - Section 12.2 updated to reflect current repo state
+
+#### Must Fix Before Submission
+
+1. Run and document one cold-start reproducibility pass.
+   - Fresh environment.
+   - Exact install steps.
+   - Exact datasets successfully reproduced.
+   - Any datasets still manual should be explicitly listed as such.
+
+2. Make the paper's structure explicitly distinguish:
+   - canonical main experiment,
+   - tuned extensions,
+   - dedicated side experiments such as DL or OGD comparisons.
+
+3. Add provenance for each major table/figure.
+   - For every main table or figure, record:
+     - script used,
+     - input CSV(s),
+     - config or setting,
+     - whether it is canonical or extension-only.
+
+4. Decide what to do about OGD and other special baselines.
+   - Either restore traceable code/artifacts for them,
+   - or demote/cut claims that depend on them.
+
+5. Harmonize documentation counts and terminology.
+   - Dataset count,
+   - benchmark count,
+   - test count,
+   - baseline count,
+   - "main" vs "extension" language.
+
+#### Nice To Fix
+
+1. Add an artifact map document.
+   - Example: `REPRODUCING.md` or `paper_artifact_map.md`
+   - Map `paper table/figure -> script -> CSV -> setting`.
+
+2. Expand tests around experiment provenance.
+   - Not just algorithm behavior, but checks that canonical outputs exist and have the
+     expected schema or budget/method coverage.
+
+3. Clean README badges and top-level positioning.
+   - Current badges and headline text still reflect older project state.
+
+4. Add one machine-readable manifest for canonical outputs.
+   - This can prevent future drift between paper and repo.
+
+### 12.4 Definition of Done for the "Paper Is Internally Consistent" Milestone
+
+This milestone should be considered complete only when all of the following are true:
+
+- One canonical experiment stack is chosen.
+- One canonical result artifact set matches the paper's main numbers.
+- Statistical language is internally consistent across main tables and discussion.
+- README, paper, and saved outputs tell the same story.
+- Cold-start reproducibility has been actually validated and documented.
+
+### 12.5 Recommended Instruction to a Follow-On Agent
+
+If another agent is asked to continue from this document, the right instruction is:
+
+"Do not assume earlier `RESOLVED` notes are correct. First verify the canonical result
+source, align README/paper/scripts around one experiment stack, and remove remaining
+consistency gaps before making new benchmark or paper-quality claims."
