@@ -65,7 +65,7 @@
 \begin{abstract}
 Multi-channel sensor networks in industrial IoT generate data exceeding available bandwidth. We propose \textbf{PCA-Triage}, a streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a bandwidth budget. The algorithm runs in $O(wdk)$ time with zero trainable parameters, requiring 0.67\,ms per decision.
 
-Across 17 experiments on 8 benchmarks against 9 baselines (including LSTM and Transformer attention), PCA-Triage is the best unsupervised method on 4 of 7 datasets at 50\% bandwidth, with statistically significant advantages (Wilcoxon $p < 0.05$). On TEP, it achieves F1\,=\,$0.961 \pm 0.001$ (matching full-data performance) with the base algorithm, and F1\,=\,$0.970 \pm 0.002$ with hybrid scoring and sharpened allocation. The algorithm is robust to packet loss and sensor noise (3.7--4.8\% degradation under combined perturbations) and outperforms the regret-optimal OGD baseline by 1.1--4.7\%.
+Across 17 experiments on 8 benchmarks against 9 baselines (including LSTM and Transformer attention), PCA-Triage is the best unsupervised method on 4 of 7 datasets at 50\% bandwidth, winning 5--6 of 7 datasets against each unsupervised baseline. On TEP, it achieves F1\,=\,$0.961 \pm 0.001$ (matching full-data performance) with the base algorithm, and F1\,=\,$0.970 \pm 0.002$ with hybrid scoring and sharpened allocation. The algorithm is robust to packet loss and sensor noise (3.7--4.8\% degradation under combined perturbations) and outperforms the regret-optimal OGD baseline by 1.1--4.7\%.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -463,7 +463,7 @@ Table~\ref{tab:results50} presents F1 scores at 50\% bandwidth with standard dev
 
 \begin{table*}[t]
 \centering
-\caption{F1 at 50\% bandwidth (mean $\pm$ std, 3 seeds). \textbf{Bold} = best unsupervised. $^*$ = PCA-Triage significantly better ($p < 0.05$, Wilcoxon). $^\dagger$ = supervised method (requires labels). PCA-Triage uses hybrid scoring ($\alpha$ per dataset), linear interpolation, and sharpened rate allocation.}
+\caption{F1 at 50\% bandwidth (mean $\pm$ std, 3 seeds). \textbf{Bold} = best unsupervised. $^\dagger$ = supervised method (requires labels). PCA-Triage uses per-dataset tuned hybrid scoring ($\alpha$, $\gamma$); baselines use default parameters. The base (untuned) PCA-Triage achieves 0.961 on TEP (Table~\ref{tab:component}).}
 \begin{tabular}{@{}lccccccc@{}}
 \toprule
 \textbf{Method} & \textbf{TEP} & \textbf{SMD} & \textbf{PSM} & \textbf{MSL} & \textbf{HAI} & \textbf{SKAB} & \textbf{SWaT$^\dagger$} \\
@@ -957,17 +957,19 @@ Uniform & 4.29 \\
 \label{tab:statistical}
 \end{table}
 
-\textbf{Wilcoxon signed-rank tests.} Table~\ref{tab:wilcoxon} reports one-sided tests (H$_1$: PCA-Triage $>$ baseline, 7 datasets). PCA-Triage achieves statistically significant wins against Uniform ($p = 0.039$), Threshold ($p = 0.016$), and Variance ($p = 0.023$), winning 6 of 7 datasets against each. Only Random Dropout escapes significance ($p = 0.109$) due to its strong performance on SWaT.
+\textbf{Wilcoxon signed-rank tests.} Table~\ref{tab:wilcoxon} reports one-sided tests (H$_1$: PCA-Triage $>$ baseline, 7 datasets). Uncorrected $p$-values suggest wins against Threshold ($p = 0.016$), Uniform ($p = 0.039$), and Variance ($p = 0.023$). However, after Holm correction for 4 pairwise comparisons, \textit{none} remain significant at $\alpha = 0.05$. This reflects the limited power of Wilcoxon with only 7 paired observations, not absence of practical differences. The rank-biserial effect sizes ($r = 0.71$--$0.86$, large) and consistent 5--6/7 win rates support a practically meaningful---if not statistically significant---advantage.
 
 \begin{table}[t]
 \centering
-\caption{Wilcoxon one-sided $p$-values (PCA-Triage $>$ baseline, 7 datasets). $^*$ = $p < 0.05$.}
+\caption{Wilcoxon one-sided $p$-values (PCA-Triage $>$ baseline, 7 datasets). None survive Holm correction at $\alpha = 0.05$ (limited power with 7 observations). Effect sizes ($r$) indicate large practical differences.}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-& \textbf{Uniform} & \textbf{Variance} & \textbf{Threshold} & \textbf{Rand.\ Drop} \\
+& \textbf{Threshold} & \textbf{Uniform} & \textbf{Variance} & \textbf{Rand.\ Drop} \\
 \midrule
-$p$-value & $.039^*$ & $.023^*$ & $.016^*$ & .109 \\
-W / L / T & 6/1/0 & 6/1/0 & 6/1/0 & 5/2/0 \\
+$p$-raw & .016 & .039 & .109 & .109 \\
+$p$-Holm & .063 & .117 & .219 & .109 \\
+W / L & 6/1 & 6/1 & 5/2 & 5/2 \\
+Effect $r$ & .86 & .86 & .71 & .71 \\
 \bottomrule
 \end{tabular}
 \label{tab:wilcoxon}
