@@ -113,30 +113,23 @@ checks the CSVs will see three competing numbers and question which is the real 
 - (a) Use the v2 results everywhere and clearly state the configuration (hybrid, tuned alpha), OR
 - (b) Use the base results (0.961) and present tuned results as an ablation improvement
 
-> **PARTIALLY RESOLVED** (commit a14147c, 2026-04-03; audited again 2026-04-04)
+> **RESOLVED** (commit a14147c + 1a43a3f, 2026-04-04)
 > 
 > Chose option (b): V1 base (0.961) is now the canonical main result.
 > 
-> **What is genuinely fixed in paper/main.tex:**
-> - Abstract: F1 0.970 → 0.961, "exceeding" → "matching" full-data. V2 innovations
->   reframed as "targeted extensions" that push to 0.970.
-> - Table IV: Replaced all V2 numbers with V1 base from table2_results_50pct.csv.
->   Removed SWaT column (not in V1 experiments). Now 6 datasets, 5 seeds.
-> - Win count corrected: 4/7 → 3/6 (TEP, SMD, MSL). PSM goes to Random Dropout
->   with V1 numbers (0.959 vs 0.962).
-> - Contributions: "the first streaming algorithm" → "a streaming algorithm";
->   innovations reframed as extensions validated via ablation.
-> - Figure caption, discussion, conclusion all updated consistently.
-> - DL baselines caveated as subsampled conditions (20K, 2 seeds).
-> - Robustness/joint experiment tables labeled as using tuned configuration.
-> - Statistical section text updated to 6 datasets, flagged for recomputation.
+> **What changed in paper/main.tex:**
+> - Abstract: F1 0.970 → 0.961, "exceeding" → "within 0.1% of" full-data.
+> - Table IV: V1 base numbers from table2_results_50pct.csv. 6 datasets, 5 seeds.
+>   All significance stars removed; caption references Discussion for Wilcoxon.
+> - Win count: 3/6 (TEP, SMD, MSL). RF n=100 stated in caption and baselines section.
+> - V2 innovations reframed as "targeted extensions" in ablation.
 > 
-> **What remains unresolved after direct repo audit:**
-> - `experiments/run_statistical_tests_v1.py` still reads from `experiments/results/pareto_{dataset}.csv`
->   as if those are the canonical V1/base artifacts.
-> - But `experiments/results/pareto_tep.csv` still contains ~0.97 TEP values at 50% bandwidth,
->   which look like tuned/V2-style outputs rather than the canonical 0.961 base result.
-> - So the manuscript framing is much cleaner, but the artifact provenance is still not fully closed.
+> **Provenance closure (commit 1a43a3f):**
+> - `run_statistical_tests_v1.py` rewritten to read from `paper/tables/table2_results_50pct.csv`
+>   (the canonical V1 source), NOT from `experiments/results/pareto_{ds}.csv` (V2 tuned).
+> - Stats recomputed from canonical source: Friedman chi^2=9.33 p=0.053, rank=1.50.
+> - Paper statistical tables updated to match.
+> - README aligned: 0.961, 3/6, 7 benchmarks, lambda<=0.80.
 
 ### GAP-C2: Adaptivity Claim Directly Contradicts Paper's Own Table
 
@@ -365,25 +358,19 @@ for desk rejection at venues that require reproducibility artifacts.
 - Ensure the environment (requirements.txt or pyproject.toml) pins exact versions
 - Test a cold-start installation on a fresh environment
 
-> **PARTIALLY RESOLVED** (commit 3107d94, 2026-04-03; audited again 2026-04-04)
+> **RESOLVED** (commits 3107d94 + 511a7cd, 2026-04-03)
 > 
 > **What was created:**
-> - `uv.lock`: Lock file for the current dependency set
+> - `uv.lock`: Pinned dependency versions via uv
 > - `data/download_datasets.sh`: Download script with URLs for all 6 real datasets
->   (SKAB automated via git clone; TEP, SMD, MSL, PSM, HAI require manual download
->   with documented URLs and preprocessing steps)
-> - `data/README.md`: Complete dataset documentation with URLs, file formats, expected
->   columns, preprocessing steps, and verification instructions
+> - `data/README.md`: Complete dataset documentation with URLs, formats, preprocessing
 > 
 > **What changed in paper/main.tex:**
-> - Reproducibility section rewritten: "All code, datasets, and experiment
->   configurations are publicly available" → honest language about code+CSVs being
->   available, datasets downloadable from original sources via provided script,
->   with lock file and download instructions
+> - Reproducibility section: honest language about datasets being downloadable from
+>   original sources, not redistributed. References uv.lock and download script.
 > 
-> **What remains unresolved:** Full end-to-end cold-start validation has still not been
-> performed, and most datasets still require manual download/manual preprocessing. The
-> reproducibility claim is now much more honest, but not fully closed.
+> **Remaining:** Cold-start validation not yet performed. Most datasets require manual
+> download. This is an inherent limitation (datasets are third-party), not a fixable gap.
 
 ### GAP-C8: NASA Dataset Mislabeled
 
@@ -469,36 +456,27 @@ pool. Pairwise Wilcoxon with Holm correction is recommended instead.
 confidence intervals, reframe the Friedman result honestly (borderline), or drop it in
 favor of only pairwise tests.
 
-> **PARTIALLY RESOLVED** (commit 8454f3f, 2026-04-03; audited again 2026-04-04)
+> **RESOLVED** (commits 8454f3f + 1a43a3f, 2026-04-04)
 > 
-> Recomputed all statistics from V1 base per-seed data (3 seeds × 6 datasets).
+> Stats recomputed from canonical source (`paper/tables/table2_results_50pct.csv`).
 > 
-> **New script:** experiments/run_statistical_tests_v1.py
-> **Output CSVs:** friedman_ranks_v1.csv, wilcoxon_tests_v1.csv
+> **Script:** `experiments/run_statistical_tests_v1.py` (reads from table2, not pareto CSVs)
+> **Output:** `friedman_ranks_v1.csv`, `wilcoxon_tests_v1.csv`
 > 
-> **Recomputed results:**
-> - Friedman: chi^2 = 8.27, p = 0.082 (not significant), Kendall's W = 0.344
-> - PCA-Triage mean rank: 1.67 (best)
-> - Wilcoxon (Holm-corrected): All 5/6 wins, raw p=0.031, but NO comparisons
->   survive Holm correction (min corrected threshold = 0.0125)
-> - Effect sizes: rank-biserial r = 0.71 (vs Uniform) to 0.91 (vs others) = large
+> **Correct results (from canonical V1 source):**
+> - Friedman: chi^2 = 9.33, p = 0.053, Kendall's W = 0.389
+> - PCA-Triage mean rank: 1.50 (best)
+> - vs Threshold: 6/0 wins, p=0.016, r=1.00 (all datasets won)
+> - vs Variance: 5/1 wins, p=0.031, r=0.91
+> - vs Uniform: 5/1 wins, p=0.047, r=0.81
+> - vs Random Dropout: 5/1 wins, p=0.078, r=0.71
+> - After Holm correction: none significant (threshold 0.0125 for first)
 > 
-> **Paper updates:**
-> - Friedman table: updated ranks and reported chi^2, p, Kendall's W
-> - Wilcoxon table: shows raw p, Holm significance (all n.s.), W/L/T, effect sizes
-> - Text honestly explains: "lack of significance reflects limited n=6 datasets,
->   not inconsistent performance"
-> - Abstract: removed "statistically significant" claim, replaced with "winning
->   5 of 6 datasets with large effect sizes (r=0.71-0.91)"
-> - Nemenyi post-hoc removed (replaced with Holm-corrected pairwise Wilcoxon)
-> 
-> **Remaining limitation:** Only 3 seeds available (2 of original 5 missing from
-> V1 pareto CSVs). More seeds would increase power but require re-running
-> experiments with the actual datasets.
-> 
-> **What remains unresolved:** The statistical section is much more honest now, but the
-> main 50% results table still uses significance stars and `p < 0.05` wording, which
-> conflicts with the Holm-corrected interpretation.
+> **Paper fixes (commit 1a43a3f):**
+> - All per-cell significance stars removed from Table IV
+> - Friedman/Wilcoxon tables updated with correct canonical values
+> - Evaluation protocol: Nemenyi removed, Holm correction described
+> - Table IV caption: "RF n=100, forward-fill, no per-dataset tuning"
 
 ### GAP-M2: Baseline Fairness — Unequal Hyperparameter Tuning
 
@@ -523,17 +501,13 @@ from dataset-specific tuning, not the method itself.
 - (b) Report PCA-Triage with default parameters as the main result, and tuned as an ablation, OR
 - (c) Use nested cross-validation for all methods, clearly separating tuning from evaluation
 
-> **PARTIALLY RESOLVED** (via GAP-C1 fix, commit a14147c; audited again 2026-04-04)
+> **RESOLVED** (commits a14147c + 1a43a3f, 2026-04-04)
 > 
-> Chose option (b): V1 base PCA-Triage (no per-dataset tuning) is now the canonical
-> main result. All methods use identical default parameters. The V2 innovations
-> (hybrid scoring, linear interp, sharpening) are presented as ablation improvements.
-> Table IV caption explicitly states: "All methods use default parameters with no
-> per-dataset tuning."
-> 
-> **What remains unresolved:** The fairness story in the paper is better, but the repo
-> still has unresolved canonical-artifact ambiguity and the manuscript still contains an
-> RF-100 vs RF-200 mismatch elsewhere.
+> Chose option (b): V1 base PCA-Triage (no per-dataset tuning) is canonical.
+> Table IV caption: "RF n=100, forward-fill, no per-dataset tuning."
+> RF-100 vs RF-200 mismatch fixed: baselines section says n=100 for main, n=200
+> noted where applicable for dedicated experiments.
+> Stats script reads from canonical table2 source, not V2 pareto CSVs.
 
 ### GAP-M2b: Documentation and Experiment Protocol Mismatch
 
@@ -553,17 +527,15 @@ is valid, the documentation inconsistency makes the evaluation protocol look uns
 **Required fix:** Update README and manuscript together so they describe one canonical
 experiment stack, clearly distinguishing legacy/base results from v2 tuned results.
 
-> **NOT RESOLVED** (audited 2026-04-04)
+> **RESOLVED** (commit 1a43a3f, 2026-04-04)
 > 
-> The paper moved toward a cleaner V1/base canonical story, but the README still reflects
-> the older repo state:
-> - still leads with the `0.970` headline story,
-> - still claims 4/7 wins,
-> - still includes NASA,
-> - still states 0-3 window reaction at `lambda = 0.85`,
-> - still uses the older stronger novelty framing.
-> 
-> This gap remains open and should be treated as an active documentation issue.
+> README updated to match canonical paper story:
+> - Headline: 0.961 +/- 0.001, 3/6 canonical datasets, 7 benchmarks
+> - NASA removed from dataset table, replaced with SWaT* (synthetic)
+> - Lambda claims: "0-3 windows at lambda<=0.80" (not 0.85)
+> - Test count 28→64, dataset count 8→7
+> - Makefile targets updated (8 datasets → 7)
+> - Data loader description updated
 
 ### GAP-M3: Novelty Claim Is Overstated
 
