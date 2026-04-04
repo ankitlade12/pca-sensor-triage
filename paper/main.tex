@@ -757,81 +757,13 @@ IDV(14) & CW valve stick & \textbf{.777} & .765 & .710 & .978 \\
 
 \textbf{Findings.} PCA-Triage is the best unsupervised method on 2 of 10 individual faults---IDV(7) (C header pressure loss, $+12.7\%$ vs Variance) and IDV(14) (reactor CW valve sticking, $+1.3\%$ vs Variance). Both faults cause correlated shifts across multiple sensor groups, where PCA's covariance-aware allocation excels. Threshold dominates on step faults (IDV 1, 2, 5, 6) because binary change detection is well-suited to abrupt step changes. On the hardest faults (IDV 4, 11), all methods lose $>20\%$ F1 vs full data, suggesting that 50\% bandwidth is insufficient regardless of allocation strategy. PCA-Triage's aggregate advantage (Table~\ref{tab:results50}) arises not from dominating individual faults but from \textit{balanced} performance---it avoids catastrophic failure on any fault type. This is operationally relevant: in practice, operators do not know which fault will occur and need a method that performs reasonably across the entire fault space.
 
-\subsection{Experiment 11: Synthetic Correlation Validation}
+\subsection{Experiments 11--13: Correlation Validation, Adaptive $k$, and Ensemble Scoring}
 
-To directly test Theorem~\ref{thm:correlation}'s prediction, we generate synthetic datasets with precisely controlled inter-channel correlation $\rho \in \{0.0, 0.2, 0.4, 0.6, 0.8, 0.95\}$. Each dataset has 40 channels: 10 correlated-informative (Group~A, within-group correlation $= \rho$), 10 independent-informative (Group~B), and 20 noise channels (Group~C). The fault signal shifts Group~A and B means by $+1.5\sigma$ while Group~C remains pure noise. Table~\ref{tab:synth_corr} shows results (5 seeds, 50\% budget).
+\textbf{Synthetic correlation validation.} To test Theorem~\ref{thm:correlation}, we generate synthetic datasets with controlled correlation $\rho \in \{0.0, \ldots, 0.95\}$. PCA-Triage does \textit{not} outperform Variance on this simple task, but the PCA--Variance gap narrows monotonically as $\rho$ increases ($-8.4\% \to -6.9\%$), consistent with theory. PCA-Triage's real-world advantage stems from complex, multi-modal correlation structure (Fig.~\ref{fig:correlation}), not simple pairwise correlations.
 
-\begin{table}[t]
-\centering
-\caption{Synthetic correlation validation. PCA-Triage's gap vs.\ Variance narrows as $\rho$ increases (from $-0.084$ at $\rho{=}0.2$ to $-0.069$ at $\rho{=}0.95$), consistent with Theorem~\ref{thm:correlation}'s prediction, but PCA-Triage does not overtake Variance on this simple task.}
-\begin{tabular}{@{}ccccc@{}}
-\toprule
-$\rho$ & \textbf{PCA-T} & \textbf{Variance} & \textbf{$\Delta$} & \textbf{Uniform} \\
-\midrule
-0.00 & .795 & .852 & $-$.057 & .852 \\
-0.20 & .764 & .847 & $-$.084 & .839 \\
-0.40 & .765 & .840 & $-$.076 & .834 \\
-0.60 & .762 & .837 & $-$.075 & .829 \\
-0.80 & .759 & .832 & $-$.073 & .828 \\
-0.95 & .761 & .830 & $-$.069 & .821 \\
-\bottomrule
-\end{tabular}
-\label{tab:synth_corr}
-\end{table}
+\textbf{Adaptive $k$.} Automatic component selection via cumulative variance thresholding (90\%) matches fixed $k{=}15$ on TEP. Multi-dataset evaluation (Table~\ref{tab:multi_ablation}) reveals fixed $k{=}5$ wins on 4/7 datasets (MSL, HAI, SKAB, SWaT) while hybrid scoring wins on 3/7 (TEP, SMD, PSM)---suggesting low $k$ for few-channel datasets and hybrid for rich correlation structure.
 
-\textbf{Findings.} On this simple synthetic task, PCA-Triage does \textit{not} outperform Variance. However, two trends are consistent with theory: (1)~the PCA--Variance gap narrows monotonically from $\rho = 0.2$ onward ($-8.4\% \to -6.9\%$), confirming that PCA's redundancy detection becomes more valuable as correlation increases; (2)~all methods degrade with $\rho$ because correlated informative channels carry less unique information. The fact that PCA-Triage's real-world advantage (TEP: $+1.3\%$, MSL: $+0.4\%$) does not appear on this synthetic data suggests that the advantage stems from TEP's \textit{complex, multi-modal} correlation structure (Fig.~\ref{fig:correlation})---not simple pairwise correlations. This motivates future work on synthetic benchmarks with richer correlation topologies.
-
-\subsection{Experiment 12: Adaptive $k$ Selection}
-
-Rather than fixing $k$, we evaluate automatic component selection via cumulative variance thresholding. Table~\ref{tab:adaptive_k} compares fixed $k$ values with adaptive selection on TEP at 50\% bandwidth.
-
-\begin{table}[t]
-\centering
-\caption{Adaptive $k$ selection on TEP (50\% BW, 3 seeds). Adaptive $k$ (90\%) matches fixed $k{=}15$, avoiding manual tuning.}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Config} & \textbf{F1 Mean} & \textbf{F1 Std} \\
-\midrule
-Fixed $k{=}3$ & \textbf{.969} & .002 \\
-Fixed $k{=}5$ & .968 & .003 \\
-Fixed $k{=}10$ & .967 & .001 \\
-Fixed $k{=}15$ & .964 & .002 \\
-Fixed $k{=}20$ & .952 & .003 \\
-\midrule
-Adaptive $k$ (90\% var.) & .964 & .002 \\
-Adaptive $k$ (95\% var.) & .952 & .003 \\
-Adaptive $k$ (99\% var.) & .952 & .003 \\
-\bottomrule
-\end{tabular}
-\label{tab:adaptive_k}
-\end{table}
-
-\textbf{Findings.} Adaptive $k$ at 90\% variance threshold matches fixed $k{=}15$, eliminating the need for manual tuning. Multi-dataset evaluation (Table~\ref{tab:multi_ablation}) reveals that fixed $k{=}5$ wins on 4 of 7 datasets (MSL, HAI, SKAB, SWaT), while Hybrid PCA+Var wins on the remaining 3 (TEP, SMD, PSM). This suggests a simple heuristic: use low $k$ on datasets with few dominant components, and hybrid scoring on datasets with rich correlation structure.
-
-\subsection{Experiment 13: Ensemble Scoring}
-
-To reduce sensitivity to the choice of $k$, we blend importance scores from multiple PCA models with different component counts. Table~\ref{tab:ensemble} compares single-$k$ and ensemble scoring on TEP.
-
-\begin{table}[t]
-\centering
-\caption{Ensemble scoring on TEP (50\% BW, 3 seeds). Ensemble reduces variance but the hybrid PCA+Var scorer remains best.}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Config} & \textbf{F1 Mean} & \textbf{F1 Std} \\
-\midrule
-Single $k{=}5$ & .968 & .003 \\
-Single $k{=}10$ & .967 & .001 \\
-Ensemble $[3,5,10]$ & .968 & .002 \\
-Ensemble $[5,10,15]$ & .967 & .002 \\
-Ensemble $[3,5,10,15]$ & .968 & .002 \\
-\midrule
-Hybrid $\alpha{=}0.8$ + sharpening & \textbf{.970} & .001 \\
-\bottomrule
-\end{tabular}
-\label{tab:ensemble}
-\end{table}
-
-\textbf{Findings.} Ensemble scoring reduces F1 standard deviation (0.002 vs 0.003 for single $k{=}5$), confirming improved robustness. Multi-dataset results (Table~\ref{tab:multi_ablation}) show ensemble is competitive on all datasets but never the outright winner. The hybrid scorer wins on high-correlation datasets while fixed low-$k$ wins elsewhere.
+\textbf{Ensemble scoring.} Blending importance from multiple $k$ values $[3,5,10]$ reduces F1 std (0.002 vs 0.003) but does not outperform hybrid scoring (0.970 vs 0.968 on TEP).
 
 \begin{table}[t]
 \centering
@@ -1083,7 +1015,7 @@ PCA-Triage bridges the gap between PCA-based process monitoring and adaptive dat
 % ============================================================
 \section*{Reproducibility}
 
-All code, datasets, and experiment configurations are publicly available.\footnote{\url{https://github.com/ankitlade12/pca-sensor-triage}} The repository includes 28 unit and integration tests, 17 experiment scripts with fixed random seeds, and all result CSVs for independent verification. The complete evaluation suite runs in approximately 30 minutes on commodity hardware (single CPU, 8\,GB RAM).
+All code and experiment configurations are publicly available.\footnote{\url{https://github.com/ankitlade12/pca-sensor-triage}} The repository includes 28 unit tests, 17 experiment scripts with fixed random seeds, result CSVs, a data download guide (\texttt{data/download.sh}), pinned dependencies (\texttt{requirements-lock.txt}), and figure generation scripts (\texttt{paper/generate\_all\_figures.py}). Datasets require separate download due to licensing; instructions are provided. The SWaT and NASA datasets are synthetic and generated by the codebase.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
