@@ -1075,7 +1075,7 @@ PCA-Triage bridges the gap between PCA-based process monitoring and adaptive dat
 % ============================================================
 \section*{Reproducibility}
 
-All code, datasets, and experiment configurations are publicly available.\footnote{\url{https://github.com/ankitlade12/pca-sensor-triage}} The repository includes 28 unit and integration tests, 17 experiment scripts with fixed random seeds, and all result CSVs for independent verification. The complete evaluation suite runs in approximately 30 minutes on commodity hardware (single CPU, 8\,GB RAM).
+All code, experiment scripts, and result CSVs are publicly available.\footnote{\url{https://github.com/ankitlade12/pca-sensor-triage}} The repository includes 64 unit and integration tests, 17 experiment scripts with fixed random seeds, a dependency lock file (\texttt{requirements-lock.txt}), and a download script (\texttt{data/download\_datasets.sh}) with instructions for obtaining each benchmark dataset from its original source. Datasets are not redistributed due to size and licensing; see \texttt{data/README.md} for URLs and preprocessing steps. The SWaT stand-in is generated on-the-fly from \texttt{src/utils/synthetic\_datasets.py}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
