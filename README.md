@@ -337,16 +337,16 @@ PCA-Triage's Pareto curve on TEP is essentially **flat from 30% bandwidth onward
 
 ### 8.4 Adaptivity Under Fault Onset
 
-Reaction time (windows until top-5 channel importance changes) on TEP:
+Reaction time (windows until importance shift > 20%, from `paper/tables/reaction_time_comparison.csv`) on TEP at λ=0.85:
 
-| Fault | λ=0.85 | λ=0.90 | λ=0.95 | λ=1.00 |
-|-------|:---:|:---:|:---:|:---:|
-| IDV(1) A/C Feed | 0 | 1 | 3 | 19 |
-| IDV(2) B Composition | 0 | 0 | 0 | 19 |
-| IDV(4) Reactor CW | 3 | 5 | 9 | 19 |
-| IDV(5) Condenser CW | 3 | 4 | 8 | 19 |
+| Fault | PCA-Triage | Variance | Threshold |
+|-------|:---:|:---:|:---:|
+| IDV(1) A/C Feed | 19 | 0 | 19 |
+| IDV(2) B Composition | 19 | 19 | 19 |
+| IDV(4) Reactor CW | 19 | 19 | 19 |
+| IDV(5) Condenser CW | 19 | 19 | 19 |
 
-λ<=0.80 reacts within 0-3 windows. λ=0.85 reacts in up to 19 windows. λ=1.0 (no forgetting) gives best F1 but slowest reaction — users choose based on accuracy vs adaptivity priority.
+At λ=0.85 and the 20% shift threshold, reaction takes up to 19 windows (one full window cycle). Lower λ (<=0.80) yields 0-3 window reaction at the cost of noisier importance estimates (see `figures/reaction_time_vs_lambda.png`). λ=1.0 gives best F1 but slowest reaction — users choose based on accuracy vs adaptivity priority.
 
 **Fault 1 narrative:** After A/C feed ratio disturbance onset, PCA-Triage shifts bandwidth toward the directly responsible channels:
 - `xmv_3` (A Feed Flow valve): **9% → 38% sampling rate** (+42%)
@@ -561,7 +561,7 @@ pre-commit install
 ```bash
 make help           # Show all commands
 make smoke          # Quick smoke test (no data needed, ~2s)
-make test           # Run full test suite (28 tests, ~1s)
+make test           # Run full test suite (64 tests, ~2s)
 make lint           # Run ruff linter
 make benchmark-quick  # Budget=0.5 comparison across 7 datasets (~15 min)
 make benchmark      # Full Pareto sweep: 7 datasets x 9 budgets (~2-4 hours)
@@ -642,7 +642,7 @@ python experiments/run_scalability.py
 python experiments/run_component_contribution.py
 
 # Exp 7: Statistical tests (Friedman + Nemenyi + Wilcoxon)
-python experiments/run_statistical_tests.py
+python experiments/run_statistical_tests_v1.py  # Canonical stats from table2
 ```
 
 Results are written to `experiments/results/`.
@@ -682,11 +682,11 @@ experiments/
     run_pareto_v2_full.py            # Full Pareto sweep (all budgets)
     run_pareto.py                    # Legacy Pareto experiment
     run_ablation.py                  # Hyperparameter ablation
-    run_statistical_tests.py         # Friedman + Wilcoxon tests
+    run_statistical_tests_v1.py      # Canonical Friedman + Wilcoxon (from table2)
     run_*.py                         # 12 experiment scripts total
     results/                         # CSV/JSON output files
 
-tests/                               # 28 tests
+tests/                               # 64 tests
     test_triage.py                   # Core algorithm + all features
     test_baselines.py                # All 7 baselines
     test_integration.py              # End-to-end pipeline tests
@@ -707,10 +707,6 @@ scripts/                                    # Analysis and deployment
     analyze_results.py                      # Summary tables + Wilcoxon tests
     smoke_test.sh                           # Quick health check (~10s)
     run_full_benchmark.sh                   # Run all 5 experiments end-to-end
-
-docs/                                       # Documentation
-    DESIGN_DECISIONS.md                     # 9 key engineering decisions with rationale
-    CHANGELOG.md                            # Version history
 
 references/                                 # 36 annotated papers
     core_papers_week1.md                    # Papers 1–10
