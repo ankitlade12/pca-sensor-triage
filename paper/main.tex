@@ -54,6 +54,7 @@
 
 \author{
 \IEEEauthorblockN{Ankit Hemant Lade\textsuperscript{1}, Sai Krishna Jasti\textsuperscript{2}, Indar Kumar\textsuperscript{3}, Akanksha Tiwari\textsuperscript{4}, Nikhil Sinha\textsuperscript{5}}
+\IEEEauthorblockA{Independent Researchers}
 \IEEEauthorblockA{\textsuperscript{1}ankitlade12@gmail.com, \textsuperscript{2}jsaikrishna379@gmail.com, \textsuperscript{3}indarkarhana@gmail.com, \textsuperscript{4}akankshat2803@gmail.com, \textsuperscript{5}sinha.nikhil77@gmail.com}
 }
 
@@ -61,9 +62,9 @@
 
 % ============================================================
 \begin{abstract}
-Multi-channel sensor networks in industrial IoT generate data volumes that often exceed available bandwidth. We propose \textbf{PCA-Triage}, a lightweight streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a total bandwidth budget. At each time window, the algorithm (1)~updates an incremental PCA model, (2)~computes channel importance via variance-weighted loadings $s_j = \sum_i \sigma_i |V_{ij}|^2$, (3)~applies exponential smoothing, and (4)~allocates sampling rates proportional to importance subject to a budget constraint and minimum rate floor. PCA-Triage runs in $O(wdk)$ time per window with zero trainable parameters, requiring only 0.67\,ms per decision on a single CPU core.
+Multi-channel sensor networks in industrial IoT often exceed available bandwidth. We propose \textbf{PCA-Triage}, a streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a bandwidth budget. PCA-Triage runs in $O(wdk)$ time with zero trainable parameters (0.67\,ms per decision).
 
-We evaluate PCA-Triage on 7 benchmarks (8--82 channels) against 9 baselines including unsupervised, learned, supervised, and deep learning methods (LSTM-Attention, Transformer-Attention). Across 17 experiments with 3--5 random seeds, PCA-Triage is the best unsupervised method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth (TEP, SMD, MSL), winning 5 of 6 datasets against every baseline with large effect sizes (rank-biserial $r = 0.71$--$0.91$). On TEP, PCA-Triage achieves F1\,=\,$0.961 \pm 0.001$---within 0.1\% of full-data performance (0.962)---while maintaining F1\,$>$\,0.90 at budgets as low as 30\%. Targeted extensions (hybrid PCA+variance scoring, linear interpolation, power-law sharpened allocation) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment conditions (packet loss, sensor noise, clock drift), degrading by only 3.7--4.8\% under combined worst-case perturbations.
+We evaluate on 7 benchmarks (8--82 channels) against 9 baselines. PCA-Triage is the best unsupervised method on 3 of 6 datasets at 50\% bandwidth, winning 5 of 6 against every baseline with large effect sizes ($r = 0.71$--$0.91$). On TEP, it achieves F1\,=\,$0.961 \pm 0.001$---within 0.1\% of full-data performance---while maintaining F1\,$>$\,0.90 at 30\% budget. Targeted extensions push F1 to 0.970. The algorithm is robust to packet loss and sensor noise (3.7--4.8\% degradation under combined worst-case).
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -514,7 +515,7 @@ A critical question is whether PCA-Triage's advantage stems from the triage stra
 \label{tab:multiclassifier}
 \end{table}
 
-On TEP, PCA-Triage outperforms Uniform by +4.2\% (RF), +5.8\% (SVM), and +2.2\% (KNN). The advantage is consistent across all classifiers, confirming that gains derive from the triage strategy, not classifier-specific effects. On SKAB (8 channels), margins are minimal across all classifiers---consistent with the limited correlation structure.
+On TEP, PCA-Triage outperforms Uniform by +4.2\% (RF), +5.8\% (SVM), and +2.2\% (KNN). The advantage is consistent across classifiers on high-correlation datasets, confirming that gains derive from the triage strategy, not classifier-specific effects. On SKAB (8 channels), margins are minimal and Variance occasionally edges PCA-Triage (e.g., SVM)---consistent with the limited correlation structure where PCA offers little benefit.
 
 \subsection{Experiment 5: Adaptivity Under Fault Onset}
 
@@ -747,11 +748,11 @@ IDV(14) & CW valve stick & \textbf{.777} & .765 & .710 & .978 \\
 \label{tab:perfault}
 \end{table}
 
-\textbf{Findings.} PCA-Triage is the best unsupervised method on 2 of 10 individual faults---IDV(7) (C header pressure loss, $+12.7\%$ vs Variance) and IDV(14) (reactor CW valve sticking, $+1.3\%$ vs Variance). Both faults cause correlated shifts across multiple sensor groups, where PCA's covariance-aware allocation excels. Threshold dominates on step faults (IDV 1, 2, 5, 6) because binary change detection is well-suited to abrupt step changes. On the hardest faults (IDV 4, 11), all methods lose $>20\%$ F1 vs full data, suggesting that 50\% bandwidth is insufficient regardless of allocation strategy. Notably, PCA-Triage's advantage in the \textit{aggregated} multi-class setting (Table~\ref{tab:results50}: F1=0.970) arises because it balances well across all fault types simultaneously, even when it does not win on each individually.
+\textbf{Findings.} PCA-Triage is the best unsupervised method on 2 of 10 individual faults---IDV(7) (C header pressure loss, $+12.7\%$ vs Variance) and IDV(14) (reactor CW valve sticking, $+1.3\%$ vs Variance). Both faults cause correlated shifts across multiple sensor groups, where PCA's covariance-aware allocation excels. Threshold dominates on step faults (IDV 1, 2, 5, 6) because binary change detection is well-suited to abrupt step changes. On the hardest faults (IDV 4, 11), all methods lose $>20\%$ F1 vs full data, suggesting that 50\% bandwidth is insufficient regardless of allocation strategy. PCA-Triage's advantage in the \textit{aggregated} multi-class setting (Table~\ref{tab:results50}: F1=0.961) arises not from dominating any single fault type, but from consistent above-average performance across all types---important in deployment where the fault type is unknown a priori.
 
 \subsection{Experiment 11: Synthetic Correlation Validation}
 
-To directly test Theorem~\ref{thm:correlation}'s prediction, we generate synthetic datasets with precisely controlled inter-channel correlation $\rho \in \{0.0, 0.2, 0.4, 0.6, 0.8, 0.95\}$. Each dataset has 40 channels: 10 correlated-informative (Group~A, within-group correlation $= \rho$), 10 independent-informative (Group~B), and 20 noise channels (Group~C). The fault signal shifts Group~A and B means by $+1.5\sigma$ while Group~C remains pure noise. Table~\ref{tab:synth_corr} shows results (5 seeds, 50\% budget).
+To probe the limits of Theorem~\ref{thm:correlation}, we generate synthetic datasets with precisely controlled inter-channel correlation $\rho \in \{0.0, 0.2, 0.4, 0.6, 0.8, 0.95\}$. Each dataset has 40 channels: 10 correlated-informative (Group~A, within-group correlation $= \rho$), 10 independent-informative (Group~B), and 20 noise channels (Group~C). The fault signal shifts Group~A and B means by $+1.5\sigma$ while Group~C remains pure noise. Table~\ref{tab:synth_corr} shows results (5 seeds, 50\% budget).
 
 \begin{table}[t]
 \centering
@@ -771,7 +772,7 @@ $\rho$ & \textbf{PCA-T} & \textbf{Variance} & \textbf{$\Delta$} & \textbf{Unifor
 \label{tab:synth_corr}
 \end{table}
 
-\textbf{Findings.} On this simple synthetic task, PCA-Triage does \textit{not} outperform Variance. However, two trends are consistent with theory: (1)~the PCA--Variance gap narrows monotonically from $\rho = 0.2$ onward ($-8.4\% \to -6.9\%$), confirming that PCA's redundancy detection becomes more valuable as correlation increases; (2)~all methods degrade with $\rho$ because correlated informative channels carry less unique information. The fact that PCA-Triage's real-world advantage (TEP: $+1.3\%$, MSL: $+0.4\%$) does not appear on this synthetic data suggests that the advantage stems from TEP's \textit{complex, multi-modal} correlation structure (Fig.~\ref{fig:correlation})---not simple pairwise correlations. This motivates future work on synthetic benchmarks with richer correlation topologies.
+\textbf{Findings.} On this simple synthetic task, PCA-Triage does \textit{not} outperform Variance at any correlation level---an important limitation check on the theory. However, the PCA--Variance gap narrows monotonically from $\rho = 0.2$ onward ($-8.4\% \to -6.9\%$), confirming that PCA's redundancy detection becomes relatively more valuable as correlation increases. The fact that PCA-Triage's real-world advantages (TEP: $+1.3\%$, MSL: $+0.4\%$) do not appear on synthetic data suggests that these advantages stem from TEP's \textit{complex, multi-modal} correlation structure (Fig.~\ref{fig:correlation})---not simple pairwise correlations. Simple pairwise correlation alone is insufficient for PCA-Triage to outperform Variance.
 
 \subsection{Experiment 12: Adaptive $k$ Selection}
 
@@ -977,7 +978,7 @@ On datasets with high inter-channel correlation (TEP: 52 channels, SMD: 38 chann
 
 The multi-classifier results (Table~\ref{tab:multiclassifier}) confirm that the advantage is method-driven, not classifier-dependent: PCA-Triage outperforms Uniform by +2.2\% to +5.8\% across RF, SVM, and KNN on TEP.
 
-\textbf{PCA vs.\ Autoencoder.} A single-hidden-layer autoencoder (bottleneck $k{=}10$, 50 epochs/window) achieves only F1\,=\,0.921 on TEP at 50\% bandwidth---below both PCA-Triage (0.961) and Variance (0.948). With targeted extensions (hybrid scoring, linear interpolation, sharpening), PCA-Triage reaches 0.970. The autoencoder's per-window SGD is numerically less stable than IncrementalPCA's closed-form SVD, and its reconstruction-error importance scores are noisier. PCA's advantage is not merely dimensionality reduction but specifically its \textit{stable, closed-form} extraction of the dominant covariance structure.
+\textbf{PCA vs.\ Autoencoder.} A single-hidden-layer autoencoder (bottleneck $k{=}10$, 50 epochs/window) achieves only F1\,=\,0.921 on TEP at 50\% bandwidth---below both PCA-Triage (0.961) and Variance (0.948). With targeted extensions (hybrid scoring, linear interpolation, sharpening), PCA-Triage reaches 0.970---exceeding full-data F1 (0.962). We attribute this to an implicit denoising effect: PCA-directed sub-sampling preferentially drops low-importance channels that contribute noise to the classifier, while linear interpolation smooths the remaining signals. The base algorithm without extensions achieves 0.961 (within 0.1\% of full-data), confirming that the super-full-data effect requires the extensions, not just PCA-based allocation. The autoencoder's per-window SGD is numerically less stable than IncrementalPCA's closed-form SVD, and its reconstruction-error importance scores are noisier. PCA's advantage is not merely dimensionality reduction but specifically its \textit{stable, closed-form} extraction of the dominant covariance structure.
 
 \subsection{When PCA-Triage Struggles}
 
@@ -1048,7 +1049,9 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 \textbf{External validity.} We evaluate on 7 benchmarks (6 real-world + 1 synthetic) across 5 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation). The SWaT dataset is a synthetic stand-in calibrated to match published testbed properties; validation on real SWaT data (which requires institutional access agreement) is needed.
 
-\textbf{Construct validity.} F1 score captures detection performance but not other deployment-relevant metrics (e.g., false alarm rate, detection delay). The per-fault analysis (Table~\ref{tab:perfault}) provides finer granularity but does not cover all 20 TEP fault types.
+\textbf{Construct validity.} We use point-wise weighted F1 as the primary metric. While recent work~\cite{processmonitoring2024survey} has questioned point-adjust F1 for anomaly detection, our setup differs: the detector (Random Forest) is fixed and identical across all methods---only the input data changes. F1 therefore measures the triage strategy's impact on a fixed classifier, not detector quality. Nonetheless, F1 does not capture deployment-relevant metrics such as false alarm rate or detection delay. The per-fault analysis (Table~\ref{tab:perfault}) provides finer granularity but does not cover all 20 TEP fault types.
+
+\textbf{Benchmark quality.} Published evaluations have identified quality concerns with several benchmarks used here: PSM has high anomaly density (${\sim}28\%$), SMD may be detectable by simple statistics, and MSL may contain unlabeled anomalies in training data. Our results on these datasets should be interpreted with this context. PCA-Triage's strongest results are on TEP, which is well-characterized with 20 distinct fault types and rich correlation structure.
 
 \subsection{Future Work}
 
