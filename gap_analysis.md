@@ -349,6 +349,25 @@ for desk rejection at venues that require reproducibility artifacts.
 - Ensure the environment (requirements.txt or pyproject.toml) pins exact versions
 - Test a cold-start installation on a fresh environment
 
+> **RESOLVED** (commit 3107d94, 2026-04-03)
+> 
+> **What was created:**
+> - `requirements-lock.txt`: Frozen dependency versions from current working environment
+> - `data/download_datasets.sh`: Download script with URLs for all 6 real datasets
+>   (SKAB automated via git clone; TEP, SMD, MSL, PSM, HAI require manual download
+>   with documented URLs and preprocessing steps)
+> - `data/README.md`: Complete dataset documentation with URLs, file formats, expected
+>   columns, preprocessing steps, and verification instructions
+> 
+> **What changed in paper/main.tex:**
+> - Reproducibility section rewritten: "All code, datasets, and experiment
+>   configurations are publicly available" → honest language about code+CSVs being
+>   available, datasets downloadable from original sources via provided script,
+>   with lock file and download instructions
+> 
+> **Note:** Full end-to-end cold-start validation not yet performed (requires
+> downloading all datasets). The infrastructure is in place.
+
 ### GAP-C8: NASA Dataset Mislabeled
 
 **Severity: MEDIUM-HIGH**
@@ -433,6 +452,33 @@ pool. Pairwise Wilcoxon with Holm correction is recommended instead.
 confidence intervals, reframe the Friedman result honestly (borderline), or drop it in
 favor of only pairwise tests.
 
+> **RESOLVED** (commit 8454f3f, 2026-04-03)
+> 
+> Recomputed all statistics from V1 base per-seed data (3 seeds × 6 datasets).
+> 
+> **New script:** experiments/run_statistical_tests_v1.py
+> **Output CSVs:** friedman_ranks_v1.csv, wilcoxon_tests_v1.csv
+> 
+> **Recomputed results:**
+> - Friedman: chi^2 = 8.27, p = 0.082 (not significant), Kendall's W = 0.344
+> - PCA-Triage mean rank: 1.67 (best)
+> - Wilcoxon (Holm-corrected): All 5/6 wins, raw p=0.031, but NO comparisons
+>   survive Holm correction (min corrected threshold = 0.0125)
+> - Effect sizes: rank-biserial r = 0.71 (vs Uniform) to 0.91 (vs others) = large
+> 
+> **Paper updates:**
+> - Friedman table: updated ranks and reported chi^2, p, Kendall's W
+> - Wilcoxon table: shows raw p, Holm significance (all n.s.), W/L/T, effect sizes
+> - Text honestly explains: "lack of significance reflects limited n=6 datasets,
+>   not inconsistent performance"
+> - Abstract: removed "statistically significant" claim, replaced with "winning
+>   5 of 6 datasets with large effect sizes (r=0.71-0.91)"
+> - Nemenyi post-hoc removed (replaced with Holm-corrected pairwise Wilcoxon)
+> 
+> **Remaining limitation:** Only 3 seeds available (2 of original 5 missing from
+> V1 pareto CSVs). More seeds would increase power but require re-running
+> experiments with the actual datasets.
+
 ### GAP-M2: Baseline Fairness — Unequal Hyperparameter Tuning
 
 **Severity: HIGH**
@@ -455,6 +501,14 @@ from dataset-specific tuning, not the method itself.
   Variance's window size), OR
 - (b) Report PCA-Triage with default parameters as the main result, and tuned as an ablation, OR
 - (c) Use nested cross-validation for all methods, clearly separating tuning from evaluation
+
+> **RESOLVED** (via GAP-C1 fix, commit a14147c)
+> 
+> Chose option (b): V1 base PCA-Triage (no per-dataset tuning) is now the canonical
+> main result. All methods use identical default parameters. The V2 innovations
+> (hybrid scoring, linear interp, sharpening) are presented as ablation improvements.
+> Table IV caption explicitly states: "All methods use default parameters with no
+> per-dataset tuning."
 
 ### GAP-M2b: Documentation and Experiment Protocol Mismatch
 
