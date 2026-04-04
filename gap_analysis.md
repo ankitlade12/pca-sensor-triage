@@ -620,6 +620,22 @@ The paper uses the edge-simulated number. This is technically valid ("single CPU
 **Recommendation:** Report both numbers in the paper. State clearly: "0.67 ms (single-
 threaded, simulating edge deployment) and 1.46 ms (laptop, multi-threaded overhead)."
 
+> **RESOLVED** (2026-04-03)
+> 
+> Compute cost table now shows TWO columns: "ms (edge)" and "ms (laptop)" for all
+> methods. Table caption clarifies: "Edge = single-threaded simulation; Laptop =
+> multi-threaded measurement." Figure caption already had both numbers.
+> 
+> Also resolved during this pass:
+> - **"Matching full-data"** language → changed to "within 0.1% of full-data" in all
+>   4 instances (abstract, figure caption, regret intuition, conclusion). Factual: 
+>   0.961 vs 0.962 = 0.1% relative difference.
+> - **Source CSV traceability**: Added LaTeX comments linking bandwidth sensitivity
+>   table to V1 base pipeline and reconstruction table to its source CSV.
+>   Reconstruction CSV values verified cell-by-cell. Bandwidth sensitivity table
+>   confirmed as V1 base (matches 0.961 at 50%), but pareto_tep.csv contains V2
+>   tuned values — comment clarifies this.
+
 ### GAP-P2: Paper Length and Structure
 
 At ~1100 lines of LaTeX with 17 experiments, 14 figures, and 10+ tables, this paper is

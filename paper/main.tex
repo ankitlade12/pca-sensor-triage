@@ -63,7 +63,7 @@
 \begin{abstract}
 Multi-channel sensor networks in industrial IoT generate data volumes that often exceed available bandwidth. We propose \textbf{PCA-Triage}, a lightweight streaming algorithm that converts incremental PCA loadings into proportional per-channel sampling rates under a total bandwidth budget. At each time window, the algorithm (1)~updates an incremental PCA model, (2)~computes channel importance via variance-weighted loadings $s_j = \sum_i \sigma_i |V_{ij}|^2$, (3)~applies exponential smoothing, and (4)~allocates sampling rates proportional to importance subject to a budget constraint and minimum rate floor. PCA-Triage runs in $O(wdk)$ time per window with zero trainable parameters, requiring only 0.67\,ms per decision on a single CPU core.
 
-We evaluate PCA-Triage on 7 benchmarks (8--82 channels) against 9 baselines including unsupervised, learned, supervised, and deep learning methods (LSTM-Attention, Transformer-Attention). Across 17 experiments with 3--5 random seeds, PCA-Triage is the best unsupervised method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth (TEP, SMD, MSL), with statistically significant advantages (Wilcoxon $p < 0.05$) against Uniform and Variance baselines. On TEP, PCA-Triage achieves F1\,=\,$0.961 \pm 0.001$---matching full-data performance (0.962)---while maintaining F1\,$>$\,0.90 at budgets as low as 30\%. Targeted extensions (hybrid PCA+variance scoring, linear interpolation, power-law sharpened allocation) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment conditions (packet loss, sensor noise, clock drift), degrading by only 3.7--4.8\% under combined worst-case perturbations.
+We evaluate PCA-Triage on 7 benchmarks (8--82 channels) against 9 baselines including unsupervised, learned, supervised, and deep learning methods (LSTM-Attention, Transformer-Attention). Across 17 experiments with 3--5 random seeds, PCA-Triage is the best unsupervised method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth (TEP, SMD, MSL), with statistically significant advantages (Wilcoxon $p < 0.05$) against Uniform and Variance baselines. On TEP, PCA-Triage achieves F1\,=\,$0.961 \pm 0.001$---within 0.1\% of full-data performance (0.962)---while maintaining F1\,$>$\,0.90 at budgets as low as 30\%. Targeted extensions (hybrid PCA+variance scoring, linear interpolation, power-law sharpened allocation) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment conditions (packet loss, sensor noise, clock drift), degrading by only 3.7--4.8\% under combined worst-case perturbations.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -325,7 +325,7 @@ Under forward-fill reconstruction, the per-channel expected squared error for ch
 where $\Delta_j^2 = \mathbb{E}[(x_t[j] - x_{t-1}[j])^2]$ is the channel's step variance. PCA-Triage minimizes total reconstruction error by assigning higher rates to channels with both high PCA importance \textit{and} high step variance.
 \end{corollary}
 
-\textbf{Regret intuition.} Let $\epsilon_k = 1 - \sum_{i=1}^k \lambda_i / \sum_{i=1}^d \lambda_i$ denote the fraction of variance not captured by the top-$k$ components. As $k$ increases, PCA-Triage's importance scores better approximate the true channel structure, and the allocation approaches oracle quality. For TEP with $k{=}10$, the top-10 components explain ${\sim}95\%$ of variance ($\epsilon_k \approx 0.05$), suggesting that the allocation is near-optimal. This aligns with the empirical finding that PCA-Triage at 50\% budget matches full-data performance.
+\textbf{Regret intuition.} Let $\epsilon_k = 1 - \sum_{i=1}^k \lambda_i / \sum_{i=1}^d \lambda_i$ denote the fraction of variance not captured by the top-$k$ components. As $k$ increases, PCA-Triage's importance scores better approximate the true channel structure, and the allocation approaches oracle quality. For TEP with $k{=}10$, the top-10 components explain ${\sim}95\%$ of variance ($\epsilon_k \approx 0.05$), suggesting that the allocation is near-optimal. This aligns with the empirical finding that PCA-Triage at 50\% budget achieves F1 within 0.1\% of full-data performance.
 
 \begin{proposition}[Adaptation Rate]
 \label{prop:adaptation}
@@ -434,6 +434,8 @@ Fig.~\ref{fig:pareto} shows F1 vs.\ bandwidth trade-off across all 6 Pareto-eval
 
 Table~\ref{tab:bw_sensitivity} provides exact F1 values across all bandwidth levels and unsupervised methods on TEP. PCA-Triage is the best unsupervised method in the \textit{critical} 30--50\% budget range---precisely where bandwidth is most constrained. At low budgets ($\leq 20\%$), Uniform performs best because aggressive triage can silence informative channels. At high budgets ($\geq 60\%$), Threshold matches or exceeds PCA-Triage because sufficient bandwidth makes fine-grained proportional allocation unnecessary.
 
+% Source: V1 base pipeline (pure PCA, forward-fill, RF-100).
+% pareto_tep.csv contains V2 tuned values — not used here.
 \begin{table}[t]
 \centering
 \caption{TEP F1 across bandwidth levels (3-seed mean, base PCA scoring). \textbf{Bold} = best unsupervised per row. PCA-Triage wins at $B \in \{30\%, 40\%, 50\%\}$---the operationally critical range.}
@@ -481,7 +483,7 @@ Fig.~\ref{fig:method_comparison} visualizes the TEP results as a bar chart, comp
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.95\columnwidth]{figures/method_comparison_50pct.png}
-\caption{TEP fault detection F1 at 50\% bandwidth. PCA-Triage (0.961) matches full-data performance (0.962) and outperforms all unsupervised baselines with zero trainable parameters.}
+\caption{TEP fault detection F1 at 50\% bandwidth. PCA-Triage (0.961) within 0.1\% of full-data performance (0.962) and outperforms all unsupervised baselines with zero trainable parameters.}
 \label{fig:method_comparison}
 \end{figure}
 
@@ -661,6 +663,7 @@ In summary, the contribution hierarchy is: \textit{data-driven allocation} $>$ \
 
 The choice of reconstruction method (how to fill dropped samples) affects downstream performance. Table~\ref{tab:recon} compares three strategies with PCA-Triage importance scoring across budget levels.
 
+% Source: experiments/results/reconstruction_comparison.csv
 \begin{table}[t]
 \centering
 \caption{Reconstruction method comparison on TEP (3 seeds). Linear interpolation outperforms forward-fill at all budgets, with the largest gain at low bandwidth.}
@@ -685,18 +688,18 @@ Table~\ref{tab:compute} reports per-window compute time and memory for all metho
 
 \begin{table}[t]
 \centering
-\caption{Computational profile (TEP, $d{=}52$, $w{=}100$). PCA-Triage runs in 0.67\,ms vs.\ 7.73\,ms for MI. $^\ddagger$Coefficients = computed model values ($kd$ for PCA), \textit{not} trainable parameters. PCA-Triage has zero trainable parameters.}
-\begin{tabular}{@{}lccc@{}}
+\caption{Computational profile (TEP, $d{=}52$, $w{=}100$). Edge = single-threaded simulation; Laptop = multi-threaded measurement. $^\ddagger$Coefficients = computed model values ($kd$ for PCA), \textit{not} trainable parameters.}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Method} & \textbf{ms/window} & \textbf{Peak MB} & \textbf{Coefficients$^\ddagger$} \\
+\textbf{Method} & \textbf{ms (edge)} & \textbf{ms (laptop)} & \textbf{Peak MB} & \textbf{Coeff.$^\ddagger$} \\
 \midrule
-PCA-Triage & 0.67 & 8.5 & 520 \\
-Uniform & 0.06 & 24.8 & 0 \\
-Threshold & 0.16 & 8.1 & 0 \\
-Variance & 0.15 & 8.1 & 0 \\
-Random Dropout & 0.06 & 8.1 & 0 \\
-Random Proj. & 0.18 & 8.2 & 9,600 \\
-Mutual Info & 7.73 & 31.8 & 0 \\
+PCA-Triage & 0.67 & 1.46 & 8.5 & 520 \\
+Uniform & 0.06 & 0.07 & 24.8 & 0 \\
+Threshold & 0.16 & 0.75 & 8.1 & 0 \\
+Variance & 0.15 & 0.70 & 8.1 & 0 \\
+Random Dropout & 0.06 & 0.12 & 8.1 & 0 \\
+Random Proj. & 0.18 & 0.70 & 8.2 & 9,600 \\
+Mutual Info & 7.73 & 7.73 & 31.8 & 0 \\
 \bottomrule
 \end{tabular}
 \label{tab:compute}
@@ -1063,7 +1066,7 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 We presented PCA-Triage, a streaming algorithm that converts incremental PCA loadings into proportional per-channel bandwidth allocation for sensor networks. Our theoretical analysis establishes budget feasibility, importance score convergence, and PCA's advantage over variance-based methods under inter-channel correlation.
 
-Across 17 experiments on 7 benchmarks with 9 baselines, PCA-Triage is the best unsupervised triage method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth, achieving F1\,=\,$0.961 \pm 0.001$ on TEP---matching full-data performance (0.962)---while running in 0.67\,ms per decision with zero trainable parameters. Targeted extensions (hybrid scoring, linear interpolation, power-law sharpening) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment perturbations (3.7--4.8\% degradation under combined worst-case on TEP/SMD). At the recommended 30\% budget, PCA-Triage saves 70\% of bandwidth with only 3.7\% F1 loss.
+Across 17 experiments on 7 benchmarks with 9 baselines, PCA-Triage is the best unsupervised triage method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth, achieving F1\,=\,$0.961 \pm 0.001$ on TEP---within 0.1\% of full-data performance (0.962)---while running in 0.67\,ms per decision with zero trainable parameters. Targeted extensions (hybrid scoring, linear interpolation, power-law sharpening) push TEP F1 to 0.970, exceeding full-data performance. The algorithm is robust to edge deployment perturbations (3.7--4.8\% degradation under combined worst-case on TEP/SMD). At the recommended 30\% budget, PCA-Triage saves 70\% of bandwidth with only 3.7\% F1 loss.
 
 PCA-Triage bridges the gap between PCA-based process monitoring and adaptive data acquisition, enabling bandwidth-efficient sensor networks without sacrificing fault detection accuracy. Its zero-parameter, streaming, unsupervised design makes it immediately deployable on resource-constrained edge devices.
 
