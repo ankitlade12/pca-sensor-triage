@@ -148,7 +148,7 @@ Our method optimizes the \textit{data side}---complementary to model compression
 
 \subsection{Positioning}
 
-Table~\ref{tab:positioning} summarizes the positioning of PCA-Triage relative to existing approaches across two axes: static vs.\ streaming and fixed-rule vs.\ data-driven. PCA-Triage is the first method to occupy the bottom-right cell---a streaming, data-driven, proportional allocation strategy.
+Prior work on correlation-aware sensor selection includes unsupervised feature selection via redundancy analysis~\cite{bacciu2016unsupervised}, adaptive sensor selection using cross-correlation in WSNs~\cite{ghosh2021learning, ghosh2021edge}, and adaptive sampling-rate selection under resource budgets~\cite{yang2023freqsense}. These methods use correlation-based importance but produce binary (include/exclude) decisions or fixed temporal rates. PCA-Triage builds on this foundation with incremental PCA as the importance engine, \textit{proportional} (not binary) rate allocation under a budget constraint, and zero-parameter streaming operation. Table~\ref{tab:positioning} summarizes the positioning.
 
 \begin{table}[!htbp]
 \centering
@@ -398,7 +398,7 @@ Methods 1--6 are used in the main Pareto comparison (Experiments~1--3). Methods 
 
 \subsection{Evaluation Protocol}
 
-\textbf{Metrics:} Weighted F1 score (harmonic mean of precision and recall) for fault detection. F1 is appropriate here because we compare \textit{triage methods} (not detectors): the classifier is fixed (RF) and only the input data changes. Recent criticism of F1 in anomaly detection~\cite{demsar2006statistical} applies to detector comparisons, not to our triage-vs-triage setup.
+\textbf{Metrics:} Weighted F1 score (harmonic mean of precision and recall) for fault detection. F1 is appropriate here because we compare \textit{triage methods} (not detectors): the classifier is fixed (RF) and only the input data changes. Recent criticism of F1 in anomaly detection~\cite{kim2022towards} applies to detector comparisons, not to our triage-vs-triage setup.
 
 \textbf{Seeds:} All experiments are repeated with 3--5 random seeds (3 for Pareto sweeps, 5 for ablations). We report mean $\pm$ standard deviation.
 
@@ -978,7 +978,7 @@ We quantify the practical trade-off between bandwidth savings and compute cost f
 
 \textbf{Internal validity.} All experiments use identical data splits, seeds, classifiers, and reconstruction across methods, minimizing confounds. However, Random Forest may favor certain allocation patterns over others; the multi-classifier analysis (Table~\ref{tab:multiclassifier}) mitigates this concern.
 
-\textbf{External validity.} We evaluate on 7 benchmarks (6 real-world + 1 synthetic) across 5 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation). The SWaT dataset is a synthetic stand-in; validation on real SWaT data (requiring institutional access) is needed. Additionally, recent work~\cite{demsar2006statistical} has documented quality concerns with several benchmarks (PSM's high anomaly density, SMD's trivial separability). Our triage evaluation is less affected than anomaly detection evaluations because the detector is fixed and only the input data changes, but these limitations should be noted.
+\textbf{External validity.} We evaluate on 7 benchmarks (6 real-world + 1 synthetic) across 5 domains, but all use the same evaluation protocol (sliding window + RF). Results may not transfer to fundamentally different tasks (e.g., real-time control) or reconstruction methods (e.g., model-based imputation). The SWaT dataset is a synthetic stand-in; validation on real SWaT data (requiring institutional access) is needed. Additionally, recent work~\cite{kim2022towards} has documented quality concerns with several benchmarks (PSM's high anomaly density, SMD's trivial separability). Our triage evaluation is less affected than anomaly detection evaluations because the detector is fixed and only the input data changes, but these limitations should be noted.
 
 \textbf{Construct validity.} F1 score captures detection performance but not other deployment-relevant metrics (e.g., false alarm rate, detection delay). The per-fault analysis (Table~\ref{tab:perfault}) provides finer granularity but does not cover all 20 TEP fault types.
 
