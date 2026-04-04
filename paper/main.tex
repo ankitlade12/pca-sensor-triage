@@ -109,7 +109,7 @@ The core insight behind PCA-Triage is that PCA naturally captures inter-channel 
 
 \item \textbf{Comprehensive empirical validation.} We evaluate on 7 benchmarks (8--82 sensors) against 9 baselines across 1,000+ experiments with 3--5 seeds, 3 classifiers, and 17 distinct analyses, with full statistical testing (Wilcoxon signed-rank, Friedman ranking). PCA-Triage is the best unsupervised method on 3 of 6 Pareto-evaluated datasets at 50\% bandwidth, and competitive on the remainder.
 
-\item \textbf{Edge viability.} PCA-Triage completes each decision in 0.67\,ms on a single CPU core, adapts to fault onset within 1--3 windows, and scales to 500 channels under the 5\,ms edge target.
+\item \textbf{Edge viability.} PCA-Triage completes each decision in 0.67\,ms on a single CPU core, adapts to fault onset with speed controlled by $\lambda$ (0--3 windows at $\lambda \leq 0.80$), and scales to 500 channels under the 5\,ms edge target.
 \end{enumerate}
 
 % ============================================================
@@ -146,11 +146,11 @@ Our method optimizes the \textit{data side}---complementary to model compression
 
 \subsection{Positioning}
 
-Table~\ref{tab:positioning} summarizes the positioning of PCA-Triage relative to existing approaches across two axes: static vs.\ streaming and fixed-rule vs.\ data-driven. PCA-Triage is the first method to occupy the bottom-right cell---a streaming, data-driven, proportional allocation strategy.
+Table~\ref{tab:positioning} summarizes the positioning of PCA-Triage relative to existing approaches across two axes: static vs.\ streaming and fixed-rule vs.\ data-driven. Recent work has explored correlation-aware sensor selection~\cite{bacciu2016unsupervised, ghosh2021adaptive, ghosh2021edge} and adaptive sampling-rate allocation under resource budgets~\cite{yang2023freqsense}. PCA-Triage builds on this line of work by using incremental PCA specifically as the importance engine, producing proportional (not binary) per-channel rates under a total bandwidth constraint, in a zero-parameter streaming setting.
 
 \begin{table}[!htbp]
 \centering
-\caption{Positioning matrix: PCA-Triage fills the bottom-right cell---streaming, data-driven, proportional allocation.}
+\caption{Positioning matrix. PCA-Triage combines streaming operation with data-driven proportional allocation (bottom-right cell). Prior work~\cite{bacciu2016unsupervised, ghosh2021adaptive} explores correlation-aware sensor selection but in batch or binary settings.}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 & \textbf{Static/Batch} & \textbf{Streaming/Adaptive} \\
@@ -253,7 +253,7 @@ For TEP ($d{=}52$, $k{=}10$, $w{=}50$): ${\sim}26{,}000$ FLOPs per window---well
 \section{Theoretical Analysis}
 \label{sec:theory}
 
-We provide formal guarantees for five properties of PCA-Triage: budget feasibility, importance score convergence, the advantage of PCA-based scoring over variance-based alternatives, allocation regret relative to an oracle, and adaptation rate after regime changes.
+We provide formal guarantees for four properties of PCA-Triage: budget feasibility, importance score convergence, the distinction between correlated and independent channels under PCA-based scoring, and adaptation rate after regime changes.
 
 \begin{proposition}[Budget Feasibility]
 \label{prop:budget}
@@ -283,12 +283,12 @@ Under stationarity, the raw scores converge: $s_j^{(t)} \to s_j^*$. The exponent
 The first term vanishes geometrically in $\lambda^t$ (initialization bias). The second term vanishes because $s_j^{(t)} \to s_j^*$ under stationarity. Therefore $\bar{s}_j^{(t)} \to s_j^*$.
 \end{proof}
 
-\begin{theorem}[PCA Advantage Under Correlation]
+\begin{theorem}[PCA Distinguishes Correlated from Independent Channels]
 \label{thm:correlation}
 Let channels $a$ and $b$ have equal marginal variance $\text{Var}(X_a) = \text{Var}(X_b) = \sigma^2$ but correlation $\rho_{ab} \neq 0$. Let channel $c$ be independent with $\text{Var}(X_c) = \sigma^2$. Then:
 \begin{enumerate}[leftmargin=*]
-\item Variance-based allocation assigns $r_a = r_b = r_c$ (equal rates).
-\item PCA-based allocation assigns $r_a \neq r_b$ in general, and concentrates bandwidth on the channel with higher loading in the first principal component, freeing bandwidth for $c$.
+\item Variance-based allocation assigns $r_a = r_b = r_c$ (equal rates), unable to distinguish correlated from independent channels.
+\item With $k = d$ components, PCA-based allocation also assigns equal rates. However, with $k < d$ (the standard operating regime), PCA concentrates importance on channels participating in the top-$k$ eigenspace, assigning $s_c = 0$ to channels whose variance lies entirely in dropped components.
 \end{enumerate}
 \end{theorem}
 
@@ -301,20 +301,20 @@ For PCA, the covariance matrix of $(X_a, X_b, X_c)$ is:
 \end{equation}
 The eigenvalues are $\sigma^2(1+\rho)$, $\sigma^2(1-\rho)$, $\sigma^2$. The first eigenvector is $(1/\sqrt{2}, 1/\sqrt{2}, 0)$, the second is $(1/\sqrt{2}, -1/\sqrt{2}, 0)$, and the third is $(0, 0, 1)$.
 
-Computing importance scores (Eq.~\ref{eq:importance}) with $k=3$:
+Computing importance scores (Eq.~\ref{eq:importance}) with $k=3$ (all components):
 \begin{align}
 s_a = s_b &= \tfrac{1}{2}\sigma^2(1+\rho) + \tfrac{1}{2}\sigma^2(1-\rho) = \sigma^2 \\
 s_c &= \sigma^2
 \end{align}
-With all three components, scores are again equal. However, with the standard choice $k < d$ (e.g., $k=2$ retaining 95\% variance when $\rho$ is large), the third component is dropped:
+With all three components, scores are equal---no advantage over variance. However, with $k=2$ (retaining ${\sim}95\%$ variance when $\rho$ is large), the third component is dropped:
 \begin{align}
 s_a = s_b &= \tfrac{1}{2}\sigma^2(1+\rho) + \tfrac{1}{2}\sigma^2(1-\rho) = \sigma^2 \\
 s_c &= 0
 \end{align}
-The independent channel $c$ loses all importance because its variance is captured by the dropped component. The budget is redirected to correlated channels $a, b$---which already carry redundant information. This motivates our choice of moderate $k$ (Sec.~\ref{sec:ablation}): too large captures noise, too small misses independent channels.
-
-More generally, in high-dimensional settings ($d \gg k$), PCA concentrates importance on channels that participate in the dominant covariance structure, naturally down-weighting channels whose variance is independent of the principal modes. This is precisely the redundancy that variance-based allocation cannot detect.
+The independent channel $c$ loses all importance because its variance is captured entirely by the dropped component. Budget is redirected to the correlated pair $a, b$.
 \end{proof}
+
+\textbf{Interpretation.} Theorem~\ref{thm:correlation} reveals both the power and the risk of PCA-based allocation. The power: PCA detects correlation structure that variance-based methods cannot, enabling non-uniform allocation among equal-variance channels. The risk: with $k < d$, channels whose variance lies outside the top-$k$ eigenspace receive zero importance and only the minimum rate $r_{\min}$---even if they carry unique, fault-relevant information. This motivates two design choices: (1)~moderate $k$ to avoid starving independent channels (Sec.~\ref{sec:ablation} shows $k \in [3, 10]$ is robust), and (2)~the hybrid scorer (Eq.~\ref{eq:hybrid}), which blends PCA importance with per-channel variance to preserve a baseline importance for channels outside the dominant eigenspace.
 
 \begin{corollary}[Reconstruction Error Bound]
 \label{cor:recon}
@@ -325,20 +325,7 @@ Under forward-fill reconstruction, the per-channel expected squared error for ch
 where $\Delta_j^2 = \mathbb{E}[(x_t[j] - x_{t-1}[j])^2]$ is the channel's step variance. PCA-Triage minimizes total reconstruction error by assigning higher rates to channels with both high PCA importance \textit{and} high step variance.
 \end{corollary}
 
-\begin{proposition}[Allocation Regret Bound]
-\label{prop:regret}
-Let $\mathbf{r}^*$ be the oracle allocation that maximizes downstream performance with full knowledge of the data distribution, and let $\mathbf{r}^{(t)}$ be PCA-Triage's allocation at window $t$. Under the reconstruction error model of Corollary~\ref{cor:recon}, the per-window regret in total reconstruction error satisfies:
-\begin{equation}
-\text{Regret}(t) = \sum_j (1 - r_j^{(t)}) \Delta_j^2 - \sum_j (1 - r_j^*) \Delta_j^2 \leq \frac{2 B d \cdot \Delta_{\max}^2 \cdot \epsilon_k}{1 - \epsilon_k}
-\end{equation}
-where $\epsilon_k = 1 - \sum_{i=1}^k \lambda_i / \sum_{i=1}^d \lambda_i$ is the fraction of variance not captured by the top-$k$ components, $\Delta_{\max} = \max_j \Delta_j$ is the largest channel step variance, and $\lambda_i$ are the eigenvalues of the data covariance matrix.
-\end{proposition}
-
-\begin{proof}
-The oracle allocates rates proportional to the true channel importance $s_j^* \propto \Delta_j^2$ (minimizing total reconstruction error). PCA-Triage allocates proportional to $\hat{s}_j = \sum_{i=1}^k \sigma_i V_{ij}^2$, which captures a $1 - \epsilon_k$ fraction of total variance. The maximum per-channel allocation error is bounded by $|r_j - r_j^*| \leq 2B \cdot \epsilon_k / (1 - \epsilon_k)$ (from the misallocation of the $\epsilon_k$ residual variance), and summing over $d$ channels with maximum step variance $\Delta_{\max}^2$ yields the bound. As $k \to d$, $\epsilon_k \to 0$ and regret vanishes.
-\end{proof}
-
-\textbf{Interpretation.} The regret decreases with the number of components $k$: when PCA captures most of the variance ($\epsilon_k \ll 1$), the allocation is near-optimal. For TEP with $k{=}10$, the top-10 components explain ${\sim}95\%$ of variance ($\epsilon_k \approx 0.05$), bounding regret at ${\sim}10\%$ of the oracle. This aligns with the empirical finding that PCA-Triage at 50\% budget matches full-data performance.
+\textbf{Regret intuition.} Let $\epsilon_k = 1 - \sum_{i=1}^k \lambda_i / \sum_{i=1}^d \lambda_i$ denote the fraction of variance not captured by the top-$k$ components. As $k$ increases, PCA-Triage's importance scores better approximate the true channel structure, and the allocation approaches oracle quality. For TEP with $k{=}10$, the top-10 components explain ${\sim}95\%$ of variance ($\epsilon_k \approx 0.05$), suggesting that the allocation is near-optimal. This aligns with the empirical finding that PCA-Triage at 50\% budget matches full-data performance.
 
 \begin{proposition}[Adaptation Rate]
 \label{prop:adaptation}
@@ -534,7 +521,7 @@ A key property of PCA-Triage is its ability to shift bandwidth toward fault-rele
 \begin{figure*}[!htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/adaptivity_heatmap.png}
-\caption{Channel importance adaptation under three TEP faults ($\lambda=0.85$, $w=25$). Top: Fault~1 (A/C Feed Ratio)---importance shifts to flow-related sensors. Middle: Fault~4 (Reactor CW Temp)---temperature sensors gain importance. Bottom: Fault~5 (Condenser CW Temp)---different temperature cluster highlighted. Each fault triggers a distinct importance pattern within 1--3 windows of onset.}
+\caption{Channel importance adaptation under three TEP faults ($\lambda=0.85$, $w=25$). Top: Fault~1 (A/C Feed Ratio)---importance shifts to flow-related sensors. Middle: Fault~4 (Reactor CW Temp)---temperature sensors gain importance. Bottom: Fault~5 (Condenser CW Temp)---different temperature cluster highlighted. Each fault triggers a distinct importance pattern after onset, with adaptation speed governed by $\lambda$.}
 \label{fig:adaptivity_multi}
 \end{figure*}
 
@@ -545,7 +532,7 @@ A key property of PCA-Triage is its ability to shift bandwidth toward fault-rele
 \label{fig:importance_fault1}
 \end{figure}
 
-When TEP Fault~1 (A/C feed ratio disturbance) occurs, PCA-Triage shifts bandwidth toward the responsible channels within 1--3 windows ($\lambda{=}0.85$). Fig.~\ref{fig:rates_fault1} shows the resulting sampling rate allocation: the A~Feed Flow valve (xmv\_3) jumps from 9\% to 38\% sampling rate after onset.
+When TEP Fault~1 (A/C feed ratio disturbance) occurs, PCA-Triage shifts bandwidth toward the responsible channels. Fig.~\ref{fig:rates_fault1} shows the resulting sampling rate allocation: the A~Feed Flow valve (xmv\_3) jumps from 9\% to 38\% sampling rate after onset.
 
 \begin{figure}[!htbp]
 \centering
@@ -554,7 +541,7 @@ When TEP Fault~1 (A/C feed ratio disturbance) occurs, PCA-Triage shifts bandwidt
 \label{fig:rates_fault1}
 \end{figure}
 
-\textbf{Reaction time analysis.} Table~\ref{tab:reaction} quantifies reaction speed across faults. With $\lambda = 0.85$, PCA-Triage detects importance shifts within 0--3 windows for all tested faults. Fig.~\ref{fig:reaction_lambda} shows how reaction time varies with $\lambda$.
+\textbf{Reaction time analysis.} Table~\ref{tab:reaction} quantifies reaction speed across faults with $\lambda = 0.85$, measured as windows until the top-5 channel set changes by $> 20\%$. At this threshold, reaction takes up to 19 windows (one full window cycle). Fig.~\ref{fig:reaction_lambda} shows how reaction time varies with $\lambda$: lower $\lambda$ (e.g., 0.80) yields 0--3 window reaction at the cost of noisier estimates.
 
 \begin{table}[t]
 \centering
@@ -630,7 +617,7 @@ We ablate four hyperparameters on TEP at 50\% bandwidth (5 seeds each). Fig.~\re
 \begin{itemize}[leftmargin=*]
 \item \textbf{Components $k$:} Robust for $k \in [3, 10]$ (F1 $= 0.962 \pm 0.003$). Performance degrades for $k > 15$ as noise components dilute importance scores. This validates the moderate-$k$ design discussed in Theorem~\ref{thm:correlation}.
 \item \textbf{Window size $w$:} Stable across $w \in [50, 500]$ (F1 $= 0.959$--$0.966$). Larger windows improve stability but increase latency.
-\item \textbf{Forgetting factor $\lambda$:} $\lambda = 1.0$ achieves the best F1 (0.962) but requires ${\sim}19$ windows to react to faults. $\lambda = 0.85$ reacts in 0--3 windows but sacrifices ${\sim}2\%$ F1. This is a deployment-specific trade-off.
+\item \textbf{Forgetting factor $\lambda$:} $\lambda = 1.0$ achieves the best F1 (0.962) but requires ${\sim}19$ windows to react to faults (Table~\ref{tab:reaction}). Lower $\lambda$ ($\leq 0.80$) yields 0--3 window reaction (Fig.~\ref{fig:reaction_lambda}) but sacrifices ${\sim}2\%$ F1. This is a deployment-specific trade-off.
 \item \textbf{Score formula:} Both weighted ($\sigma_i V_{ij}^2$) and unweighted ($V_{ij}^2$) loadings outperform reconstruction-based scoring. The unweighted variant performs slightly better on TEP, suggesting that the loading structure alone is highly informative.
 \end{itemize}
 
@@ -1006,10 +993,10 @@ The multi-classifier results (Table~\ref{tab:multiclassifier}) confirm that the 
 
 The forgetting factor $\lambda$ controls a fundamental trade-off between steady-state accuracy and fault reaction speed (Fig.~\ref{fig:reaction_lambda}):
 \begin{itemize}[leftmargin=*]
-\item $\lambda = 1.0$: Best F1 (0.962) but 19-window reaction time.
-\item $\lambda = 0.85$: Reacts in 0--3 windows but sacrifices ${\sim}2\%$ F1.
+\item $\lambda = 1.0$: Best F1 (0.962) but slow reaction (19 windows, Table~\ref{tab:reaction}).
+\item $\lambda \leq 0.80$: Reacts in 0--3 windows (Fig.~\ref{fig:reaction_lambda}) but sacrifices ${\sim}2\%$ F1.
 \end{itemize}
-This is a deployment-specific choice. Safety-critical systems (e.g., chemical plants) may prefer faster reaction ($\lambda = 0.85$), while high-throughput monitoring (e.g., server farms) may prefer accuracy ($\lambda = 1.0$).
+This is a deployment-specific choice. Safety-critical systems (e.g., chemical plants) may prefer faster reaction ($\lambda \leq 0.80$), while high-throughput monitoring (e.g., server farms) may prefer accuracy ($\lambda = 1.0$).
 
 \subsection{Cost-Benefit Analysis}
 
