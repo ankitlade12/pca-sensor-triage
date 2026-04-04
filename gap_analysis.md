@@ -326,6 +326,14 @@ main evaluation.
   PCA-Triage degrades more gracefully than DL methods" — a weaker but honest claim, OR
 - (c) Remove the "5/7 datasets" claim from the abstract and conclusion
 
+> **RESOLVED** (via GAP-C1 fix, commit a14147c)
+> 
+> Chose option (b): DL baselines findings text rewritten to explicitly state
+> "Under subsampled conditions (20K samples, 2 seeds)" and notes that PCA-Triage
+> TEP F1 is 0.811 here vs 0.961 on full data. Framed as relative robustness to
+> data scarcity, not absolute performance. Table caption adds "under subsampled
+> conditions." The "5/7 datasets" claim removed from abstract and conclusion.
+
 ### GAP-C7: Reproducibility Claim Is False
 
 **Severity: CRITICAL**
@@ -528,6 +536,13 @@ is valid, the documentation inconsistency makes the evaluation protocol look uns
 **Required fix:** Update README and manuscript together so they describe one canonical
 experiment stack, clearly distinguishing legacy/base results from v2 tuned results.
 
+> **RESOLVED** (via GAP-C1 fix, commit a14147c)
+> 
+> The canonical experiment now uses V1 base (RF-100, forward-fill, pure PCA) which
+> matches what the README describes. Paper Table IV caption states "All methods use
+> default parameters with no per-dataset tuning." README's description (RF n=100,
+> forward-fill) is consistent with the paper's canonical results.
+
 ### GAP-M3: Novelty Claim Is Overstated
 
 **Severity: MEDIUM-HIGH**
@@ -609,6 +624,14 @@ Additionally, newer benchmarks now exist:
 **Required fix:** Add explicit acknowledgment of benchmark limitations in the threats-to-
 validity section. Consider adding 1-2 datasets from TSB-AD or TAB for stronger coverage.
 
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Added "Benchmark quality" paragraph to threats-to-validity section acknowledging
+> PSM high anomaly density, SMD triviality, and MSL unlabeled anomalies. Notes that
+> TEP is the best-characterized benchmark. NASA row already removed (GAP-C8).
+> Adding new benchmarks (TSB-AD, TAB) deferred — requires dataset access and
+> experiment re-runs.
+
 ### GAP-M5: F1 Exceeding Full-Data Performance Needs Explanation
 
 **Severity: MEDIUM**
@@ -629,6 +652,15 @@ The paper does NOT provide a convincing mechanistic explanation. A reviewer will
 alongside the triaged result. If the v2 tuned result (0.970) exceeds full-data but the
 base result (0.961) does not, the explanation is the tuning, not the triage.
 
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Reframed: base PCA-Triage (0.961) is now "within 0.1% of full-data (0.962)"
+> throughout. The 0.970 claim is explicitly attributed to targeted extensions.
+> Added mechanistic explanation in discussion: "implicit denoising effect —
+> PCA-directed sub-sampling drops low-importance channels that contribute noise,
+> while linear interpolation smooths remaining signals." Confirmed that base
+> without extensions does NOT exceed full-data, only extensions do.
+
 ### GAP-M6: Missing Baselines
 
 **Severity: MEDIUM**
@@ -648,6 +680,14 @@ OGD results in the paper, but the baseline implementation is missing from the re
 
 **Required fix:** At minimum, implement OGD (since it's already claimed), and add one CS
 baseline. Binary feature selection baseline would be a bonus.
+
+> **NOT RESOLVED — deferred to future work.**
+> 
+> Requires implementing new baselines and re-running experiments with actual datasets
+> (not available in repo). OGD results exist in the paper from a prior experiment run
+> but the implementation code is missing. CS and binary FS baselines would strengthen
+> the paper but are not blocking for initial submission. A reviewer may request these
+> in a revision.
 
 ---
 
@@ -704,6 +744,12 @@ Some experiments could move to supplementary material:
 
 **Recommendation:** Identify the 8-10 strongest experiments, move the rest to supplementary.
 
+> **NOT RESOLVED — deferred.**
+> 
+> Requires a full LaTeX compile to assess actual page count and determine which
+> experiments to move. Cannot be assessed without compiling. If overlength, candidates
+> for supplementary: Experiments 11-13 (synthetic correlation, adaptive k, ensemble).
+
 ### GAP-P3: "7 Real-World + 1 Synthetic" Is Misleading
 
 The paper states (line 364): "including 7 real-world benchmarks and 1 synthetic dataset."
@@ -716,6 +762,13 @@ But:
 A more honest framing: "5 informative real-world benchmarks (TEP, SMD, MSL, PSM, HAI),
 1 real benchmark where all methods saturate (HAI), 1 real benchmark with limited channels
 (SKAB), and 2 synthetic datasets."
+
+> **PARTIALLY RESOLVED** (via GAP-C8, commit a14147c)
+> 
+> NASA removed (was the most misleading "real" dataset). Paper now says "6 real-world
+> benchmarks and 1 synthetic dataset" which is accurate — SWaT is marked with dagger.
+> The nuances about SKAB (8 channels) and HAI (saturated) are discussed in the
+> "When PCA-Triage Struggles" section.
 
 ### GAP-P4: Evaluation Metric Choice
 
@@ -730,6 +783,14 @@ made explicitly.
 
 **Recommendation:** Add 1-2 sentences justifying why point-wise F1 is appropriate for
 triage comparison, and consider reporting VUS-PR as a supplementary metric.
+
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Added F1 metric justification in construct validity section: "the detector (RF)
+> is fixed and identical across all methods — only the input data changes. F1
+> therefore measures the triage strategy's impact on a fixed classifier, not
+> detector quality." VUS-PR deferred as supplementary metric (would require
+> reimplementation).
 
 ### GAP-P5: Theory Section Cost-Benefit
 
@@ -753,6 +814,14 @@ be better used for stronger experiments.
 feasibility) and Proposition 4 (adaptation rate) — the two that are correct and useful.
 Present Theorem 1's insight as an empirical observation with the correlation matrix example.
 
+> **PARTIALLY RESOLVED** (commits 1ffa1ef + bcea93f)
+> 
+> Theorem 1 restated honestly (GAP-C3). Regret bound removed (GAP-C4). Props 1, 2,
+> and 4 kept — they are simple but provide formal grounding expected by IEEE reviewers.
+> Theory section now has: 2 propositions (budget, convergence), 1 theorem (correlation
+> distinction), 1 corollary (reconstruction error), 1 proposition (adaptation rate),
+> plus informal regret intuition. More compact than before.
+
 ### GAP-P6: Per-Fault Results Weaken the Narrative
 
 Table X (per-fault breakdown) shows PCA-Triage wins on only 2 of 10 individual TEP faults
@@ -762,6 +831,13 @@ aggregate metrics by not being worst on any fault, not by being best at fault de
 
 **Recommendation:** Frame more carefully. Explain why aggregate performance matters more
 than per-fault performance for deployment (operators don't know which fault will occur).
+
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Per-fault findings rewritten: "arises not from dominating any single fault type,
+> but from consistent above-average performance across all types — important in
+> deployment where the fault type is unknown a priori." Stale 0.970 reference
+> corrected to 0.961.
 
 ### GAP-P7: Robustness Framing Is Too Broad
 
@@ -776,6 +852,13 @@ The positive claim is still defensible for packet loss and moderate noise, but t
 
 **Recommendation:** Reframe as selective robustness: strong under packet loss and moderate
 noise, weaker under temporal perturbations such as jitter and clock drift.
+
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Abstract and conclusion reframed: "robust to packet loss and moderate sensor noise,
+> with 3.7-4.8% degradation under combined worst-case perturbations on TEP/SMD
+> (more sensitive to temporal jitter and clock drift)." The experiment findings text
+> already noted temporal sensitivity honestly.
 
 ### GAP-P8: Synthetic Correlation Experiment Undermines the Theory Narrative
 
@@ -792,6 +875,14 @@ trend.
 not as affirmative evidence. Keep the stronger argument grounded in the real benchmark
 results and correlation analysis.
 
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Experiment 11 intro reframed: "To directly test" → "To probe the limits of."
+> Findings rewritten: "an important limitation check on the theory" and "Simple
+> pairwise correlation alone is insufficient for PCA-Triage to outperform Variance."
+> Real-world advantage attributed to "complex, multi-modal correlation structure"
+> rather than theory prediction.
+
 ---
 
 ## 6. MINOR GAPS (Polish / Nice-to-Have)
@@ -801,30 +892,67 @@ OGD is listed as baseline #9 in the paper but no implementation exists in src/ba
 Results appear in Table XVI (Experiment 17), so the experiment was run somehow — but the
 code isn't in the repo.
 
+> **NOT RESOLVED — deferred.** OGD results exist in the paper from a prior experiment
+> run but the code is missing from the repository. Would need to recover or reimplement.
+
 ### GAP-N2: No Environment Lock File
 pyproject.toml exists but no lock file (uv.lock, poetry.lock). Exact dependency versions
 for reproducibility are not pinned.
+
+> **RESOLVED** (commit 511a7cd, 2026-04-03)
+> 
+> Generated uv.lock from pyproject.toml. Removed legacy requirements.txt,
+> requirements-lock.txt, and environment.yml. Project now uses uv-based dependency
+> management exclusively.
 
 ### GAP-N3: Multi-Classifier Table Uses Different F1 Than Main Result
 Multi-classifier table (line 513) shows TEP RF F1 = 0.962, but main Table IV shows 0.970.
 This is because multi-classifier uses base PCA-Triage (not v2 hybrid). The inconsistency
 will confuse readers.
 
+> **RESOLVED** (via GAP-C1 fix, commit a14147c)
+> 
+> Main Table IV now uses V1 base (0.961). Multi-classifier table shows 0.962 (same
+> V1 base, rounds differently due to different seed sets). These are now consistent
+> within rounding — both show base PCA-Triage at ~0.961-0.962.
+
 ### GAP-N3b: Multi-Classifier Narrative Overstates Consistency
 The paper says PCA-Triage "consistently" outperforms Uniform and Variance regardless of
 classifier choice, but SKAB with SVM shows Variance > PCA-Triage. The table mostly supports
 classifier robustness, but not a universal dominance claim.
 
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Text softened: "consistent across all classifiers" → "consistent across classifiers
+> on high-correlation datasets." Added: "On SKAB, margins are minimal and Variance
+> occasionally edges PCA-Triage (e.g., SVM)."
+
 ### GAP-N4: Abstract Is Too Long
 The abstract (lines 63-67) is ~250 words. IEEE typically recommends 150-200 words for
 journal abstracts. It tries to include every result — some trimming would improve impact.
 
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Abstract trimmed from ~250 words to 118 words. Removed step-by-step algorithm
+> description (moved to method section) and excess result details.
+
 ### GAP-N5: Author Affiliations Missing
 Line 57 shows only email addresses, no institutional affiliations. IEEE requires affiliations.
+
+> **RESOLVED** (commit bcea93f, 2026-04-03)
+> 
+> Added "Independent Researchers" affiliation block.
 
 ### GAP-N6: Some Figures May Not Reproduce
 Figure generation depends on data that's not in the repo. A reviewer running from a fresh
 clone would have no figures.
+
+> **NOT RESOLVED — inherent limitation.**
+> 
+> Figures were generated from experiment results that depend on datasets not in the
+> repo. The pre-generated PNG figures ARE in the repo (paper/figures/), so the paper
+> compiles correctly. Regenerating figures requires downloading datasets and re-running
+> experiments. This is documented in data/README.md.
 
 ---
 
@@ -838,6 +966,13 @@ clone would have no figures.
 | Yang et al. (2023) / FreqSense — Adaptive sampling-rate selection under resource budgets | Budget-constrained adaptive sampling | Directly relevant to formulation |
 | Benavoli et al. (2016), JMLR — Should We Really Use Post-Hoc Tests Based on Mean-Ranks? | Criticizes Nemenyi post-hoc test | Required for statistical methodology |
 | Kim et al. (2022), AAAI — Towards a Rigorous Evaluation of TSAD | Documents benchmark quality issues | Required for benchmark discussion |
+
+> **RESOLVED** (commit 1ffa1ef, 2026-04-03)
+> 
+> Added Bacciu 2016, Ghosh et al. 2021 (x2), and Yang et al. 2023 to references.bib
+> and cited in positioning section. Benavoli 2016 not explicitly cited (Nemenyi
+> removed, replaced with Holm-corrected Wilcoxon). Kim et al. 2022 benchmark
+> concerns acknowledged in threats-to-validity paragraph.
 
 ---
 
