@@ -1,10 +1,10 @@
 # PCA-Triage: Adaptive Sensor Triage for Edge AI Inference
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Tests](https://img.shields.io/badge/tests-28%20passed-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-64%20passed-brightgreen.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
-![Datasets](https://img.shields.io/badge/datasets-8-orange.svg)
+![Datasets](https://img.shields.io/badge/datasets-7-orange.svg)
 
 **Authors:** Ankit Hemant Lade, Sai Krishna Jasti, Indar Kumar, Akanksha Tiwari, Nikhil Sinha
 
@@ -37,7 +37,7 @@
 
 The contribution is **not** a new model architecture — it is a **what-to-sample and how-much** strategy that wraps any downstream classifier or anomaly detector.
 
-**Headline result (17 experiments, 8 datasets, 9 baselines, 3 classifiers):** At **50% bandwidth**, PCA-Triage achieves F1 = 0.970 ± 0.002 on TEP — exceeding full-data performance (0.962) — with **0.67 ms per decision** and **zero trainable parameters**. Best unsupervised method on **4/7 datasets**. Beats LSTM-Attention and Transformer-Attention on **5/7 datasets**. Beats regret-optimal OGD on all tested datasets (+1.1–4.7%). Robust to edge deployment perturbations (3.7–4.8% degradation under combined worst-case).
+**Headline result (17 experiments, 7 benchmarks, 9 baselines, 3 classifiers):** At **50% bandwidth** with default parameters (no per-dataset tuning), PCA-Triage achieves F1 = 0.961 +/- 0.001 on TEP — within 0.1% of full-data performance (0.962) — with **0.67 ms per decision** and **zero trainable parameters**. Best unsupervised method on **3/6 canonical datasets** (TEP, SMD, MSL). Targeted extensions (hybrid scoring, linear interpolation, sharpening) push TEP F1 to 0.970. Robust to packet loss and moderate sensor noise (3.7–4.8% degradation under combined worst-case on TEP/SMD).
 
 ---
 
@@ -46,7 +46,7 @@ The contribution is **not** a new model architecture — it is a **what-to-sampl
 When multi-channel sensor data must be transmitted under bandwidth constraints, using streaming PCA to *dynamically allocate per-channel sampling rates proportional to importance* yields better downstream task performance than fixed or heuristic allocation strategies. Specifically:
 
 1. **Correlated sensor networks** (TEP, 52 channels): PCA captures inter-channel correlations that variance-based methods miss. PCA-Triage outperforms Variance-based allocation by +2.1% F1 and Uniform by +4.6% F1 at 50% bandwidth.
-2. **Fault onset adaptation**: When a fault activates new sensor channels, PCA loadings shift within 1-3 windows. On TEP Fault 1, the A Feed Flow valve (xmv_3) jumps from 9% to 38% sampling rate after fault onset.
+2. **Fault onset adaptation**: When a fault activates new sensor channels, PCA loadings shift — adaptation speed controlled by lambda (0-3 windows at lambda <= 0.80, up to 19 windows at lambda = 1.0). On TEP Fault 1, the A Feed Flow valve (xmv_3) jumps from 9% to 38% sampling rate after fault onset.
 3. **Edge viability**: The algorithm runs at O(wdk) with zero trainable parameters, completing each triage decision in 0.67 ms on a single CPU core — well under the 5 ms edge deployment target.
 
 ### Why PCA-Triage > Variance-Based
@@ -60,7 +60,7 @@ Variance-based allocation treats each channel independently. PCA-Triage captures
 | **Fixed Rules** | Uniform sampling; Send-on-Delta | DSRA; Energy-aware AIMD |
 | **Data-Driven** | Batch PCA detection; Offline FS | **PCA-Triage (Ours)** |
 
-No existing method occupies the bottom-right cell: a streaming, data-driven approach that converts PCA loadings into proportional per-channel bandwidth allocation under a total budget constraint.
+PCA-Triage occupies the bottom-right cell: a streaming, data-driven approach that uses incremental PCA specifically as the importance engine for proportional per-channel bandwidth allocation. Prior work has explored correlation-aware sensor selection (Bacciu 2016, Ghosh et al. 2021) and adaptive sampling-rate allocation (FreqSense 2023), but in batch or binary settings.
 
 ---
 
@@ -91,7 +91,7 @@ s̄_j^(t) = λ · s̄_j^(t-1) + (1 - λ) · s_j^(t)
 | λ | Behaviour | Best For |
 |---|-----------|----------|
 | 1.0 | No forgetting, cumulative PCA | Static/slowly-changing systems |
-| 0.85 | Fast adaptation, 0-3 window reaction | Fault onset detection |
+| 0.80 | Fast adaptation, 0-3 window reaction | Fault onset detection |
 | 0.95 | Balanced | General use |
 
 ### 3.3 Rate Allocation
@@ -167,7 +167,7 @@ flowchart LR
 ```
 Phase 1: Data Loading           Phase 2: Triage              Phase 3: Evaluation
 ─────────────────────           ──────────────────            ──────────────────
-Load TEP/SKAB/NASA   ────▶   For each window:              Train RF on triaged data
+Load TEP/SKAB/etc   ────▶   For each window:              Train RF on triaged data
 StandardScaler                  1. PCA update                Compare F1 vs full data
 Train/Test split                2. Score channels            Wilcoxon significance test
                                 3. Allocate rates            Generate Pareto curves
@@ -216,7 +216,9 @@ The 6 methods form a **controlled comparison** spanning the design space:
 | **PSM** | Server metrics (eBay) | 25 | 220K | Anomaly detection | RANSynCoders, KDD 2021 |
 | **HAI** | Industrial control system | 82 | 259K | Attack detection | CSET 2020 |
 | **SKAB** | Water circulation testbed | 8 | 47K | Anomaly detection | Skoltech, 2020 |
-| **NASA** | Bearing degradation | 16 | 1K | Degradation detection | NASA IMS |
+| **SWaT*** | Water treatment | 51 | 500K | Attack detection | Synthetic stand-in |
+
+*SWaT is a synthetic dataset calibrated to match the real SWaT testbed properties.
 
 ### 6.2 TEP Sensor Description
 
@@ -300,16 +302,16 @@ F1 across all methods and bandwidth levels (5-seed mean). **Bold** = best unsupe
 
 | Method | TEP | SMD | PSM | MSL | HAI | SKAB |
 |--------|:---:|:---:|:---:|:---:|:---:|:---:|
-| **PCA-Triage** | **0.961*** | **0.982** | 0.959 | **0.921*** | 1.000 | 0.583 |
+| **PCA-Triage** | **0.961** | **0.982** | 0.959 | **0.921** | 1.000 | 0.583 |
 | Threshold | 0.958 | 0.981 | 0.925 | 0.913 | 1.000 | 0.582 |
 | Variance | 0.948 | 0.977 | 0.903 | 0.917 | **1.000** | 0.577 |
 | Uniform | 0.924 | 0.968 | 0.897 | 0.912 | 0.998 | **0.586** |
 | Random Dropout | 0.788 | 0.980 | **0.962** | 0.914 | 1.000 | 0.524 |
-| Mutual Info** | 0.914 | 0.986 | 0.996 | 0.930 | 1.000 | 0.588 |
+| Mutual Info† | 0.914 | 0.986 | 0.996 | 0.930 | 1.000 | 0.588 |
 
-`*` = significantly better than all unsupervised baselines (Wilcoxon p < 0.05, 5 seeds). `**` = supervised (requires labels).
+**Bold** = best unsupervised. † = supervised (requires labels). Source: `paper/tables/table2_results_50pct.csv` (V1 base, RF n=100, forward-fill, no per-dataset tuning).
 
-PCA-Triage is the **best unsupervised method on 3 of 6 real datasets** (TEP, SMD, MSL) — specifically the high-channel datasets (52, 38, 55 sensors) where inter-channel correlation is rich. On TEP and MSL, the advantage is **statistically significant** (p < 0.05) against all baselines.
+PCA-Triage is the **best unsupervised method on 3 of 6 datasets** (TEP, SMD, MSL) — the high-channel datasets where inter-channel correlation is rich. Wins 5/6 or 6/6 against every baseline with large effect sizes (r=0.71–1.00), though none survive Holm correction for multiple comparisons (see paper for full statistical analysis).
 
 ### 8.2.1 Classifier Agnosticism
 
@@ -335,16 +337,16 @@ PCA-Triage's Pareto curve on TEP is essentially **flat from 30% bandwidth onward
 
 ### 8.4 Adaptivity Under Fault Onset
 
-Reaction time (windows until top-5 channel importance changes) on TEP:
+Reaction time (windows until importance shift > 20%, from `paper/tables/reaction_time_comparison.csv`) on TEP at λ=0.85:
 
-| Fault | λ=0.85 | λ=0.90 | λ=0.95 | λ=1.00 |
-|-------|:---:|:---:|:---:|:---:|
-| IDV(1) A/C Feed | 0 | 1 | 3 | 19 |
-| IDV(2) B Composition | 0 | 0 | 0 | 19 |
-| IDV(4) Reactor CW | 3 | 5 | 9 | 19 |
-| IDV(5) Condenser CW | 3 | 4 | 8 | 19 |
+| Fault | PCA-Triage | Variance | Threshold |
+|-------|:---:|:---:|:---:|
+| IDV(1) A/C Feed | 19 | 0 | 19 |
+| IDV(2) B Composition | 19 | 19 | 19 |
+| IDV(4) Reactor CW | 19 | 19 | 19 |
+| IDV(5) Condenser CW | 19 | 19 | 19 |
 
-λ=0.85 reacts within 0-3 windows across all fault types. λ=1.0 (no forgetting) gives best F1 but slowest reaction — users choose based on accuracy vs adaptivity priority.
+At λ=0.85 and the 20% shift threshold, reaction takes up to 19 windows (one full window cycle). Lower λ (<=0.80) yields 0-3 window reaction at the cost of noisier importance estimates (see `figures/reaction_time_vs_lambda.png`). λ=1.0 gives best F1 but slowest reaction — users choose based on accuracy vs adaptivity priority.
 
 **Fault 1 narrative:** After A/C feed ratio disturbance onset, PCA-Triage shifts bandwidth toward the directly responsible channels:
 - `xmv_3` (A Feed Flow valve): **9% → 38% sampling rate** (+42%)
@@ -428,32 +430,30 @@ To quantify each component's contribution, we disable components one at a time o
 
 ### 8.10 Statistical Analysis
 
-**Friedman test** across 6 datasets at 50% bandwidth: χ² = 12.76, **p = 0.026** (significant).
+Source: `paper/tables/table2_results_50pct.csv` via `experiments/run_statistical_tests_v1.py`.
+
+**Friedman test** (5 unsupervised methods × 6 datasets, seed-averaged F1 at 50%): χ² = 9.33, p = 0.053 (borderline, not significant at α=0.05), Kendall's W = 0.389.
 
 | Method | Mean Rank |
 |--------|:---------:|
-| Mutual Info† | 1.83 |
-| **PCA-Triage** | **2.33** |
-| Threshold | 3.67 |
-| Variance | 3.67 |
-| Random Dropout | 4.50 |
-| Uniform | 5.00 |
+| **PCA-Triage** | **1.50** |
+| Threshold | 2.83 |
+| Variance | 3.00 |
+| Random Dropout | 3.50 |
+| Uniform | 4.17 |
 
-PCA-Triage ranks **1st among unsupervised methods**. Nemenyi post-hoc (CD = 4.35): PCA-Triage and Mutual Info are statistically indistinguishable (p = 0.997).
+PCA-Triage ranks **1st among all unsupervised methods**.
 
-**Wilcoxon signed-rank tests** (one-sided, 5 seeds):
+**Wilcoxon signed-rank tests** (one-sided, Holm-corrected for 4 comparisons):
 
-| Dataset | vs Uniform | vs Variance | vs Threshold | vs Random Drop |
-|---------|:---:|:---:|:---:|:---:|
-| TEP | .031* | .031* | .031* | .031* |
-| SMD | .031* | .031* | .156 | .031* |
-| MSL | .031* | .031* | .031* | .031* |
-| PSM | .031* | .031* | .031* | 1.00 |
-| HAI | .031* | 1.00 | .031* | .031* |
-| SKAB | .594 | .313 | .313 | .031* |
-| **Wins** | **5/6** | **4/6** | **4/6** | **5/6** |
+| Baseline | W / L | p (raw) | Effect r | Holm sig. |
+|----------|:-----:|:-------:|:--------:|:---------:|
+| Threshold | 6/0 | .016 | 1.00 | n.s. |
+| Variance | 5/1 | .031 | 0.91 | n.s. |
+| Uniform | 5/1 | .047 | 0.81 | n.s. |
+| Random Dropout | 5/1 | .078 | 0.71 | n.s. |
 
-`*` = p < 0.05. PCA-Triage achieves statistically significant wins on **4–5 of 6 datasets** against every unsupervised baseline.
+No comparison survives Holm correction (minimum corrected threshold = 0.0125 with n=6 datasets). Effect sizes are consistently large (r=0.71–1.00), indicating practical significance despite limited statistical power.
 
 ### 8.11 Per-Fault-Type Breakdown (TEP)
 
@@ -528,7 +528,7 @@ Mutual Information-based allocation requires fault labels — unavailable during
 
 ### 10.5 λ Trade-Off
 
-λ=1.0 accumulates all history → best F1 (0.962) but 19-window reaction time to faults. λ=0.85 forgets quickly → 0-3 window reaction but ~2% lower F1 (0.942). The optimal λ depends on whether the deployment prioritises detection accuracy or fault response speed.
+λ=1.0 accumulates all history → best F1 (0.962) but 19-window reaction time to faults. Lower λ (<=0.80) forgets quickly → 0-3 window reaction but ~2% lower F1. The optimal λ depends on whether the deployment prioritises detection accuracy or fault response speed.
 
 ### 10.6 Adaptive λ (Preliminary)
 
@@ -537,7 +537,7 @@ We tested a time-varying λ that decreases when importance shifts are detected (
 | Configuration | F1 | Notes |
 |---|:---:|---|
 | Fixed λ=1.0 | **0.961** | Best accuracy, 19-window reaction |
-| Fixed λ=0.85 | 0.954 | Fast reaction (0-3 windows) |
+| Fixed λ=0.85 | 0.954 | Moderate reaction (~19 windows) |
 | Adaptive λ ∈ [0.80, 0.99] | 0.953 | Converges to ~0.99 on stationary TEP |
 | Adaptive λ ∈ [0.85, 0.99] | 0.953 | Similar — no advantage on stationary data |
 
@@ -561,10 +561,10 @@ pre-commit install
 ```bash
 make help           # Show all commands
 make smoke          # Quick smoke test (no data needed, ~2s)
-make test           # Run full test suite (28 tests, ~1s)
+make test           # Run full test suite (64 tests, ~2s)
 make lint           # Run ruff linter
-make benchmark-quick  # Budget=0.5 comparison across 8 datasets (~15 min)
-make benchmark      # Full Pareto sweep: 8 datasets x 9 budgets (~2-4 hours)
+make benchmark-quick  # Budget=0.5 comparison across 7 datasets (~15 min)
+make benchmark      # Full Pareto sweep: 7 datasets x 9 budgets (~2-4 hours)
 make figures        # Regenerate all publication figures
 ```
 
@@ -641,8 +641,8 @@ python experiments/run_scalability.py
 # Exp 6: Component contribution analysis
 python experiments/run_component_contribution.py
 
-# Exp 7: Statistical tests (Friedman + Nemenyi + Wilcoxon)
-python experiments/run_statistical_tests.py
+# Exp 7: Statistical tests (canonical Friedman + Wilcoxon from table2)
+python experiments/run_statistical_tests_v1.py  # Canonical stats from table2
 ```
 
 Results are written to `experiments/results/`.
@@ -661,7 +661,7 @@ src/
         rate_allocator.py            # Sharpened proportional allocation
         reconstruction.py            # Linear / forward-fill / zero interp
         pipeline.py                  # TriagePipeline — end-to-end streaming
-    baselines/                       # 7 comparison methods
+    baselines/                       # Comparison baselines and helpers
         uniform.py                   # Same rate all channels
         threshold.py                 # Binary active/inactive (Send-on-Delta)
         variance.py                  # Proportional to rolling variance
@@ -670,7 +670,7 @@ src/
         attention.py                 # Self-attention importance
         autoencoder.py               # Reconstruction error importance
     utils/
-        data_loader.py               # Loaders for 8 datasets
+        data_loader.py               # Loaders for 7 datasets
         synthetic_datasets.py        # SWaT/WADI synthetic generators
         plotting.py                  # Publication figure generators
 
@@ -678,22 +678,21 @@ configs/
     default.yaml                     # Hyperparameters + per-dataset tuning
 
 experiments/
-    run_pareto_v2.py                 # Budget=0.5 comparison (quick)
-    run_pareto_v2_full.py            # Full Pareto sweep (all budgets)
-    run_pareto.py                    # Legacy Pareto experiment
+    run_pareto.py                    # Canonical V1/base main comparison
+    run_pareto_v2.py                 # Tuned V2 extension comparison
     run_ablation.py                  # Hyperparameter ablation
-    run_statistical_tests.py         # Friedman + Wilcoxon tests
-    run_*.py                         # 12 experiment scripts total
+    run_statistical_tests_v1.py      # Canonical Friedman + Wilcoxon (from table2)
+    run_statistical_tests.py         # Legacy exploratory stats (not for paper)
+    run_*.py                         # Additional experiment runners
     results/                         # CSV/JSON output files
 
-tests/                               # 28 tests
+tests/                               # 64 tests
     test_triage.py                   # Core algorithm + all features
     test_baselines.py                # All 7 baselines
     test_integration.py              # End-to-end pipeline tests
-    test_integration.py                     # 11 integration tests: end-to-end + edge cases
 
 paper/                                      # Paper materials
-    main.tex                                # Full LaTeX paper (IEEEtran journal, ~760 lines)
+    main.tex                                # Full LaTeX paper
     references.bib                          # BibTeX bibliography (39 references)
     sections/
         introduction.md                     # ~940 words
@@ -707,10 +706,6 @@ scripts/                                    # Analysis and deployment
     analyze_results.py                      # Summary tables + Wilcoxon tests
     smoke_test.sh                           # Quick health check (~10s)
     run_full_benchmark.sh                   # Run all 5 experiments end-to-end
-
-docs/                                       # Documentation
-    DESIGN_DECISIONS.md                     # 9 key engineering decisions with rationale
-    CHANGELOG.md                            # Version history
 
 references/                                 # 36 annotated papers
     core_papers_week1.md                    # Papers 1–10
@@ -772,4 +767,3 @@ data/raw/                                   # Datasets (not tracked in git)
 - Breiman (2001). *Random Forests.* Machine Learning.
 - Pedregosa et al. (2011). *Scikit-learn: Machine Learning in Python.* JMLR.
 - Halko, Martinsson & Tropp (2011). *Finding Structure with Randomness.* SIAM Review.
-
