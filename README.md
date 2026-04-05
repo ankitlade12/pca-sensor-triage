@@ -661,65 +661,63 @@ src/
         rate_allocator.py            # Sharpened proportional allocation
         reconstruction.py            # Linear / forward-fill / zero interp
         pipeline.py                  # TriagePipeline — end-to-end streaming
-    baselines/                       # Comparison baselines and helpers
+    baselines/                       # 11 comparison methods
         uniform.py                   # Same rate all channels
         threshold.py                 # Binary active/inactive (Send-on-Delta)
         variance.py                  # Proportional to rolling variance
         random_dropout.py            # Randomly drop channels
         mutual_info.py               # MI with labels (supervised)
-        attention.py                 # Self-attention importance
+        attention.py                 # Random-projection attention (fixed weights)
         autoencoder.py               # Reconstruction error importance
+        lstm_attention.py            # LSTM with trained channel attention
+        ogd.py                       # Online Gradient Descent allocation
+        send_on_delta.py             # Temporal Send-on-Delta + joint spatial
     utils/
         data_loader.py               # Loaders for 7 datasets
-        synthetic_datasets.py        # SWaT/WADI synthetic generators
+        synthetic_datasets.py        # SWaT synthetic generator
         plotting.py                  # Publication figure generators
 
 configs/
     default.yaml                     # Hyperparameters + per-dataset tuning
+    ablation.yaml                    # Ablation study settings
 
 experiments/
     run_pareto.py                    # Canonical V1/base main comparison
     run_pareto_v2.py                 # Tuned V2 extension comparison
     run_ablation.py                  # Hyperparameter ablation
     run_statistical_tests_v1.py      # Canonical Friedman + Wilcoxon (from table2)
-    run_statistical_tests.py         # Legacy exploratory stats (not for paper)
-    run_*.py                         # Additional experiment runners
-    results/                         # CSV/JSON output files
+    run_dl_baselines.py              # LSTM/Transformer attention baselines
+    run_realtime_simulation.py       # Deployment perturbation robustness
+    run_scale_test.py                # Scalability to 1000 channels
+    run_joint_spatiotemporal.py      # PCA + Send-on-Delta + OGD
+    run_*.py                         # Additional experiment runners (21 total)
+    results/                         # 29 CSV/JSON output files
 
 tests/                               # 64 tests
     test_triage.py                   # Core algorithm + all features
-    test_baselines.py                # All 7 baselines
+    test_baselines.py                # All baselines
     test_integration.py              # End-to-end pipeline tests
 
-paper/                                      # Paper materials
-    main.tex                                # Full LaTeX paper
-    references.bib                          # BibTeX bibliography (39 references)
-    sections/
-        introduction.md                     # ~940 words
-        related_work.md                     # ~1526 words, 36 papers cited
-        method.md                           # ~1156 words with pseudocode
-    figures/                                # 14 publication-quality figures (300 DPI)
-    tables/                                 # 3 result tables (CSV)
+paper/
+    main.tex                         # Full LaTeX paper
+    references.bib                   # BibTeX bibliography (45 references)
+    ARTIFACT_MAP.md                  # Paper-to-data provenance map
+    figures/                         # 14 publication-quality figures (300 DPI)
+    tables/                          # 3 canonical result tables (CSV)
 
-scripts/                                    # Analysis and deployment
-    verify_paper_numbers.py                 # Validate paper claims vs data
-    analyze_results.py                      # Summary tables + Wilcoxon tests
-    smoke_test.sh                           # Quick health check (~10s)
-    run_full_benchmark.sh                   # Run all 5 experiments end-to-end
-
-references/                                 # 36 annotated papers
-    core_papers_week1.md                    # Papers 1–10
-    paper_annotations_day5.md               # Papers 1–5 (deep annotations)
-    paper_annotations_day6.md               # Papers 6–10 (deep annotations)
-    paper_annotations_week2.md              # Papers 11–28
-    paper_annotations_week3.md              # Papers 29–33
-    paper_annotations_recent.md             # Papers 34–36 (2025 update)
-    related_work_notes.md                   # Gap positioning matrix
+scripts/
+    verify_paper_numbers.py          # Validate paper claims vs canonical CSVs
+    analyze_results.py               # Summary tables + Wilcoxon tests
+    smoke_test.sh                    # Quick health check (~10s)
+    run_full_benchmark.sh            # Run all experiments end-to-end
 
 notebooks/
-    data_exploration.ipynb                  # Dataset exploration + correlation analysis
+    data_exploration.ipynb           # Dataset exploration + correlation analysis
 
-data/raw/                                   # Datasets (not tracked in git)
+data/
+    README.md                        # Dataset download instructions
+    download_datasets.sh             # Automated download script
+    raw/                             # Datasets (not tracked in git)
 ```
 
 ---
