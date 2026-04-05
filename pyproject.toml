@@ -12,9 +12,9 @@ requires-python = ">=3.10"
 authors = [
     {name = "Ankit Hemant Lade", email = "ankitlade12@gmail.com"},
     {name = "Sai Krishna Jasti", email = "jsaikrishna379@gmail.com"},
+    {name = "Nikhil Sinha", email = "sinha.nikhil77@gmail.com"},
     {name = "Indar Kumar", email = "indarkarhana@gmail.com"},
     {name = "Akanksha Tiwari", email = "akankshat2803@gmail.com"},
-    {name = "Nikhil Sinha", email = "sinha.nikhil77@gmail.com"},
 ]
 keywords = ["PCA", "sensor", "triage", "edge AI", "IoT", "bandwidth", "streaming"]
 classifiers = [

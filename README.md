@@ -6,7 +6,7 @@
 ![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
 ![Datasets](https://img.shields.io/badge/datasets-7-orange.svg)
 
-**Authors:** Ankit Hemant Lade, Sai Krishna Jasti, Indar Kumar, Akanksha Tiwari, Nikhil Sinha
+**Authors:** Ankit Hemant Lade, Sai Krishna Jasti, Nikhil Sinha, Indar Kumar, Akanksha Tiwari
 
 ## Table of Contents
 
