@@ -1,10 +1,10 @@
 # PCA-Triage: Adaptive Sensor Triage for Edge AI Inference
 
-![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Tests](https://img.shields.io/badge/tests-64%20passed-brightgreen.svg)
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
-![Datasets](https://img.shields.io/badge/datasets-7-orange.svg)
+[![arXiv](https://img.shields.io/badge/arXiv-2604.05045-b31b1b.svg)](https://arxiv.org/abs/2604.05045)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+
+> **Paper:** [arXiv:2604.05045](https://arxiv.org/abs/2604.05045)
 
 **Authors:** Ankit Hemant Lade, Sai Krishna Jasti, Nikhil Sinha, Indar Kumar, Akanksha Tiwari
 
