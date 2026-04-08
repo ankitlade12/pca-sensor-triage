@@ -44,6 +44,11 @@ paper/*.bbl
 paper/*.blg
 paper/*.out
 paper/*.synctex.gz
+paper/*.pdf
+
+# EAAI submission files
+paper/*_eaai.*
+paper/cover_letter_eaai.*
 
 # Office temp files
 ~$*
