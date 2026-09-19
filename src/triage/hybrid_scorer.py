@@ -28,12 +28,15 @@ class HybridScorer:
 
     def __init__(self, n_components: int = 10, alpha: float = 0.7,
                  forgetting_factor: float = 1.0):
+        if not 0 <= forgetting_factor <= 1:
+            raise ValueError("forgetting_factor must be in [0, 1]")
         self.n_components = n_components
         self.alpha = alpha
         self.forgetting_factor = forgetting_factor
         self.ipca = IncrementalPCA(n_components=n_components)
         self._fitted = False
         self._importance_history = None
+        self._n_score_updates = 0
 
     def compute_importance(self, window: np.ndarray) -> np.ndarray:
         w, d = window.shape
@@ -46,10 +49,10 @@ class HybridScorer:
             self.ipca.partial_fit(window)
 
         V = self.ipca.components_
-        sigma = self.ipca.singular_values_
+        eigenvalues = self.ipca.explained_variance_
         pca_scores = np.zeros(d)
-        for i in range(len(sigma)):
-            pca_scores += sigma[i] * V[i, :] ** 2
+        for i in range(len(eigenvalues)):
+            pca_scores += eigenvalues[i] * V[i, :] ** 2
         pca_scores = pca_scores / pca_scores.sum() if pca_scores.sum() > 0 else np.ones(d) / d
 
         # Variance importance
@@ -62,10 +65,16 @@ class HybridScorer:
 
         # Exponential smoothing over time
         if self._importance_history is None:
-            self._importance_history = scores
+            self._importance_history = scores.copy()
+            self._n_score_updates = 1
         else:
             lam = self.forgetting_factor
-            self._importance_history = lam * self._importance_history + (1 - lam) * scores
+            if lam == 1.0:
+                n = self._n_score_updates
+                self._importance_history = (n * self._importance_history + scores) / (n + 1)
+            else:
+                self._importance_history = lam * self._importance_history + (1 - lam) * scores
+            self._n_score_updates += 1
 
         smoothed = self._importance_history / self._importance_history.sum()
         return smoothed
@@ -74,3 +83,4 @@ class HybridScorer:
         self.ipca = IncrementalPCA(n_components=self.n_components)
         self._fitted = False
         self._importance_history = None
+        self._n_score_updates = 0

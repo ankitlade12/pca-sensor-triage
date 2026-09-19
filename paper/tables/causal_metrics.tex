@@ -1,0 +1,310 @@
+\begin{table}[p]
+\centering
+\small
+\caption{SMD: method retrained. Detection metrics; delay is conditional and measured in samples.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+Dataset & Method & Budget & Precision & Recall & FPR & Event recall & Missed events & Delay (samples) & FA/1000 & Point F1 & Specificity & Events \\
+\midrule
+SMD-1-1 & PCA-Triage & 0.3 & 0.318 $\pm$ 0.009 & 0.526 $\pm$ 0.050 & 0.118 $\pm$ 0.009 & 0.675 $\pm$ 0.112 & 2.6 $\pm$ 0.9 & 37.114 $\pm$ 22.254 & 5.141 $\pm$ 0.413 & 0.396 $\pm$ 0.020 & 0.882 $\pm$ 0.009 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Variance & 0.3 & 0.326 $\pm$ 0.013 & 0.540 $\pm$ 0.026 & 0.117 $\pm$ 0.012 & 0.700 $\pm$ 0.068 & 2.4 $\pm$ 0.5 & 21.933 $\pm$ 9.999 & 5.780 $\pm$ 0.876 & 0.406 $\pm$ 0.008 & 0.883 $\pm$ 0.012 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Threshold & 0.3 & 0.321 $\pm$ 0.015 & 0.523 $\pm$ 0.023 & 0.116 $\pm$ 0.004 & 0.775 $\pm$ 0.105 & 1.8 $\pm$ 0.8 & 26.102 $\pm$ 13.551 & 4.797 $\pm$ 0.438 & 0.398 $\pm$ 0.018 & 0.884 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Uniform & 0.3 & 0.319 $\pm$ 0.012 & 0.532 $\pm$ 0.032 & 0.119 $\pm$ 0.002 & 0.725 $\pm$ 0.163 & 2.2 $\pm$ 1.3 & 22.172 $\pm$ 15.011 & 4.010 $\pm$ 0.366 & 0.399 $\pm$ 0.018 & 0.881 $\pm$ 0.002 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & PCA-Triage & 0.5 & 0.317 $\pm$ 0.013 & 0.507 $\pm$ 0.023 & 0.114 $\pm$ 0.003 & 0.700 $\pm$ 0.168 & 2.4 $\pm$ 1.3 & 26.070 $\pm$ 17.873 & 6.159 $\pm$ 0.543 & 0.390 $\pm$ 0.017 & 0.886 $\pm$ 0.003 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Variance & 0.5 & 0.329 $\pm$ 0.016 & 0.535 $\pm$ 0.033 & 0.114 $\pm$ 0.008 & 0.825 $\pm$ 0.143 & 1.4 $\pm$ 1.1 & 14.523 $\pm$ 15.970 & 6.988 $\pm$ 0.456 & 0.407 $\pm$ 0.019 & 0.886 $\pm$ 0.008 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Threshold & 0.5 & 0.320 $\pm$ 0.014 & 0.509 $\pm$ 0.017 & 0.113 $\pm$ 0.007 & 0.725 $\pm$ 0.163 & 2.2 $\pm$ 1.3 & 28.300 $\pm$ 17.448 & 6.342 $\pm$ 1.036 & 0.393 $\pm$ 0.013 & 0.887 $\pm$ 0.007 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Uniform & 0.5 & 0.319 $\pm$ 0.008 & 0.518 $\pm$ 0.009 & 0.116 $\pm$ 0.003 & 0.850 $\pm$ 0.137 & 1.2 $\pm$ 1.1 & 10.901 $\pm$ 7.975 & 5.337 $\pm$ 0.234 & 0.395 $\pm$ 0.008 & 0.884 $\pm$ 0.003 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & PCA-Triage & 0.7 & 0.318 $\pm$ 0.019 & 0.525 $\pm$ 0.034 & 0.118 $\pm$ 0.007 & 0.750 $\pm$ 0.153 & 2.0 $\pm$ 1.2 & 18.590 $\pm$ 12.642 & 7.992 $\pm$ 0.832 & 0.396 $\pm$ 0.023 & 0.882 $\pm$ 0.007 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Variance & 0.7 & 0.320 $\pm$ 0.014 & 0.529 $\pm$ 0.027 & 0.118 $\pm$ 0.007 & 0.875 $\pm$ 0.177 & 1.0 $\pm$ 1.4 & 8.527 $\pm$ 5.246 & 8.680 $\pm$ 0.574 & 0.398 $\pm$ 0.015 & 0.882 $\pm$ 0.007 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Threshold & 0.7 & 0.328 $\pm$ 0.010 & 0.544 $\pm$ 0.010 & 0.116 $\pm$ 0.004 & 0.950 $\pm$ 0.112 & 0.4 $\pm$ 0.9 & 4.358 $\pm$ 0.828 & 8.554 $\pm$ 0.693 & 0.409 $\pm$ 0.010 & 0.884 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Uniform & 0.7 & 0.320 $\pm$ 0.010 & 0.517 $\pm$ 0.022 & 0.115 $\pm$ 0.004 & 0.925 $\pm$ 0.068 & 0.6 $\pm$ 0.5 & 5.686 $\pm$ 2.465 & 7.051 $\pm$ 0.644 & 0.395 $\pm$ 0.013 & 0.885 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Full Data & 1.0 & 0.330 $\pm$ 0.010 & 0.537 $\pm$ 0.011 & 0.114 $\pm$ 0.004 & 0.875 $\pm$ 0.125 & 1.0 $\pm$ 1.0 & 4.967 $\pm$ 0.709 & 8.968 $\pm$ 0.552 & 0.409 $\pm$ 0.010 & 0.886 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-det-smd-method_retrained}
+\end{table}
+\begin{table}[p]
+\centering
+\small
+\caption{SMD: method retrained. Distortion and mask-counted payload. Four bytes per value are assumed. RMSE uses standardized values.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+Dataset & Method & Budget & MAE & RMSE & NRMSE & Values & Payload bytes & Realized fraction & Max excess values \\
+\midrule
+SMD-1-1 & PCA-Triage & 0.3 & 0.258 $\pm$ 0.027 & 14.902 $\pm$ 7.847 & 0.016 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Variance & 0.3 & 0.141 $\pm$ 0.002 & 2.375 $\pm$ 0.415 & 0.013 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Threshold & 0.3 & 0.413 $\pm$ 0.028 & 71.459 $\pm$ 11.325 & 0.019 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Uniform & 0.3 & 0.700 $\pm$ 0.014 & 116.545 $\pm$ 11.910 & 0.016 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & PCA-Triage & 0.5 & 0.154 $\pm$ 0.010 & 9.024 $\pm$ 2.230 & 0.012 $\pm$ 0.000 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Variance & 0.5 & 0.058 $\pm$ 0.001 & 1.258 $\pm$ 0.246 & 0.008 $\pm$ 0.000 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Threshold & 0.5 & 0.109 $\pm$ 0.021 & 13.987 $\pm$ 17.107 & 0.013 $\pm$ 0.001 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Uniform & 0.5 & 0.421 $\pm$ 0.084 & 83.863 $\pm$ 19.805 & 0.012 $\pm$ 0.000 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & PCA-Triage & 0.7 & 0.039 $\pm$ 0.002 & 1.902 $\pm$ 0.455 & 0.006 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Variance & 0.7 & 0.015 $\pm$ 0.000 & 0.852 $\pm$ 0.065 & 0.004 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Threshold & 0.7 & 0.021 $\pm$ 0.000 & 0.562 $\pm$ 0.055 & 0.004 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Uniform & 0.7 & 0.219 $\pm$ 0.043 & 55.388 $\pm$ 21.253 & 0.009 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Full Data & 1.0 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 1082202.0 $\pm$ 0.0 & 4328808.0 $\pm$ 0.0 & 1.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-dist-smd-method_retrained}
+\end{table}
+\clearpage
+\begin{table}[p]
+\centering
+\small
+\caption{SMD: fixed full data. Detection metrics; delay is conditional and measured in samples.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+Dataset & Method & Budget & Precision & Recall & FPR & Event recall & Missed events & Delay (samples) & FA/1000 & Point F1 & Specificity & Events \\
+\midrule
+SMD-1-1 & PCA-Triage & 0.3 & 0.320 $\pm$ 0.016 & 0.514 $\pm$ 0.019 & 0.114 $\pm$ 0.006 & 0.625 $\pm$ 0.000 & 3.0 $\pm$ 0.0 & 42.000 $\pm$ 9.445 & 4.860 $\pm$ 0.319 & 0.394 $\pm$ 0.016 & 0.886 $\pm$ 0.006 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Variance & 0.3 & 0.325 $\pm$ 0.014 & 0.525 $\pm$ 0.010 & 0.114 $\pm$ 0.006 & 0.650 $\pm$ 0.056 & 2.8 $\pm$ 0.4 & 25.573 $\pm$ 8.877 & 5.955 $\pm$ 0.560 & 0.401 $\pm$ 0.014 & 0.886 $\pm$ 0.006 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Threshold & 0.3 & 0.312 $\pm$ 0.011 & 0.517 $\pm$ 0.013 & 0.119 $\pm$ 0.006 & 0.750 $\pm$ 0.088 & 2.0 $\pm$ 0.7 & 29.100 $\pm$ 17.772 & 4.909 $\pm$ 0.248 & 0.389 $\pm$ 0.011 & 0.881 $\pm$ 0.006 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Uniform & 0.3 & 0.320 $\pm$ 0.015 & 0.516 $\pm$ 0.016 & 0.115 $\pm$ 0.005 & 0.675 $\pm$ 0.112 & 2.6 $\pm$ 0.9 & 24.406 $\pm$ 9.291 & 4.242 $\pm$ 0.430 & 0.395 $\pm$ 0.016 & 0.885 $\pm$ 0.005 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & PCA-Triage & 0.5 & 0.325 $\pm$ 0.011 & 0.524 $\pm$ 0.015 & 0.114 $\pm$ 0.004 & 0.650 $\pm$ 0.056 & 2.8 $\pm$ 0.4 & 27.607 $\pm$ 18.407 & 6.096 $\pm$ 0.428 & 0.401 $\pm$ 0.012 & 0.886 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Variance & 0.5 & 0.328 $\pm$ 0.012 & 0.532 $\pm$ 0.011 & 0.114 $\pm$ 0.005 & 0.900 $\pm$ 0.056 & 0.8 $\pm$ 0.4 & 10.450 $\pm$ 9.932 & 7.486 $\pm$ 0.331 & 0.406 $\pm$ 0.011 & 0.886 $\pm$ 0.005 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Threshold & 0.5 & 0.317 $\pm$ 0.013 & 0.530 $\pm$ 0.013 & 0.119 $\pm$ 0.005 & 0.825 $\pm$ 0.112 & 1.4 $\pm$ 0.9 & 11.692 $\pm$ 6.490 & 7.816 $\pm$ 0.391 & 0.396 $\pm$ 0.013 & 0.881 $\pm$ 0.005 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Uniform & 0.5 & 0.324 $\pm$ 0.011 & 0.523 $\pm$ 0.011 & 0.114 $\pm$ 0.005 & 0.775 $\pm$ 0.056 & 1.8 $\pm$ 0.4 & 9.567 $\pm$ 3.312 & 5.639 $\pm$ 0.304 & 0.400 $\pm$ 0.010 & 0.886 $\pm$ 0.005 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & PCA-Triage & 0.7 & 0.328 $\pm$ 0.010 & 0.531 $\pm$ 0.011 & 0.114 $\pm$ 0.004 & 0.775 $\pm$ 0.137 & 1.8 $\pm$ 1.1 & 9.450 $\pm$ 6.326 & 7.606 $\pm$ 0.731 & 0.406 $\pm$ 0.010 & 0.886 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Variance & 0.7 & 0.330 $\pm$ 0.011 & 0.535 $\pm$ 0.012 & 0.114 $\pm$ 0.004 & 0.875 $\pm$ 0.125 & 1.0 $\pm$ 1.0 & 5.005 $\pm$ 0.805 & 8.806 $\pm$ 0.712 & 0.408 $\pm$ 0.011 & 0.886 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Threshold & 0.7 & 0.328 $\pm$ 0.011 & 0.535 $\pm$ 0.011 & 0.115 $\pm$ 0.005 & 0.825 $\pm$ 0.112 & 1.4 $\pm$ 0.9 & 5.718 $\pm$ 1.262 & 8.722 $\pm$ 0.672 & 0.407 $\pm$ 0.011 & 0.885 $\pm$ 0.005 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Uniform & 0.7 & 0.327 $\pm$ 0.009 & 0.530 $\pm$ 0.009 & 0.114 $\pm$ 0.004 & 0.875 $\pm$ 0.088 & 1.0 $\pm$ 0.7 & 5.632 $\pm$ 1.850 & 6.854 $\pm$ 0.580 & 0.404 $\pm$ 0.008 & 0.886 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+SMD-1-1 & Full Data & 1.0 & 0.330 $\pm$ 0.010 & 0.537 $\pm$ 0.011 & 0.114 $\pm$ 0.004 & 0.875 $\pm$ 0.125 & 1.0 $\pm$ 1.0 & 4.967 $\pm$ 0.709 & 8.968 $\pm$ 0.552 & 0.409 $\pm$ 0.010 & 0.886 $\pm$ 0.004 & 8.0 $\pm$ 0.0 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-det-smd-fixed_full_data}
+\end{table}
+\begin{table}[p]
+\centering
+\small
+\caption{SMD: fixed full data. Distortion and mask-counted payload. Four bytes per value are assumed. RMSE uses standardized values.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+Dataset & Method & Budget & MAE & RMSE & NRMSE & Values & Payload bytes & Realized fraction & Max excess values \\
+\midrule
+SMD-1-1 & PCA-Triage & 0.3 & 0.258 $\pm$ 0.027 & 14.902 $\pm$ 7.847 & 0.016 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Variance & 0.3 & 0.141 $\pm$ 0.002 & 2.375 $\pm$ 0.415 & 0.013 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Threshold & 0.3 & 0.413 $\pm$ 0.028 & 71.459 $\pm$ 11.325 & 0.019 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Uniform & 0.3 & 0.700 $\pm$ 0.014 & 116.545 $\pm$ 11.910 & 0.016 $\pm$ 0.000 & 324660.0 $\pm$ 0.0 & 1298640.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & PCA-Triage & 0.5 & 0.154 $\pm$ 0.010 & 9.024 $\pm$ 2.230 & 0.012 $\pm$ 0.000 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Variance & 0.5 & 0.058 $\pm$ 0.001 & 1.258 $\pm$ 0.246 & 0.008 $\pm$ 0.000 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Threshold & 0.5 & 0.109 $\pm$ 0.021 & 13.987 $\pm$ 17.107 & 0.013 $\pm$ 0.001 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Uniform & 0.5 & 0.421 $\pm$ 0.084 & 83.863 $\pm$ 19.805 & 0.012 $\pm$ 0.000 & 541101.0 $\pm$ 0.0 & 2164404.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & PCA-Triage & 0.7 & 0.039 $\pm$ 0.002 & 1.902 $\pm$ 0.455 & 0.006 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Variance & 0.7 & 0.015 $\pm$ 0.000 & 0.852 $\pm$ 0.065 & 0.004 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Threshold & 0.7 & 0.021 $\pm$ 0.000 & 0.562 $\pm$ 0.055 & 0.004 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Uniform & 0.7 & 0.219 $\pm$ 0.043 & 55.388 $\pm$ 21.253 & 0.009 $\pm$ 0.000 & 757541.0 $\pm$ 0.0 & 3030164.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+SMD-1-1 & Full Data & 1.0 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 1082202.0 $\pm$ 0.0 & 4328808.0 $\pm$ 0.0 & 1.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-dist-smd-fixed_full_data}
+\end{table}
+\clearpage
+\begin{table}[p]
+\centering
+\small
+\caption{PSM: method retrained. Detection metrics; delay is conditional and measured in samples.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+Dataset & Method & Budget & Precision & Recall & FPR & Event recall & Missed events & Delay (samples) & FA/1000 & Point F1 & Specificity & Events \\
+\midrule
+PSM & PCA-Triage & 0.3 & 0.992 $\pm$ 0.011 & 0.015 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.094 $\pm$ 0.025 & 65.2 $\pm$ 1.8 & 826.403 $\pm$ 131.663 & 0.023 $\pm$ 0.027 & 0.030 $\pm$ 0.002 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Variance & 0.3 & 0.985 $\pm$ 0.012 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.122 $\pm$ 0.023 & 63.2 $\pm$ 1.6 & 678.380 $\pm$ 299.926 & 0.025 $\pm$ 0.019 & 0.032 $\pm$ 0.002 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Threshold & 0.3 & 0.974 $\pm$ 0.024 & 0.017 $\pm$ 0.002 & 0.000 $\pm$ 0.000 & 0.103 $\pm$ 0.027 & 64.6 $\pm$ 1.9 & 813.958 $\pm$ 274.543 & 0.046 $\pm$ 0.037 & 0.033 $\pm$ 0.004 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Uniform & 0.3 & 0.974 $\pm$ 0.030 & 0.016 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.103 $\pm$ 0.021 & 64.6 $\pm$ 1.5 & 683.684 $\pm$ 137.859 & 0.034 $\pm$ 0.032 & 0.031 $\pm$ 0.001 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & PCA-Triage & 0.5 & 0.976 $\pm$ 0.031 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.139 $\pm$ 0.026 & 62.0 $\pm$ 1.9 & 906.807 $\pm$ 359.620 & 0.046 $\pm$ 0.046 & 0.031 $\pm$ 0.001 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Variance & 0.5 & 0.987 $\pm$ 0.014 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.153 $\pm$ 0.022 & 61.0 $\pm$ 1.6 & 952.049 $\pm$ 214.155 & 0.036 $\pm$ 0.025 & 0.032 $\pm$ 0.001 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Threshold & 0.5 & 0.980 $\pm$ 0.012 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.125 $\pm$ 0.028 & 63.0 $\pm$ 2.0 & 985.411 $\pm$ 323.244 & 0.064 $\pm$ 0.042 & 0.032 $\pm$ 0.002 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Uniform & 0.5 & 0.974 $\pm$ 0.022 & 0.017 $\pm$ 0.002 & 0.000 $\pm$ 0.000 & 0.147 $\pm$ 0.032 & 61.4 $\pm$ 2.3 & 678.599 $\pm$ 402.486 & 0.068 $\pm$ 0.055 & 0.033 $\pm$ 0.004 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & PCA-Triage & 0.7 & 0.980 $\pm$ 0.016 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.167 $\pm$ 0.017 & 60.0 $\pm$ 1.2 & 742.202 $\pm$ 405.506 & 0.073 $\pm$ 0.040 & 0.032 $\pm$ 0.001 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Variance & 0.7 & 0.939 $\pm$ 0.054 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.183 $\pm$ 0.012 & 58.8 $\pm$ 0.8 & 692.545 $\pm$ 110.209 & 0.098 $\pm$ 0.064 & 0.032 $\pm$ 0.002 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Threshold & 0.7 & 0.980 $\pm$ 0.022 & 0.018 $\pm$ 0.005 & 0.000 $\pm$ 0.000 & 0.181 $\pm$ 0.040 & 59.0 $\pm$ 2.9 & 503.929 $\pm$ 136.598 & 0.109 $\pm$ 0.147 & 0.036 $\pm$ 0.009 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Uniform & 0.7 & 0.987 $\pm$ 0.013 & 0.016 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.150 $\pm$ 0.033 & 61.2 $\pm$ 2.4 & 676.210 $\pm$ 295.402 & 0.048 $\pm$ 0.047 & 0.032 $\pm$ 0.002 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Full Data & 1.0 & 0.963 $\pm$ 0.026 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.214 $\pm$ 0.016 & 56.6 $\pm$ 1.1 & 629.185 $\pm$ 95.826 & 0.155 $\pm$ 0.096 & 0.036 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-det-psm-method_retrained}
+\end{table}
+\begin{table}[p]
+\centering
+\small
+\caption{PSM: method retrained. Distortion and mask-counted payload. Four bytes per value are assumed. RMSE uses standardized values.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+Dataset & Method & Budget & MAE & RMSE & NRMSE & Values & Payload bytes & Realized fraction & Max excess values \\
+\midrule
+PSM & PCA-Triage & 0.3 & 0.109 $\pm$ 0.000 & 0.290 $\pm$ 0.009 & 0.017 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Variance & 0.3 & 0.087 $\pm$ 0.000 & 0.255 $\pm$ 0.027 & 0.017 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Threshold & 0.3 & 0.101 $\pm$ 0.001 & 0.281 $\pm$ 0.009 & 0.019 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Uniform & 0.3 & 0.105 $\pm$ 0.000 & 0.297 $\pm$ 0.012 & 0.015 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & PCA-Triage & 0.5 & 0.069 $\pm$ 0.000 & 0.222 $\pm$ 0.011 & 0.013 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Variance & 0.5 & 0.045 $\pm$ 0.000 & 0.193 $\pm$ 0.011 & 0.013 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Threshold & 0.5 & 0.062 $\pm$ 0.000 & 0.228 $\pm$ 0.014 & 0.016 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Uniform & 0.5 & 0.069 $\pm$ 0.000 & 0.237 $\pm$ 0.018 & 0.012 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & PCA-Triage & 0.7 & 0.033 $\pm$ 0.000 & 0.145 $\pm$ 0.010 & 0.010 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Variance & 0.7 & 0.015 $\pm$ 0.000 & 0.161 $\pm$ 0.034 & 0.008 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Threshold & 0.7 & 0.021 $\pm$ 0.000 & 0.131 $\pm$ 0.014 & 0.008 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Uniform & 0.7 & 0.039 $\pm$ 0.000 & 0.176 $\pm$ 0.013 & 0.009 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Full Data & 1.0 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 2196025.0 $\pm$ 0.0 & 8784100.0 $\pm$ 0.0 & 1.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-dist-psm-method_retrained}
+\end{table}
+\clearpage
+\begin{table}[p]
+\centering
+\small
+\caption{PSM: fixed full data. Detection metrics; delay is conditional and measured in samples.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+Dataset & Method & Budget & Precision & Recall & FPR & Event recall & Missed events & Delay (samples) & FA/1000 & Point F1 & Specificity & Events \\
+\midrule
+PSM & PCA-Triage & 0.3 & 0.973 $\pm$ 0.020 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.122 $\pm$ 0.021 & 63.2 $\pm$ 1.5 & 967.344 $\pm$ 270.657 & 0.050 $\pm$ 0.030 & 0.035 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Variance & 0.3 & 0.982 $\pm$ 0.013 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.150 $\pm$ 0.032 & 61.2 $\pm$ 2.3 & 996.798 $\pm$ 258.641 & 0.039 $\pm$ 0.024 & 0.035 $\pm$ 0.008 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Threshold & 0.3 & 0.980 $\pm$ 0.015 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.117 $\pm$ 0.025 & 63.6 $\pm$ 1.8 & 1311.094 $\pm$ 265.481 & 0.050 $\pm$ 0.045 & 0.035 $\pm$ 0.008 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Uniform & 0.3 & 0.970 $\pm$ 0.026 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.122 $\pm$ 0.030 & 63.2 $\pm$ 2.2 & 958.219 $\pm$ 280.034 & 0.055 $\pm$ 0.041 & 0.035 $\pm$ 0.008 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & PCA-Triage & 0.5 & 0.970 $\pm$ 0.023 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.144 $\pm$ 0.021 & 61.6 $\pm$ 1.5 & 1053.611 $\pm$ 302.410 & 0.080 $\pm$ 0.071 & 0.035 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Variance & 0.5 & 0.974 $\pm$ 0.018 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.164 $\pm$ 0.021 & 60.2 $\pm$ 1.5 & 914.783 $\pm$ 154.680 & 0.089 $\pm$ 0.058 & 0.035 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Threshold & 0.5 & 0.972 $\pm$ 0.018 & 0.018 $\pm$ 0.003 & 0.000 $\pm$ 0.000 & 0.136 $\pm$ 0.050 & 62.2 $\pm$ 3.6 & 852.212 $\pm$ 339.140 & 0.096 $\pm$ 0.067 & 0.034 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Uniform & 0.5 & 0.971 $\pm$ 0.028 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.150 $\pm$ 0.023 & 61.2 $\pm$ 1.6 & 789.026 $\pm$ 199.579 & 0.061 $\pm$ 0.061 & 0.035 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & PCA-Triage & 0.7 & 0.969 $\pm$ 0.024 & 0.018 $\pm$ 0.003 & 0.000 $\pm$ 0.000 & 0.181 $\pm$ 0.026 & 59.0 $\pm$ 1.9 & 758.742 $\pm$ 54.960 & 0.112 $\pm$ 0.065 & 0.035 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Variance & 0.7 & 0.969 $\pm$ 0.024 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.183 $\pm$ 0.021 & 58.8 $\pm$ 1.5 & 723.110 $\pm$ 142.210 & 0.116 $\pm$ 0.079 & 0.035 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Threshold & 0.7 & 0.967 $\pm$ 0.027 & 0.018 $\pm$ 0.003 & 0.000 $\pm$ 0.000 & 0.192 $\pm$ 0.021 & 58.2 $\pm$ 1.5 & 719.205 $\pm$ 119.058 & 0.121 $\pm$ 0.080 & 0.036 $\pm$ 0.006 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Uniform & 0.7 & 0.974 $\pm$ 0.026 & 0.018 $\pm$ 0.003 & 0.000 $\pm$ 0.000 & 0.169 $\pm$ 0.015 & 59.8 $\pm$ 1.1 & 762.339 $\pm$ 170.357 & 0.093 $\pm$ 0.072 & 0.035 $\pm$ 0.006 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+PSM & Full Data & 1.0 & 0.963 $\pm$ 0.026 & 0.018 $\pm$ 0.004 & 0.000 $\pm$ 0.000 & 0.214 $\pm$ 0.016 & 56.6 $\pm$ 1.1 & 629.185 $\pm$ 95.826 & 0.155 $\pm$ 0.096 & 0.036 $\pm$ 0.007 & 1.000 $\pm$ 0.000 & 72.0 $\pm$ 0.0 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-det-psm-fixed_full_data}
+\end{table}
+\begin{table}[p]
+\centering
+\small
+\caption{PSM: fixed full data. Distortion and mask-counted payload. Four bytes per value are assumed. RMSE uses standardized values.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+Dataset & Method & Budget & MAE & RMSE & NRMSE & Values & Payload bytes & Realized fraction & Max excess values \\
+\midrule
+PSM & PCA-Triage & 0.3 & 0.109 $\pm$ 0.000 & 0.290 $\pm$ 0.009 & 0.017 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Variance & 0.3 & 0.087 $\pm$ 0.000 & 0.255 $\pm$ 0.027 & 0.017 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Threshold & 0.3 & 0.101 $\pm$ 0.001 & 0.281 $\pm$ 0.009 & 0.019 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Uniform & 0.3 & 0.105 $\pm$ 0.000 & 0.297 $\pm$ 0.012 & 0.015 $\pm$ 0.000 & 658807.0 $\pm$ 0.0 & 2635228.0 $\pm$ 0.0 & 0.300 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & PCA-Triage & 0.5 & 0.069 $\pm$ 0.000 & 0.222 $\pm$ 0.011 & 0.013 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Variance & 0.5 & 0.045 $\pm$ 0.000 & 0.193 $\pm$ 0.011 & 0.013 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Threshold & 0.5 & 0.062 $\pm$ 0.000 & 0.228 $\pm$ 0.014 & 0.016 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Uniform & 0.5 & 0.069 $\pm$ 0.000 & 0.237 $\pm$ 0.018 & 0.012 $\pm$ 0.000 & 1098012.0 $\pm$ 0.0 & 4392048.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & PCA-Triage & 0.7 & 0.033 $\pm$ 0.000 & 0.145 $\pm$ 0.010 & 0.010 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Variance & 0.7 & 0.015 $\pm$ 0.000 & 0.161 $\pm$ 0.034 & 0.008 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Threshold & 0.7 & 0.021 $\pm$ 0.000 & 0.131 $\pm$ 0.014 & 0.008 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Uniform & 0.7 & 0.039 $\pm$ 0.000 & 0.176 $\pm$ 0.013 & 0.009 $\pm$ 0.000 & 1537217.0 $\pm$ 0.0 & 6148868.0 $\pm$ 0.0 & 0.700 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+PSM & Full Data & 1.0 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 2196025.0 $\pm$ 0.0 & 8784100.0 $\pm$ 0.0 & 1.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-dist-psm-fixed_full_data}
+\end{table}
+\clearpage
+\begin{table}[p]
+\centering
+\small
+\caption{TEP: method retrained. Detection metrics; delay is conditional and measured in samples.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+Dataset & Method & Budget & Precision & Recall & FPR & Event recall & Missed events & Delay (samples) & FA/1000 & Point F1 & Specificity & Events \\
+\midrule
+TEP & PCA-Triage & 0.5 & 0.963 $\pm$ 0.001 & 0.904 $\pm$ 0.005 & 0.384 $\pm$ 0.012 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 2.962 $\pm$ 0.879 & 7.223 $\pm$ 0.391 & 0.932 $\pm$ 0.002 & 0.616 $\pm$ 0.012 & 100.0 $\pm$ 0.0 \\
+TEP & Variance & 0.5 & 0.962 $\pm$ 0.001 & 0.903 $\pm$ 0.004 & 0.393 $\pm$ 0.009 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 3.460 $\pm$ 0.554 & 7.170 $\pm$ 0.668 & 0.931 $\pm$ 0.002 & 0.607 $\pm$ 0.009 & 100.0 $\pm$ 0.0 \\
+TEP & Threshold & 0.5 & 0.965 $\pm$ 0.002 & 0.886 $\pm$ 0.007 & 0.354 $\pm$ 0.023 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 4.588 $\pm$ 0.696 & 5.760 $\pm$ 0.398 & 0.924 $\pm$ 0.003 & 0.646 $\pm$ 0.023 & 100.0 $\pm$ 0.0 \\
+TEP & Uniform & 0.5 & 0.962 $\pm$ 0.001 & 0.914 $\pm$ 0.002 & 0.399 $\pm$ 0.011 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 2.044 $\pm$ 0.438 & 9.672 $\pm$ 0.148 & 0.937 $\pm$ 0.001 & 0.601 $\pm$ 0.011 & 100.0 $\pm$ 0.0 \\
+TEP & Full Data & 1.0 & 0.943 $\pm$ 0.002 & 0.972 $\pm$ 0.002 & 0.638 $\pm$ 0.019 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.304 & 8.343 $\pm$ 1.114 & 0.958 $\pm$ 0.001 & 0.362 $\pm$ 0.019 & 100.0 $\pm$ 0.0 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-det-tep-method_retrained}
+\end{table}
+\begin{table}[p]
+\centering
+\small
+\caption{TEP: method retrained. Distortion and mask-counted payload. Four bytes per value are assumed. RMSE uses standardized values.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+Dataset & Method & Budget & MAE & RMSE & NRMSE & Values & Payload bytes & Realized fraction & Max excess values \\
+\midrule
+TEP & PCA-Triage & 0.5 & 0.104 $\pm$ 0.000 & 0.270 $\pm$ 0.002 & 0.027 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Variance & 0.5 & 0.099 $\pm$ 0.000 & 0.261 $\pm$ 0.002 & 0.026 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Threshold & 0.5 & 0.139 $\pm$ 0.001 & 0.383 $\pm$ 0.002 & 0.038 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Uniform & 0.5 & 0.175 $\pm$ 0.000 & 0.483 $\pm$ 0.001 & 0.036 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Full Data & 1.0 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 2730000.0 $\pm$ 0.0 & 10920000.0 $\pm$ 0.0 & 1.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-dist-tep-method_retrained}
+\end{table}
+\clearpage
+\begin{table}[p]
+\centering
+\small
+\caption{TEP: fixed full data. Detection metrics; delay is conditional and measured in samples.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+Dataset & Method & Budget & Precision & Recall & FPR & Event recall & Missed events & Delay (samples) & FA/1000 & Point F1 & Specificity & Events \\
+\midrule
+TEP & PCA-Triage & 0.5 & 0.940 $\pm$ 0.001 & 0.980 $\pm$ 0.001 & 0.688 $\pm$ 0.014 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 0.242 $\pm$ 0.094 & 7.878 $\pm$ 0.378 & 0.960 $\pm$ 0.001 & 0.312 $\pm$ 0.014 & 100.0 $\pm$ 0.0 \\
+TEP & Variance & 0.5 & 0.939 $\pm$ 0.001 & 0.980 $\pm$ 0.001 & 0.691 $\pm$ 0.017 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 0.242 $\pm$ 0.094 & 7.779 $\pm$ 0.274 & 0.959 $\pm$ 0.000 & 0.309 $\pm$ 0.017 & 100.0 $\pm$ 0.0 \\
+TEP & Threshold & 0.5 & 0.939 $\pm$ 0.001 & 0.983 $\pm$ 0.001 & 0.698 $\pm$ 0.012 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 0.242 $\pm$ 0.094 & 7.333 $\pm$ 0.146 & 0.960 $\pm$ 0.001 & 0.302 $\pm$ 0.012 & 100.0 $\pm$ 0.0 \\
+TEP & Uniform & 0.5 & 0.940 $\pm$ 0.001 & 0.975 $\pm$ 0.001 & 0.678 $\pm$ 0.015 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 0.242 $\pm$ 0.094 & 8.560 $\pm$ 0.149 & 0.958 $\pm$ 0.001 & 0.322 $\pm$ 0.015 & 100.0 $\pm$ 0.0 \\
+TEP & Full Data & 1.0 & 0.943 $\pm$ 0.002 & 0.972 $\pm$ 0.002 & 0.638 $\pm$ 0.019 & 1.000 $\pm$ 0.000 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.304 & 8.343 $\pm$ 1.114 & 0.958 $\pm$ 0.001 & 0.362 $\pm$ 0.019 & 100.0 $\pm$ 0.0 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-det-tep-fixed_full_data}
+\end{table}
+\begin{table}[p]
+\centering
+\small
+\caption{TEP: fixed full data. Distortion and mask-counted payload. Four bytes per value are assumed. RMSE uses standardized values.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+Dataset & Method & Budget & MAE & RMSE & NRMSE & Values & Payload bytes & Realized fraction & Max excess values \\
+\midrule
+TEP & PCA-Triage & 0.5 & 0.104 $\pm$ 0.000 & 0.270 $\pm$ 0.002 & 0.027 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Variance & 0.5 & 0.099 $\pm$ 0.000 & 0.261 $\pm$ 0.002 & 0.026 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Threshold & 0.5 & 0.139 $\pm$ 0.001 & 0.383 $\pm$ 0.002 & 0.038 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Uniform & 0.5 & 0.175 $\pm$ 0.000 & 0.483 $\pm$ 0.001 & 0.036 $\pm$ 0.000 & 1365000.0 $\pm$ 0.0 & 5460000.0 $\pm$ 0.0 & 0.500 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+TEP & Full Data & 1.0 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 2730000.0 $\pm$ 0.0 & 10920000.0 $\pm$ 0.0 & 1.000 $\pm$ 0.000 & 0.000 $\pm$ 0.000 \\
+\addlinespace
+\bottomrule
+\end{tabular}%
+}
+\label{supp-dist-tep-fixed_full_data}
+\end{table}
+\clearpage

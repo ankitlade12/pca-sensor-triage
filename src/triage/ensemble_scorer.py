@@ -31,6 +31,8 @@ class EnsembleScorer:
         weights: List[float] = None,
         forgetting_factor: float = 1.0,
     ):
+        if not 0 <= forgetting_factor <= 1:
+            raise ValueError("forgetting_factor must be in [0, 1]")
         if k_values is None:
             k_values = [3, 5, 10]
         self.k_values = k_values
@@ -40,6 +42,7 @@ class EnsembleScorer:
         self._ipcas = [IncrementalPCA(n_components=k) for k in k_values]
         self._fitted = [False] * len(k_values)
         self._importance_history: Optional[np.ndarray] = None
+        self._n_score_updates = 0
 
     def compute_importance(self, window: np.ndarray) -> np.ndarray:
         """Compute ensemble importance scores."""
@@ -61,11 +64,11 @@ class EnsembleScorer:
                 ipca.partial_fit(window)
 
             V = ipca.components_
-            sigma = ipca.singular_values_
+            eigenvalues = ipca.explained_variance_
 
             scores = np.zeros(d)
-            for i in range(len(sigma)):
-                scores += sigma[i] * V[i, :] ** 2
+            for i in range(len(eigenvalues)):
+                scores += eigenvalues[i] * V[i, :] ** 2
 
             s_sum = scores.sum()
             if s_sum > 0:
@@ -80,12 +83,20 @@ class EnsembleScorer:
 
         # Exponential smoothing
         if self._importance_history is None:
-            self._importance_history = ensemble_scores
+            self._importance_history = ensemble_scores.copy()
+            self._n_score_updates = 1
         else:
             lam = self.forgetting_factor
-            self._importance_history = (
-                lam * self._importance_history + (1 - lam) * ensemble_scores
-            )
+            if lam == 1.0:
+                n = self._n_score_updates
+                self._importance_history = (
+                    n * self._importance_history + ensemble_scores
+                ) / (n + 1)
+            else:
+                self._importance_history = (
+                    lam * self._importance_history + (1 - lam) * ensemble_scores
+                )
+            self._n_score_updates += 1
 
         smoothed = self._importance_history / self._importance_history.sum()
         return smoothed
@@ -94,3 +105,4 @@ class EnsembleScorer:
         self._ipcas = [IncrementalPCA(n_components=k) for k in self.k_values]
         self._fitted = [False] * len(self.k_values)
         self._importance_history = None
+        self._n_score_updates = 0

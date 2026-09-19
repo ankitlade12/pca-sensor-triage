@@ -1,4 +1,4 @@
-.PHONY: install test test-quick lint format benchmark benchmark-quick clean smoke figures help
+.PHONY: install test test-quick lint format benchmark benchmark-quick causal-benchmark causal-tep revised-tables revised-paper verify-revision clean smoke figures help
 
 # ──────────────────────────────────────────────────────────────
 # Setup
@@ -51,11 +51,28 @@ pareto:  ## Legacy Pareto experiment
 ablation:  ## Ablation studies (k, w, lambda)
 	python experiments/run_ablation.py
 
+causal-benchmark:  ## Revised official-split anomaly benchmark
+	python experiments/run_causal_benchmark.py
+
+causal-tep:  ## Revised run-separated TEP benchmark
+	python experiments/run_causal_tep.py
+
 # ──────────────────────────────────────────────────────────────
 # Figures & Paper
 # ──────────────────────────────────────────────────────────────
 figures:  ## Regenerate all publication figures from results
 	python paper/generate_all_figures.py
+
+revised-tables:  ## Generate revised LaTeX tables from causal results
+	python scripts/generate_revised_tables.py
+
+revised-paper: revised-tables  ## Compile journal-neutral revised manuscript
+	cd paper && latexmk -pdf -interaction=nonstopmode -halt-on-error main_revised.tex
+	cd paper && latexmk -pdf -interaction=nonstopmode -halt-on-error supplement_revised.tex
+
+verify-revision:  ## Verify tests, corrected results, and revised manuscript scope
+	python -m pytest tests/ -q
+	python scripts/verify_revised_results.py
 
 # ──────────────────────────────────────────────────────────────
 # Cleanup

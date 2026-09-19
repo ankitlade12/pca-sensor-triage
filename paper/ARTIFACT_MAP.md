@@ -1,6 +1,10 @@
 # Paper Artifact Provenance Map
 
-Maps every major table and figure in `paper/main.tex` to its source data,
+> **Legacy notice:** This file maps the rejected acausal manuscript. It is not
+> the source of truth for resubmission. See `docs/REVISION.md`,
+> `paper/main_revised.tex`, and result files beginning with `causal_`.
+
+Maps every major table and figure in the historical `docs/archive/main_before_2026-09-06.tex` to its source data,
 generation script, and experiment configuration.
 
 ## Canonical Experiment Stack (Main Comparison)

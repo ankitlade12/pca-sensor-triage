@@ -12,7 +12,6 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pyreadr
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from .synthetic_datasets import generate_swat_like
@@ -26,6 +25,7 @@ def load_tep(
     test_start: int = 21,
     test_end: int = 30,
     scale: bool = True,
+    fault_onset_sample: int = 20,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str], Optional[StandardScaler]]:
     """Load Tennessee Eastman Process dataset.
 
@@ -67,19 +67,29 @@ def load_tep(
     for fault in fault_types:
         if fault == 0:
             tr = ff_df[ff_df['simulationRun'] <= train_runs]
-            te = ff_df[(ff_df['simulationRun'] > test_start) &
+            te = ff_df[(ff_df['simulationRun'] >= test_start) &
                        (ff_df['simulationRun'] <= test_end)]
         else:
             tr = ft_df[(ft_df['faultNumber'] == fault) &
                        (ft_df['simulationRun'] <= train_runs)]
             te = ft_df[(ft_df['faultNumber'] == fault) &
-                       (ft_df['simulationRun'] > test_start) &
+                       (ft_df['simulationRun'] >= test_start) &
                        (ft_df['simulationRun'] <= test_end)]
 
         X_train_parts.append(tr[sensor_cols].values)
-        y_train_parts.append(np.full(len(tr), fault))
+        if fault == 0:
+            y_train_parts.append(np.zeros(len(tr), dtype=int))
+        else:
+            y_train_parts.append(
+                np.where(tr["sample"].to_numpy() >= fault_onset_sample, fault, 0)
+            )
         X_test_parts.append(te[sensor_cols].values)
-        y_test_parts.append(np.full(len(te), fault))
+        if fault == 0:
+            y_test_parts.append(np.zeros(len(te), dtype=int))
+        else:
+            y_test_parts.append(
+                np.where(te["sample"].to_numpy() >= fault_onset_sample, fault, 0)
+            )
 
     X_train = np.vstack(X_train_parts)
     y_train = np.concatenate(y_train_parts)
@@ -178,9 +188,9 @@ def load_nasa_bearing(
     X = df[sensor_cols].values
     y = df['anomaly'].values.astype(int)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, stratify=y, random_state=42
-    )
+    split = int((1 - test_size) * len(X))
+    X_train, X_test = X[:split], X[split:]
+    y_train, y_test = y[:split], y[split:]
 
     scaler = None
     if scale:
@@ -197,7 +207,7 @@ def _load_csv_dataset(
     exclude_cols: List[str] = None,
     test_size: float = 0.3,
     scale: bool = True,
-    stratify: bool = True,
+    split_strategy: str = "chronological",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str], Optional[StandardScaler]]:
     """Generic loader for CSV datasets with anomaly labels."""
     csv_path = os.path.join(DATA_DIR, filename)
@@ -211,14 +221,14 @@ def _load_csv_dataset(
     X = np.nan_to_num(df[sensor_cols].values.astype(float), nan=0.0)
     y = df[label_col].values.astype(int)
 
-    if stratify and len(np.unique(y)) > 1:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, stratify=y, random_state=42
+    if split_strategy != "chronological":
+        raise ValueError(
+            "Only chronological splitting is supported for time-series data; "
+            "random stratified splitting leaks temporal neighbors."
         )
-    else:
-        split = int((1 - test_size) * len(X))
-        X_train, X_test = X[:split], X[split:]
-        y_train, y_test = y[:split], y[split:]
+    split = int((1 - test_size) * len(X))
+    X_train, X_test = X[:split], X[split:]
+    y_train, y_test = y[:split], y[split:]
 
     scaler = None
     if scale:
@@ -230,32 +240,87 @@ def _load_csv_dataset(
 
 
 def load_smd(test_size: float = 0.3, scale: bool = True):
-    """Load Server Machine Dataset (38 features, 388K samples, anomaly detection).
-    Source: NetManAIOps/OmniAnomaly (KDD 2019).
+    """Load the official SMD split for machine-1-1.
+
+    The training stream is normal-only. The independent labeled test stream is
+    kept intact and chronological.
     """
-    return _load_csv_dataset('smd_combined.csv', test_size=test_size, scale=scale)
+    del test_size
+    root = os.path.join(DATA_DIR, "omni_temp", "ServerMachineDataset")
+    train_path = os.path.join(root, "train", "machine-1-1.txt")
+    test_path = os.path.join(root, "test", "machine-1-1.txt")
+    label_path = os.path.join(root, "test_label", "machine-1-1.txt")
+    X_train = np.loadtxt(train_path, delimiter=",")
+    X_test = np.loadtxt(test_path, delimiter=",")
+    y_train = np.zeros(len(X_train), dtype=int)
+    y_test = np.loadtxt(label_path, delimiter=",").astype(int).reshape(-1)
+    sensor_cols = [f"feature_{i}" for i in range(X_train.shape[1])]
+    return _scale_official_split(X_train, y_train, X_test, y_test, sensor_cols, scale)
 
 
 def load_msl(test_size: float = 0.3, scale: bool = True):
-    """Load NASA Mars Science Laboratory telemetry (55 features, 132K samples).
-    Source: khundman/telemanom (KDD 2018).
-    """
-    return _load_csv_dataset('msl_combined.csv', test_size=test_size, scale=scale)
+    """Load the official MSL normal-training and labeled-test arrays."""
+    del test_size
+    root = os.path.join(DATA_DIR, "msl_smap", "MSL")
+    X_train = np.load(os.path.join(root, "MSL_train.npy"))
+    X_test = np.load(os.path.join(root, "MSL_test.npy"))
+    y_train = np.zeros(len(X_train), dtype=int)
+    y_test = np.load(os.path.join(root, "MSL_test_label.npy")).astype(int)
+    sensor_cols = [f"feature_{i}" for i in range(X_train.shape[1])]
+    return _scale_official_split(X_train, y_train, X_test, y_test, sensor_cols, scale)
 
 
 def load_psm(test_size: float = 0.3, scale: bool = True):
-    """Load Pooled Server Metrics from eBay (25 features, 220K samples).
-    Source: eBay/RANSynCoders (KDD 2021).
-    """
-    return _load_csv_dataset('psm_combined.csv', test_size=test_size, scale=scale)
+    """Load the official PSM normal-training and labeled-test CSV files."""
+    del test_size
+    root = os.path.join(DATA_DIR, "psm_temp", "data")
+    train_df = pd.read_csv(os.path.join(root, "train.csv"))
+    test_df = pd.read_csv(os.path.join(root, "test.csv"))
+    label_df = pd.read_csv(os.path.join(root, "test_label.csv"))
+    sensor_cols = [c for c in train_df.columns if c != "timestamp_(min)"]
+    X_train = train_df[sensor_cols].to_numpy(dtype=float)
+    X_test = test_df[sensor_cols].to_numpy(dtype=float)
+    y_train = np.zeros(len(X_train), dtype=int)
+    y_test = label_df["label"].to_numpy(dtype=int)
+    return _scale_official_split(X_train, y_train, X_test, y_test, sensor_cols, scale)
 
 
 def load_hai(test_size: float = 0.3, scale: bool = True):
-    """Load HIL-based Augmented ICS dataset (83 features, 259K samples).
-    Source: icsdataset/hai (CSET 2020).
-    """
-    return _load_csv_dataset('hai_combined.csv', exclude_cols=['time'],
-                             test_size=test_size, scale=scale)
+    """Load HAI 20.07 using its official train/test file division."""
+    del test_size
+    root = os.path.join(DATA_DIR, "hai_temp", "hai-20.07")
+    train_files = sorted(glob.glob(os.path.join(root, "train*.csv.gz")))
+    test_files = sorted(glob.glob(os.path.join(root, "test*.csv.gz")))
+    train_df = pd.concat([pd.read_csv(p, sep=";") for p in train_files], ignore_index=True)
+    test_df = pd.concat([pd.read_csv(p, sep=";") for p in test_files], ignore_index=True)
+    excluded = {"time", "attack", "attack_P1", "attack_P2", "attack_P3"}
+    sensor_cols = [
+        c for c in train_df.columns if c not in excluded and c in test_df.columns
+    ]
+    X_train = train_df[sensor_cols].to_numpy(dtype=float)
+    X_test = test_df[sensor_cols].to_numpy(dtype=float)
+    y_train = train_df["attack"].to_numpy(dtype=int)
+    y_test = test_df["attack"].to_numpy(dtype=int)
+    return _scale_official_split(X_train, y_train, X_test, y_test, sensor_cols, scale)
+
+
+def _scale_official_split(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    sensor_cols: List[str],
+    scale: bool,
+):
+    """Clean and train-scale an already separated official dataset split."""
+    X_train = np.nan_to_num(X_train.astype(float), nan=0.0, posinf=0.0, neginf=0.0)
+    X_test = np.nan_to_num(X_test.astype(float), nan=0.0, posinf=0.0, neginf=0.0)
+    scaler = None
+    if scale:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+    return X_train, y_train, X_test, y_test, sensor_cols, scaler
 
 
 # Dataset registry — all datasets (includes synthetic stand-ins for SWaT/WADI)

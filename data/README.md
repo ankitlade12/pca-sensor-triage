@@ -24,26 +24,26 @@ bash data/download_datasets.sh
 ### SMD (Server Machine Dataset)
 - **Source:** NetManAIOps/OmniAnomaly (Su et al. KDD 2019)
 - **URL:** https://github.com/NetManAIOps/OmniAnomaly
-- **Preprocessing:** Combine machine-1-1 train/test with labels into single CSV
-- **Expected output:** `data/raw/smd_combined.csv`
-- **Columns:** 38 sensor features + `anomaly` (binary)
+- **Files used:** official `train/machine-1-1.txt`,
+  `test/machine-1-1.txt`, and `test_label/machine-1-1.txt`
+- **Expected root:** `data/raw/omni_temp/ServerMachineDataset/`
+- **Channels:** 38
 - **Access:** Public (GitHub)
 
-### MSL (Mars Science Laboratory)
-- **Source:** khundman/telemanom (Hundman et al. KDD 2018)
-- **URL:** https://github.com/khundman/telemanom
-- **Data URL:** https://s3-us-west-2.amazonaws.com/telemanom/data.zip
-- **Preprocessing:** Combine MSL channel files with labels
-- **Expected output:** `data/raw/msl_combined.csv`
-- **Columns:** 55 sensor features + `anomaly` (binary)
-- **Access:** Public (GitHub/S3)
+### MSL — excluded from current primary evaluation
+
+The local `MSL_train.npy` / `MSL_test.npy` files are aggregate arrays, not
+verified original single-stream sensor files. The original Telemanom data use
+per-stream telemetry and encoded commands. Entity identities, concatenation order,
+and inherited preprocessing were not recoverable here. No current primary
+result uses MSL. See https://github.com/khundman/telemanom#data.
 
 ### PSM (Pooled Server Metrics)
 - **Source:** eBay/RANSynCoders (Abdulaal et al. KDD 2021)
 - **URL:** https://github.com/eBay/RANSynCoders
-- **Preprocessing:** Combine train.csv, test.csv, test_label.csv
-- **Expected output:** `data/raw/psm_combined.csv`
-- **Columns:** 25 sensor features + `anomaly` (binary)
+- **Files used:** official `train.csv`, `test.csv`, and `test_label.csv`
+- **Expected root:** `data/raw/psm_temp/data/`
+- **Channels:** 25 after excluding the timestamp
 - **Access:** Public (GitHub)
 
 ### HAI (HIL-based Augmented ICS)
@@ -68,11 +68,23 @@ bash data/download_datasets.sh
 
 ## Preprocessing Notes
 
-All datasets undergo the same standardization:
+The legacy combined CSV files are retained only for reproducibility of the
+rejected manuscript. New experiments must use official partitions whenever
+they are available. Where only a single chronological stream is available,
+the split is contiguous and no window may cross a boundary.
+
+Preprocessing rules for revised experiments:
 1. Select sensor columns (exclude metadata: datetime, time, etc.)
 2. Replace NaN with 0.0
-3. Train/test split: 70/30, stratified by label (`random_state=42`)
-4. StandardScaler: fit on train, transform both train and test
+3. Preserve the source's official train/test division, machine/run identity,
+   and chronological order
+4. Create validation data only from the training side of the final test split
+5. Fit StandardScaler on training data only and transform validation/test data
+6. Reset online state at every independent machine, run, or experiment
+
+Random stratification is prohibited for time-series experiments because it
+places temporally adjacent samples and portions of the same event on both sides
+of the evaluation boundary.
 
 See `src/utils/data_loader.py` for exact implementation.
 
@@ -83,17 +95,26 @@ After setup, verify all datasets load correctly:
 ```python
 from src.utils.data_loader import get_dataset, list_datasets
 print(list_datasets())
-for ds in ['tep', 'smd', 'msl', 'psm', 'hai', 'skab']:
+for ds in ['smd', 'psm']:
     X_train, y_train, X_test, y_test, cols, _ = get_dataset(ds)
     print(f"{ds}: train={X_train.shape}, test={X_test.shape}, channels={len(cols)}")
 ```
 
-## Cold-Start Status
+## Reproduction Status
 
 - Repository health checks are maintained and currently pass (`pytest`, paper-number verification).
-- End-to-end experiment reruns still require manual dataset acquisition/preprocessing for
-  TEP, SMD, MSL, PSM, and HAI.
-- A full clean-machine reproduction of every paper experiment has not yet been documented in
-  this repository.
-- The intended source of truth for the paper is `paper/ARTIFACT_MAP.md` plus the canonical
-  table files under `paper/tables/`.
+- The corrected SMD, PSM, and TEP experiments have been run from the paths
+  listed above. A new machine still requires acquisition of the public source
+  files because raw data are not redistributed here.
+- The revised source of truth is `docs/REVISION.md`, the `causal_*.csv` files,
+  and `paper/tables/causal_summary.tex`. Legacy combined CSVs and tables must not
+  be substituted.
+
+## Current TEP entry point
+
+Use `experiments/run_causal_tep.py`, not the legacy `load_tep` loader, for the
+current evaluation. Both train and held-out runs come from the released Training
+RData files: runs 1–5 train; runs 21–25 test; labels use `sample >= 20` as the
+fault-onset convention. This is a run-separated subset evaluation, not use of
+the provider's separate Testing RData files. The exact convention is recorded
+in the experiment manifest. Non-overlapping 50-sample windows reset per run.

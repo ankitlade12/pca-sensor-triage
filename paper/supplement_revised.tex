@@ -1,0 +1,27 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[landscape,margin=0.7in]{geometry}
+\usepackage{booktabs,graphicx,amsmath}
+\usepackage[hidelinks]{hyperref}
+\begin{document}
+\title{Supplementary results: A Causal Evaluation of PCA-Guided Sensor-Rate Allocation under Hard Communication Budgets}
+\author{Anonymous authors}
+\date{}
+\maketitle
+\noindent All entries are mean $\pm$ sample standard deviation over five joint
+experimental seeds (42, 123, 456, 789, 1024). These seeds vary acquisition,
+detector randomness, and the Isolation Forest fitting subset. Full Data is a
+full-rate reference and is listed only once per protocol. TEP point and event
+metrics here use binary detection (any fault). Event boundaries never cross
+simulation runs. Delay is in samples and conditional on detection; missed events
+are reported separately. A dash denotes an undefined delay. Payload bytes
+assume four bytes per retained value and exclude network overhead. RMSE and MAE
+use train-standardized values. NRMSE divides channel RMSE by the pooled test
+range, using one for a constant channel; those ranges are used only for reporting.
+The main paper uses threshold quantile 0.99. Other predeclared quantiles are
+sensitivity results and do not select the primary configuration.
+\clearpage
+\input{tables/causal_metrics.tex}
+\input{tables/causal_thresholds.tex}
+\end{document}

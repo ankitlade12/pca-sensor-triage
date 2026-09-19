@@ -66,3 +66,33 @@ paper/figures_tiny/
 *.pkl
 *.h5
 *.hdf5
+
+# Local submission administration and agent state
+AGENTS.md
+.agents/
+.codex/
+submission_*/
+resubmission_*/
+JOURNAL_OPTIONS_*.md
+REVIEW_*.md
+REVISION_STATUS.md
+paper/response_to_reviewers*.md
+paper/cover_letter*
+paper/declaration_of_interest*
+paper/title_page*
+paper/acknowledgments_*
+paper/highlights_*
+paper/main_measurement.tex
+scripts/build_*submission.py
+scripts/build_flat_resource.py
+
+# LaTeX compilation bookkeeping
+*.fdb_latexmk
+*.fls
+paper/current/*.aux
+paper/current/*.log
+paper/current/*.bbl
+paper/current/*.blg
+paper/current/*.out
+paper/current/*.synctex.gz
+paper/current/main.pdf

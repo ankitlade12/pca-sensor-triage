@@ -40,6 +40,16 @@ class TestPCATriage:
         assert scores.shape == (10,)
         assert abs(scores.sum() - 1.0) < 1e-6
 
+    def test_lambda_one_is_running_mean_not_frozen(self):
+        triage = PCATriage(n_components=2, window_size=50, forgetting_factor=1.0)
+        first = np.random.RandomState(1).normal(size=(50, 4))
+        first[:, 0] *= 20
+        second = np.random.RandomState(2).normal(size=(50, 4))
+        second[:, 3] *= 20
+        scores_first = triage.compute_importance(first)
+        scores_second = triage.compute_importance(second)
+        assert not np.allclose(scores_first, scores_second)
+
     def test_high_variance_channel_gets_high_importance(self):
         triage = PCATriage(n_components=3, window_size=100)
         window = np.random.randn(100, 10) * 0.1
@@ -92,6 +102,12 @@ class TestRateAllocator:
         nan_fracs = np.isnan(triaged).mean(axis=0)
         assert nan_fracs[0] > nan_fracs[4]
 
+    def test_hard_budget_is_exact_per_window(self):
+        alloc = RateAllocator(budget=0.4, min_rate=0.05)
+        rates = alloc.allocate(np.random.RandomState(4).dirichlet(np.ones(7)))
+        triaged = alloc.apply_rates(np.ones((31, 7)), rates, seed=42)
+        assert np.isfinite(triaged).sum() == int(np.floor(0.4 * 31 * 7))
+
     def test_effective_bandwidth(self):
         alloc = RateAllocator(budget=0.5, min_rate=0.05)
         rates = np.array([0.3, 0.5, 0.7])
@@ -142,6 +158,22 @@ class TestTriagePipeline:
         pipe.process_stream(data, seed=42)
         pipe.reset()
         assert len(pipe.importance_log) == 0
+
+    def test_current_window_cannot_change_its_own_rates(self):
+        rng = np.random.RandomState(10)
+        first = rng.normal(size=(25, 6))
+        second_a = rng.normal(size=(25, 6))
+        second_b = second_a.copy()
+        second_b[:, 5] *= 100
+
+        pipe_a = TriagePipeline(n_components=3, window_size=25, budget=0.5)
+        pipe_b = TriagePipeline(n_components=3, window_size=25, budget=0.5)
+        pipe_a.process_stream(np.vstack([first, second_a]), seed=42)
+        pipe_b.process_stream(np.vstack([first, second_b]), seed=42)
+
+        assert np.allclose(pipe_a.rate_log[0], 0.5)
+        assert np.allclose(pipe_a.rate_log[1], pipe_b.rate_log[1])
+        assert pipe_a.realized_bandwidth_log == [0.5, 0.5]
 
 
 class TestHybridScorer:
@@ -213,11 +245,11 @@ class TestPipelineV2:
         assert recon.shape == data.shape
         assert not np.isnan(recon).any()
 
-    def test_linear_interpolation_default(self):
+    def test_causal_forward_fill_default(self):
         pipe = TriagePipeline(
             n_components=3, window_size=25, budget=0.5,
         )
-        assert pipe.reconstruction_method == 'linear'
+        assert pipe.reconstruction_method == 'forward_fill'
 
     def test_sharpened_pipeline(self):
         pipe = TriagePipeline(
@@ -237,3 +269,49 @@ class TestPipelineV2:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+def test_zero_variance_bootstrap_recovers():
+    scorer = PCATriage(n_components=2, forgetting_factor=0.5)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        cold = scorer.compute_importance(np.zeros((50, 3)))
+    assert np.allclose(cold, np.ones(3) / 3)
+    varied = np.random.RandomState(7).normal(size=(50, 3)) * [1, 2, 30]
+    updated = scorer.compute_importance(varied)
+    assert np.isfinite(updated).all()
+    assert updated[2] > updated[0]
+
+
+def test_smoothing_averages_normalized_covariance_participation():
+    scorer = PCATriage(n_components=2, forgetting_factor=0.5)
+    first = np.random.RandomState(1).normal(size=(50, 3)) * [1, 2, 3]
+    second = np.random.RandomState(2).normal(size=(50, 3)) * [30, 2, 1]
+    previous = scorer.compute_importance(first)
+    actual = scorer.compute_importance(second)
+    raw = (scorer.ipca.explained_variance_[:, None] * scorer.ipca.components_ ** 2).sum(axis=0)
+    assert np.allclose(actual, 0.5 * previous + 0.5 * raw / raw.sum())
+
+
+def test_tail_uses_latest_computed_rates():
+    pipeline = TriagePipeline(n_components=2, window_size=10, budget=0.5)
+    stream = np.random.RandomState(7).normal(size=(25, 3)) * [1, 5, 20]
+    pipeline.process_stream(stream)
+    assert len(pipeline.rate_log) == 3
+    assert np.allclose(pipeline.rate_log[-1], pipeline._next_rates)
+    assert not np.allclose(pipeline.rate_log[-1], pipeline.rate_log[-2])
+    assert pipeline.allocator.observation_log[-1]["window_samples"] == 5
+
+
+def test_saturation_redistribution_uses_all_available_budget():
+    allocator = RateAllocator(budget=0.9, min_rate=0.05)
+    rates = allocator.allocate(np.array([0.8, 0.19, 0.009, 0.001]))
+    assert rates.sum() == pytest.approx(3.6)
+    assert np.all(rates <= 1)
+
+
+def test_communication_log_counts_actual_bernoulli_mask():
+    allocator = RateAllocator(budget=0.5)
+    acquired = allocator.apply_rates(np.ones((11, 3)), np.ones(3), hard_budget=False)
+    record = allocator.observation_log[-1]
+    assert record["transmitted_values"] == np.isfinite(acquired).sum() == 33
+    assert record["excess_values"] == 17

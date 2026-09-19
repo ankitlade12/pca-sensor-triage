@@ -1,0 +1,30 @@
+{
+  "datasets": [
+    "smd",
+    "msl",
+    "psm"
+  ],
+  "budgets": [
+    0.3,
+    0.5,
+    0.7
+  ],
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    1024
+  ],
+  "methods": [
+    "PCA-Triage",
+    "Variance",
+    "Threshold",
+    "Uniform",
+    "Full Data"
+  ],
+  "split": "official",
+  "decision_timing": "rates(t) from reconstructed windows <= t-1",
+  "reconstruction": "causal forward fill",
+  "budget_enforcement": "hard per window"
+}

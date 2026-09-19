@@ -5,7 +5,7 @@ Supports multiple interpolation strategies for filling in missing samples
 after PCA-Triage has reduced per-channel sampling rates.
 """
 
-from typing import Literal
+from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,7 @@ import pandas as pd
 def reconstruct(
     triaged_data: np.ndarray,
     method: Literal["forward_fill", "linear", "zero"] = "forward_fill",
+    initial_values: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Reconstruct full-rate data from triaged observations.
 
@@ -38,14 +39,20 @@ def reconstruct(
     df = pd.DataFrame(triaged_data)
 
     if method == "forward_fill":
-        # Forward fill, then backward fill for leading NaNs
-        df = df.ffill().bfill()
+        # Strictly causal zero-order hold. Leading missing values use the last
+        # value from the preceding window when supplied, otherwise zero (the
+        # mean after train-fitted standardization).
+        if initial_values is not None:
+            initial = pd.DataFrame([np.asarray(initial_values, dtype=float)])
+            df = pd.concat([initial, df], ignore_index=True).ffill().iloc[1:]
+        else:
+            df = df.ffill()
     elif method == "linear":
         df = df.interpolate(method="linear", axis=0, limit_direction="both")
     else:
         raise ValueError(f"Unknown method: {method}")
 
-    # Fill any remaining NaNs (e.g., columns with zero samples) with 0
+    # Fill remaining leading NaNs (or channels with no samples) with zero.
     df = df.fillna(0.0)
 
     return df.values

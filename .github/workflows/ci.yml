@@ -32,13 +32,16 @@ jobs:
     - name: Run tests
       run: python -m pytest tests/ -v --tb=short
 
+    - name: Verify revised results and acquisition ledgers
+      run: python scripts/verify_revised_results.py
+
     - name: Smoke test (core pipeline + v2 features)
       run: |
         python -c "
         from src.triage import TriagePipeline, HybridScorer
         import numpy as np
         X = np.random.randn(500, 20)
-        # Test base pipeline (linear interp default)
+        # Test base pipeline (causal zero-order hold default)
         pipe = TriagePipeline(n_components=5, window_size=50, budget=0.5)
         result = pipe.process_stream(X, seed=42)
         assert result.shape == X.shape

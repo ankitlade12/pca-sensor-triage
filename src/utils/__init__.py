@@ -9,3 +9,6 @@ from .data_loader import load_skab as load_skab
 from .data_loader import load_smd as load_smd
 from .data_loader import load_tep as load_tep
 from .data_loader import load_tep_single_fault as load_tep_single_fault
+from .evaluation import communication_metrics as communication_metrics
+from .evaluation import contiguous_events as contiguous_events
+from .evaluation import detection_metrics as detection_metrics

@@ -6,7 +6,8 @@ Remaining channels get full sampling rate.
 """
 
 import numpy as np
-import pandas as pd
+
+from src.triage.reconstruction import reconstruct
 
 
 class RandomDropout:
@@ -30,6 +31,7 @@ class RandomDropout:
         n_keep = max(1, int(self.budget * d))
         n_windows = n // self.window_size
         reconstructed = np.zeros_like(data, dtype=float)
+        last_values = np.zeros(d, dtype=float)
 
         for w_idx in range(n_windows):
             start = w_idx * self.window_size
@@ -41,13 +43,12 @@ class RandomDropout:
             mask = np.zeros(d, dtype=bool)
             mask[keep_idx] = True
 
-            # Zero out dropped channels, then fill with column mean
+            # Dropped channels carry forward their last causally available value.
             result = window.copy()
             result[:, ~mask] = np.nan
-            result = pd.DataFrame(result).ffill().bfill().fillna(0.0).values
-            # For fully NaN columns, use 0
-            result = np.nan_to_num(result, nan=0.0)
+            result = reconstruct(result, method="forward_fill", initial_values=last_values)
             reconstructed[start:end] = result
+            last_values = result[-1].copy()
 
         remaining_n = n % self.window_size
         if remaining_n > 0:
@@ -57,8 +58,8 @@ class RandomDropout:
             mask[keep_idx] = True
             result = data[start:].copy().astype(float)
             result[:, ~mask] = np.nan
-            result = pd.DataFrame(result).ffill().bfill().fillna(0.0).values
-            result = np.nan_to_num(result, nan=0.0)
-            reconstructed[start:] = result
+            reconstructed[start:] = reconstruct(
+                result, method="forward_fill", initial_values=last_values
+            )
 
         return reconstructed

@@ -1,0 +1,107 @@
+{
+  "protocol_version": "2026-09-06-mask-audited",
+  "created_utc": "2026-09-06T19:39:12.586961+00:00",
+  "command": [
+    "experiments/run_causal_tep.py"
+  ],
+  "python": "3.14.0",
+  "numpy": "2.4.3",
+  "pandas": "3.0.1",
+  "sklearn": "1.8.0",
+  "datasets": [
+    "tep"
+  ],
+  "budgets": [
+    0.5
+  ],
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    1024
+  ],
+  "methods": [
+    "PCA-Triage",
+    "Variance",
+    "Threshold",
+    "Uniform",
+    "Full Data"
+  ],
+  "window_size": 50,
+  "n_components": 10,
+  "smoothing": 0.95,
+  "min_rate": 0.05,
+  "score_order": "normalize covariance diagonal, then smooth",
+  "stream_initialization": "all allocation and reconstruction state reset per partition/run",
+  "accounting": "counts from acquisition masks; hypothetical float32 payload, 4 bytes/value",
+  "seed_interpretation": "joint acquisition, detector, and fitting-subsample seeds",
+  "threshold_quantiles": [
+    0.95,
+    0.975,
+    0.99,
+    0.995,
+    0.999
+  ],
+  "primary_quantile": 0.99,
+  "source_sha256": {
+    "src/__init__.py": "528c0457148e7ed89da4e9e99fbc4e675e1bca0669444a93bbd7c4a6f52ef911",
+    "src/baselines/__init__.py": "a80f5c4c33779b7f60d9404c317a0a02e0f9c0b0a3493729a502af073304249a",
+    "src/baselines/attention.py": "9a959a2527b4852ba860e024a5433c10bb49303b2cd295557b5cfd8c9ae6bada",
+    "src/baselines/autoencoder.py": "a9e9fbcff91960e409f076e37704eba5d230174532032340c2ebd7eeddcf29dc",
+    "src/baselines/lstm_attention.py": "c4a04d1eb4f3626de763aa15500bf6585d2ec96771ed71558e30d0d8fd2b5f74",
+    "src/baselines/mutual_info.py": "7290ef8b08c3dfdd593f58a039a11193a95ed8e57558818522016ba573d3ac89",
+    "src/baselines/ogd.py": "9160f34ac21e8aa042024fcc49ac2cc5433a295d1178ce47c00ae972368397c0",
+    "src/baselines/random_dropout.py": "f9f74f7958de0d86d0356fdf88b9459e6cea3c9c057ae733ef8092ef91eba4b6",
+    "src/baselines/send_on_delta.py": "a04533f3f68ba8750af98cfb5ebc22586bb36fd9a54c4ad440b56b115cc11c0d",
+    "src/baselines/threshold.py": "e1126615847bae0ee40bd29c69003a5c05669bfbcd3bb2eba36d33369a840617",
+    "src/baselines/uniform.py": "452268c65a1916e5d04f5359de26c316de522902fe72bc17143a9c5da53b96f8",
+    "src/baselines/variance.py": "8dd31adbd9a77093c68ab8c98cf29caff16722301eca62d76174040edd7811ce",
+    "src/triage/__init__.py": "f5537933081d210423718bd8fc89b1935ace6baffa5d651a39c6d19f60a90470",
+    "src/triage/adaptive_k.py": "ba911cd06334411b70a70a68262700f09a15eca8a9b5ec5261bb515f567b1f28",
+    "src/triage/ensemble_scorer.py": "c485e8c25ec418e6a6102577eb3ce13867e149d22e93b025f2eb39d03b8324b8",
+    "src/triage/hybrid_scorer.py": "8ad58f73b162be50ea36b62691123ffa2779af6517a8db9e64b252c818702622",
+    "src/triage/pca_triage.py": "0e838b765871d991e57a4915b18587f767b325925954f0b41cc6d5e0a508a60c",
+    "src/triage/pipeline.py": "b929601bc00b4dbc68d2081f826be6a43cf4fc5c92804aadabea5ea41e8ad8eb",
+    "src/triage/rate_allocator.py": "e17052c89b58fcac73aa220c1ea9bd523eb238bfc8ff93ead83ec1afe9e8adeb",
+    "src/triage/reconstruction.py": "f83d24dfd3c2e2087e345e1420ca77cc1d90bd6c5f3136cf5aab9e1409172cf6",
+    "src/utils/__init__.py": "439b094f2afb5a195975300a8096f90cf9f836e932389c6ab6fe8a2b16de4291",
+    "src/utils/data_loader.py": "b97fb3b87ae5f94fce5dab59c07749bfa1995cf05ace77771223c9016df74fbf",
+    "src/utils/evaluation.py": "285b628d5e606ad169a2079bf2b015a6d89a143f2de98abc5d4b58f5c8c94eab",
+    "src/utils/plotting.py": "601a8ffadda3e24704b5b2a61f6f88edd4fc2ea6745023fec336c3ecc57e1802",
+    "src/utils/synthetic_datasets.py": "caaeaa49a77086a80a87a3024533a067c19a0910553b86c64f71e51d645a9b2f",
+    "experiments/run_causal_benchmark.py": "d0b34c1aff2059fa8821145556c0abef162920c2087195c9dc59f7b7a9547381",
+    "experiments/run_causal_tep.py": "ab46464c316a34843e87cc2c1ef73b8cc321a4d477cd0dedde9a191c450f43b5"
+  },
+  "data_sha256": {
+    "data/raw/TEP_FaultFree_Training.RData": "12d1055b852763fac09ef36bd7c9612a800c8bf7b6f75f344d12119206f9e940",
+    "data/raw/TEP_Faulty_Training.RData": "058df8bd90c5f575f44d2f6085bdd3bc3662e3e9cc25a50e34af42be3748952b"
+  },
+  "train_runs": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "test_runs": [
+    21,
+    22,
+    23,
+    24,
+    25
+  ],
+  "fault_onset_sample": 20,
+  "label_rule": "sample >= 20",
+  "event_boundaries": "per run",
+  "rmse_aggregation": "pooled samples and channels",
+  "post_run_nonsemantic_edits": [
+    {
+      "file": "experiments/run_causal_benchmark.py",
+      "executed_sha256": "24abc9a9fdf2aedd216acce556b487e5e95fe0bf2fbda6a055a2fec0da5247f6",
+      "packaged_sha256": "d0b34c1aff2059fa8821145556c0abef162920c2087195c9dc59f7b7a9547381",
+      "ast_sha256": "9fc59c8e45f8b2bf3767127df02cb78842d07bda8cb378ff80a38bf0fc8b3cc7",
+      "change": "Split semicolon-separated statements onto separate lines; Python AST unchanged."
+    }
+  ]
+}

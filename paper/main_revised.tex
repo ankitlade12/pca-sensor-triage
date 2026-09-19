@@ -1,0 +1,578 @@
+% Journal-neutral revised manuscript after MEAS-D-26-10542 review.
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+\usepackage[margin=1in]{geometry}
+\usepackage{lineno}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\renewenvironment{proof}[1][Proof]{\noindent\textit{#1.}\space}{\hfill$\blacksquare$\par}
+
+\begin{document}
+\title{A Causal Evaluation of PCA-Guided Sensor-Rate Allocation under Hard Communication Budgets}
+\author{Anonymous Author(s)\\Anonymized for double-blind review}
+\date{}
+\maketitle
+
+\begin{abstract}
+Bandwidth-constrained multichannel measurement requires deciding how frequently
+each channel should be transmitted before the corresponding measurements are
+available. We study a causal rate-allocation rule that converts the diagonal of
+an incremental rank-$k$ PCA covariance approximation into per-channel rates.
+Rates for each window are computed only from preceding reconstructed windows;
+the first window uses uniform allocation, missing values are reconstructed by
+causal zero-order hold, and integer sampling quotas enforce the communication
+budget in every window. The allocation rule requires no task labels and makes
+the information pattern, reconstruction delay, and realized communication cost
+explicit. We evaluate it using independent simulation runs or official
+chronological train/test partitions and report measurement distortion,
+point-wise and event-level detection, false alarms, detection delay, and actual
+bandwidth. \input{tables/causal_abstract.tex}
+The results show why causal timing, measurement distortion, and downstream
+detection must be evaluated separately.
+\end{abstract}
+
+\noindent\textbf{Keywords:} adaptive sampling; sensor-rate allocation;
+incremental PCA; communication constraints; causal reconstruction; edge measurement
+
+\linenumbers
+
+\section{Introduction}
+
+Distributed measurement systems often collect more channel samples than a
+sensor link or edge uplink can transmit. Uniform downsampling is simple, but it
+does not account for differences among channels. A rate allocator can instead
+assign a rate $r_j$ to each of $d$ channels while respecting a total budget
+$B$. The decision is operationally meaningful only if it is made before the
+samples governed by that decision are observed.
+
+Prior work includes event-triggered temporal sampling
+\cite{miskowicz2006send,gupta2018sbl}, correlation-aware sensor
+selection \cite{bacciu2016unsupervised,ghosh2021adaptive}, and online subspace
+tracking \cite{weng2003ccipca,balzano2010grouse,yang2018historypca}. These
+areas address related questions, but binary channel selection, uniform temporal
+sampling, and proportional per-channel rate allocation are not interchangeable.
+The term \emph{sensor triage}, used in an earlier version of this work, means
+only proportional sensor-rate allocation here.
+
+This study asks whether the channel contributions to an online low-rank
+covariance approximation provide a useful unsupervised signal for allocating a
+hard communication budget. PCA itself is not presented as novel. The specific
+contribution is a causal mapping from incremental PCA covariance contributions
+to next-window integer sampling quotas, together with an evaluation protocol
+that exposes its measurement and detection trade-offs.
+
+The contributions are:
+\begin{enumerate}[leftmargin=*]
+\item a causal system and timing model in which rates for window $t$ depend only
+on information available through window $t-1$;
+\item a dimensionally consistent score equal to the diagonal of the rank-$k$
+PCA covariance approximation;
+\item a largest-remainder quota rule that enforces the aggregate budget in each
+window rather than only in expectation; and
+\item an evaluation based on independent runs or official chronological splits,
+with distortion, communication, point-level, event-level, and delay metrics.
+\end{enumerate}
+
+\section{Related work}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Relationship to the closest methodological families. ``Rate'' means
+proportional per-channel rates rather than binary inclusion.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}p{0.16\textwidth}p{0.14\textwidth}p{0.16\textwidth}p{0.18\textwidth}p{0.25\textwidth}@{}}
+\toprule
+Approach & Decision & Main signal & Strength & Difference from this study \\
+\midrule
+Send-on-delta \cite{miskowicz2006send} & transmit on change & local deviation & event responsiveness & observes current value before deciding \\
+Bacciu \cite{bacciu2016unsupervised} & select feature subset & cross-correlation & redundancy filtering & does not assign temporal quotas \\
+Ghosh et al. \cite{ghosh2021adaptive} & active sensor set & UCB, correlation, energy & predicts inactive sensors & energy-aware selection with GPR \\
+Gupta and De \cite{gupta2018sbl} & active set and cycle rate & PCA-SBL recovery & feedback on sensing error & selection/recovery optimization \\
+CCIPCA \cite{weng2003ccipca} & update subspace & covariance structure & incremental tracking & supplies no allocation rule \\
+Present rule & next-window quotas & covariance diagonal & explicit sample cap & descriptive unsupervised proxy \\
+\bottomrule
+\end{tabular}%
+}
+\label{tab:positioning}
+\end{table}
+
+Send-on-delta triggers transmission when the current observation differs
+sufficiently from the previous transmitted value \cite{miskowicz2006send}.
+This information pattern is natural for a locally observed sensor but differs
+from deciding an acquisition schedule before values arrive. Bacciu's
+cross-correlation filter selects nonredundant time-series features
+\cite{bacciu2016unsupervised}. Ghosh et al. select an active sensor set using
+upper-confidence-bound learning and energy information, and reconstruct
+inactive parameters with Gaussian process regression \cite{ghosh2021adaptive}.
+These methods address relevance or redundancy more directly than a marginal
+covariance-diagonal score.
+
+A particularly close predecessor is the PCA-SBL framework of Gupta and De
+\cite{gupta2018sbl}. It combines PCA-based sparse signal recovery, energy-aware
+sensor selection, and feedback that predicts the next measurement cycle's
+sampling requirement. Consequently, neither combining PCA with adaptive sensing
+nor making a next-cycle decision is novel by itself. The present study instead
+isolates a simpler proportional covariance-participation rule under an explicit
+integer sample cap and common causal reconstruction. It does not establish
+superiority over these complete selection and recovery systems.
+
+Recent sensor-sampling work extends this landscape. CLARA combines node
+correlation, clustering, sampling-rate adaptation, and fault tolerance in
+periodic wireless sensor networks \cite{harb2024clara}. Its network-oriented
+scope motivates correlation-aware allocation, but our replay experiments do
+not model network clustering or node failures. CoSS jointly selects sensors
+and sampling rates using weights learned within a human-activity recognition
+network \cite{liu2026coss}. This is a task-trained selection mechanism; the
+present allocator uses no class labels to choose quotas. Huang et al. formulate
+multi-sensor sampling as a Markov decision process and train a deep Q-network
+using a reward that combines information, energy cost, and redundancy
+\cite{huang2025dqn}. Their formulation highlights the importance of specifying
+both the information available at decision time and the resource objective.
+These recent methods are relevant alternatives, not methods against which the
+present results establish an empirical ranking.
+
+Online subspace methods such as Oja's rule, CCIPCA, and GROUSE can replace the
+incremental SVD update \cite{oja1982simplified,weng2003ccipca,balzano2010grouse}.
+They change subspace estimation and computational cost, but do not by themselves
+specify a communication policy. The method studied here supplies no new
+process-monitoring statistic or control limit; downstream detectors are
+measurement consumers used to evaluate the allocation rule.
+
+\section{Method}
+
+\subsection{System, budget, and information pattern}
+
+Let $X_t\in\mathbb{R}^{w\times d}$ denote the full but initially unobserved
+measurements in window $t$. Before $X_t$ arrives, a controller announces rates
+$r_{t,j}\in[r_{\min},1]$. The sensing or transmission mechanism retains a
+subset $\Omega_t$ and the receiver observes only
+$P_{\Omega_t}(X_t)$. The aggregate hard constraint is
+\begin{equation}
+ |\Omega_t|\leq \lfloor Bwd\rfloor .
+\label{eq:hardbudget}
+\end{equation}
+The controller reconstructs $\widehat X_t$ and then updates the PCA state.
+Thus $r_t$ is measurable with respect to reconstructed observations through
+$t-1$ and cannot depend on unseen values in $X_t$.
+
+The first window is a uniform bootstrap, $r_{1,j}=B$. This cost is included in
+all reported communication measurements. The strict acquisition-constrained
+model updates PCA with $\widehat X_t$. A separate uplink-constrained variant,
+in which a local gateway legitimately observes full-rate $X_t$, may update from
+$X_t$ but must be reported as a different information model.
+
+Windows are non-overlapping. This prevents one raw observation from affecting
+multiple nominal decisions and makes payload accounting direct. A final short
+window receives its own integer quota. No model, reconstruction state, or
+window crosses an independent machine or simulation-run boundary.
+
+\subsection{PCA covariance-contribution score}
+
+After processing window $t$, incremental PCA gives eigenpairs
+$(\lambda_i,v_i)$ for $i=1,\ldots,k$. We define
+\begin{equation}
+ s_{t,j}=\sum_{i=1}^{k}\lambda_i v_{ij}^{2}.
+\label{eq:score}
+\end{equation}
+This is the $j$th diagonal element of the rank-$k$ approximation
+\begin{equation}
+ C_k=\sum_{i=1}^k\lambda_i v_iv_i^\top.
+\end{equation}
+It measures how much retained
+subspace variance is expressed through channel $j$. It is not a supervised
+measure of fault relevance and does not select one representative from a
+correlated pair. This limitation follows from the score definition.
+
+The implemented method first normalizes the raw contributions:
+\begin{equation}
+ u_{t,j}=s_{t,j}/\sum_l s_{t,l}.
+\end{equation}
+If the total retained variance is zero or nonfinite, $u_t$ is uniform. This
+fallback prevents a constant bootstrap from poisoning subsequent updates.
+For $0\leq\rho<1$, smoothing operates on normalized participation:
+\begin{equation}
+ \bar u_t=\rho\bar u_{t-1}+(1-\rho)u_t,
+ \qquad \bar u_1=u_1.
+\end{equation}
+The special value $\rho=1$ denotes the cumulative mean of the normalized score
+vectors. Normalization before smoothing prevents a high-energy window from
+receiving additional weight solely through its covariance trace; this differs
+from smoothing raw covariance contributions and then normalizing.
+
+\subsection{Rates, integer quotas, and acquisition}
+
+Set $p_{t,j}=\bar u_{t,j}/\sum_l\bar u_{t,l}$. The update after window $t$
+sets the next window's target rates to
+\begin{equation}
+ r_{t+1,j}=r_{\min}+p_{t,j}(Bd-r_{\min}d).
+\label{eq:rates}
+\end{equation}
+After clipping, excess is repeatedly redistributed among unsaturated channels
+until the feasible target budget is exhausted. We floor
+the target counts $wr_{t+1,j}$, then use largest remainders to reach exactly
+$\lfloor Bwd\rfloor$ samples. Positions are drawn without replacement. The minimum rate is a continuous
+target floor: integer rounding can reduce an individual realized rate below
+that floor, especially in a short final window. The aggregate cap is exact.
+
+The receiver uses zero-order hold. Leading missing values use the last value
+from the preceding window; at cold start they use zero after train-fitted
+standardization. Linear interpolation is excluded from the primary online
+protocol because it requires future samples. The software retains it for explicitly offline use, but no such analysis is
+included in the primary or supplementary evidence here.
+
+\begin{algorithm}[t]
+\caption{Causal PCA-guided rate allocation}
+\label{alg:causal}
+\begin{algorithmic}[1]
+\STATE Set $r_{1,j}\gets B$ for all $j$; initialize PCA
+\FOR{$t=1,2,\ldots$}
+  \STATE Announce $r_t$ before observing window $X_t$
+  \STATE Convert $r_t$ to integer quotas summing to $\lfloor Bwd\rfloor$
+  \STATE Acquire samples $P_{\Omega_t}(X_t)$ under those quotas
+  \STATE Causally reconstruct $\widehat X_t$ by zero-order hold
+  \STATE Update incremental PCA using $\widehat X_t$
+  \STATE Compute and smooth scores using Eq.~\eqref{eq:score}
+  \STATE Allocate $r_{t+1}$ using Eq.~\eqref{eq:rates}
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Complexity}
+
+For a window of length $w$, $d$ channels, and $k$ retained components, the
+incremental SVD update dominates computation. No controller-specific timing or microcontroller-readiness claim is made
+from operation counts alone. End-to-end claims require timing the acquisition, reconstruction,
+update, allocation, and communication-control path on named hardware.
+
+\section{Properties and scope of the score}
+
+\begin{proposition}[Covariance-diagonal identity]
+For a positive semidefinite covariance matrix
+$C=\sum_{i=1}^{d}\lambda_i v_iv_i^\top$, the score in
+Eq.~\eqref{eq:score} satisfies
+\begin{align}
+ s_j&\geq0, & \sum_{j=1}^{d}s_j&=\sum_{i=1}^{k}\lambda_i,\\
+ C_{jj}-s_j&=\sum_{i=k+1}^{d}\lambda_i v_{ij}^{2}\geq0.
+\end{align}
+For $k=d$, $s_j=C_{jj}$ and the raw PCA score equals the diagonal variance of the same covariance matrix.
+\end{proposition}
+\begin{proof}
+Non-negativity follows from $\lambda_i\geq0$ and squared loadings. Summing over
+$j$ and using $\sum_jv_{ij}^2=1$ gives the trace identity. Subtracting the
+truncated eigendecomposition from the full diagonal gives the residual. For
+$k=d$ the residual is zero.
+\end{proof}
+
+This proposition supplies a rationale for the score but not an optimality
+claim. In particular, two exchangeable correlated channels receive equal
+scores. The previous claim that squared PCA loadings necessarily concentrate
+bandwidth on one member of a correlated pair is false and has been removed.
+
+\begin{proposition}
+Assume $0\leq r_{\min}\leq B$. Largest-remainder integerization of feasible
+target rates produces nonnegative quotas $q_{t,j}\leq w$ satisfying
+$\sum_jq_{t,j}=\lfloor Bwd\rfloor$ whenever that many samples are available.
+\end{proposition}
+\begin{proof}
+Flooring produces an integer total no larger than the target. Each remaining
+unit is assigned only to a channel below its capacity. The procedure stops at
+the prescribed integer total, which is at most $wd$ because $B\leq1$.
+\end{proof}
+
+If incremental PCA converges under a stationary distribution and its retained
+trace has a positive limit, the normalized score converges by continuity.
+For $\rho<1$, its exponential average converges to the same limit; for
+$\rho=1$, the cumulative mean converges by Ces\`aro convergence.
+No convergence claim is made for abrupt nonstationarity without additional
+assumptions.
+
+\section{Experimental protocol}
+
+\subsection{Datasets and splits}
+
+All 20 TEP fault types are evaluated. The 52 transmitted process channels
+include 41 measured and 11 manipulated variables; the budget counts values
+rather than assuming identical physical sensing costs. Simulations are split by simulation run;
+no window crosses a run, and online state is reset between runs
+\cite{downs1993tep,rieth2017tep}. SMD
+and PSM use their official normal-training and labeled-test streams
+\cite{su2019omnianomaly,abdulaal2021ransyn}. Scaling is
+fit on training observations only. Random stratification of time points is not
+used. Hyperparameters are global unless selected exclusively from a validation
+subset on the training side.
+
+\begin{table}[t]
+\centering
+\caption{Corrected dataset protocol. TEP counts are per fault type; SMD uses
+machine-1-1 and is not presented as the entire SMD collection.}
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Dataset & Channels & Train & Test & Boundary \\
+\midrule
+TEP & 52 & $5\times500$ & $5\times500$ & simulation run \\
+SMD-1-1 & 38 & 28,479 & 28,479 & official stream \\
+PSM & 25 & 132,481 & 87,841 & official stream \\
+\bottomrule
+\end{tabular}
+\label{tab:datasets}
+\end{table}
+
+TEP faulty trajectories contain a normal prefix followed by an introduced
+disturbance. Samples before onset are labeled normal instead of assigning the
+fault label to the entire trajectory. Both partitions use the released Training RData files: runs 1--5 train the
+classifier and runs 21--25 provide final evaluation for every fault type.
+The label convention is normal for sample indices below 20 and faulty from
+index 20 onward; it is recorded explicitly in the experiment manifest. SMD machine-1-1 and
+PSM retain their released order; normal training streams are not mixed with
+labeled test events. Using one SMD machine is explicit because concatenating
+machines would create artificial boundaries in a supposed single stream.
+
+The aggregate MSL arrays used during an earlier revision are excluded from
+primary evidence. Their provenance does not establish the original entity
+boundaries; the source contains per-stream telemetry and encoded command inputs
+rather than 55 interchangeable physical sensors \cite{telemanomdata}.
+Treating the aggregate array as one continuous sensor stream would conflate
+independent histories and an inadequately specified communication model.
+
+Allocation, PCA, and reconstruction state start fresh at every official train
+or test partition and every independent TEP run. The test stream therefore
+starts with a counted uniform bootstrap, rather than retaining part of the
+training controller's state. Scaling and trained downstream detectors are
+retained from training. Full-rate training observations are available offline
+for the common scaler and fixed-detector reference. They are calibration inputs,
+not observations available to the online test allocator. Reported payload totals
+cover test acquisition; separate training ledgers are supplied. The budget
+therefore characterizes deployment replay, not total lifecycle acquisition cost. Partial final windows use the latest available rates;
+only complete windows update PCA.
+
+Nonfinite numeric values are replaced before scaling. A StandardScaler is fit
+only to training observations and then applied without refitting to test data.
+The standardized value zero is consequently a train-derived mean and supplies
+the cold-start value when a channel has not delivered an observation. Windows
+do not overlap, labels are unavailable to the allocator, and no parameter is
+selected from final test labels.
+
+\subsection{Comparators and downstream protocols}
+
+The primary comparators are Uniform allocation and two prior-window rules:
+Variance and change Threshold. All receive the same information, integer
+budget, bootstrap, and causal reconstruction. The primary study contains only these constrained rules and Full Data.
+Send-on-delta and supervised feature selection are discussed as related work,
+not represented as evaluated peers.
+
+For labeled TEP runs, a random forest is evaluated in two ways: retrained for
+each reconstructed training set, and fixed after training on full-rate data
+\cite{breiman2001random}. Official normal-only anomaly-training datasets use an
+Isolation Forest with a threshold determined from training scores. The same
+retrained-versus-fixed distinction is reported. These protocols separate
+end-to-end adaptation from distortion of an existing detector.
+
+Variance allocation computes per-channel variance from the preceding causally
+reconstructed window. Threshold allocation uses preceding-window mean absolute
+changes and prioritizes channels above the median change. Uniform allocation
+assigns the same target rate to every channel. All three use the same integer
+quota routine and zero-order hold as the PCA rule. Full Data is a reference,
+not a constrained competitor. Budget realization and reconstruction are held constant. However, PCA uses
+accumulated subspace information and smoothing, whereas Variance and Threshold
+use one preceding window. The comparison therefore evaluates complete allocation
+rules rather than isolating a PCA effect independently of temporal memory.
+
+\subsection{Scope of the comparisons with recent methods}
+The experimental question is whether the covariance-participation rule improves
+on elementary allocation rules when each method receives only previously
+reconstructed samples and must obey the same next-window integer sample cap.
+Uniform, Variance, and Threshold are transparent reference rules, not a claim
+to cover the state of the art. Full Data measures the cost of restricted
+acquisition and is not a budget-matched competitor.
+
+We do not report numerical comparisons with CLARA, CoSS, or the DQN sampling
+method. The reasons, and the resulting limits on interpretation, are as follows.
+\begin{enumerate}[leftmargin=*]
+\item CLARA's clustering and fault-tolerance setting \cite{harb2024clara} would
+require an explicit mapping from network nodes and their relationships to
+benchmark channels, together with a network/failure model. Our benchmark
+protocol supplies neither. Removing these components would evaluate an
+adaptation, whose results could not be attributed to the complete method.
+\item CoSS \cite{liu2026coss} learns sensor and rate rankings with a downstream
+classification network. A faithful TEP comparison would require a separate
+task-trained model, validation-only selection, and accounting for the data
+used during selection. The normal-only SMD and PSM training splits do not
+supply the labeled activity-classification task used by CoSS. Such extensions
+are possible, but are not experiments performed in this study.
+\item The DQN method \cite{huang2025dqn} uses a state containing observations,
+remaining power, and sampling history, with a reward trading information
+against energy and redundancy. The present replay protocol has no calibrated
+power model and counts acquired scalar values rather than a reward penalty.
+A comparison would need to specify how states are formed from acquired values,
+charge all measurements used in learning and decisions, and constrain actions
+to the same per-window cap. We have not implemented or validated that adaptation.
+\end{enumerate}
+These are scope-based reasons for the omitted experiments, not evidence that
+recent methods cannot be compared or would perform worse. They leave the
+empirical contribution limited to the implemented reference rules. In particular,
+TEP labels could support a separate supervised selection study, and clustered
+or learned policies could be assessed under an explicitly extended protocol.
+A broader comparative study remains necessary before claiming competitive
+performance against contemporary sensor-selection or learned-sampling systems.
+
+\subsection{Metrics and repetition}
+
+We report payload values and bytes, realized bandwidth, per-window budget
+excess, MAE, RMSE, normalized per-channel RMSE, precision, recall, F1, false
+positive rate, specificity, event recall, false-alarm events per 1000 samples,
+and detection delay. Point adjustment is not used. Experiments are repeated
+with five fixed joint seeds that control acquisition masks, detector randomness,
+and (for Isolation Forest) the fitting subset. Means and standard deviations
+therefore describe joint experimental variation, not acquisition alone or
+population uncertainty. Independent TEP simulation
+runs provide substantive replication; the official anomaly benchmarks are
+single-stream case studies, so no population-level inferential superiority is
+claimed for them.
+
+For original and reconstructed streams $X$ and $\widehat X$, distortion is
+summarized by
+\begin{equation}
+ \mathrm{RMSE}=\sqrt{\frac{1}{nd}\sum_{t=1}^{n}\sum_{j=1}^{d}
+ (X_{tj}-\widehat X_{tj})^2}.
+\end{equation}
+TEP RMSE pools squared errors over all test runs before taking the square root.
+Per-channel RMSE is normalized by the pooled test range and averaged; constant
+channels use a denominator of one. Test ranges are used only for retrospective
+error reporting, never for allocation, training, or threshold selection.
+An event is a maximal contiguous positive-label interval. Event recall counts
+an event when at least one unadjusted positive prediction falls inside it.
+Detection delay is measured from event start to the first such prediction. A
+predicted positive interval overlapping no true event is a false-alarm event.
+Each independent TEP run is scored separately for events before pooling counts
+and delay samples. Delay is conditional on detection and expressed in samples;
+missed-event counts are reported alongside it. If no event is detected, delay
+is undefined. Per-1000-sample alarm rates do not imply a common physical time
+scale across datasets. These definitions avoid retrospective point adjustment.
+
+The global allocation configuration is $k=10$, $w=50$, $\rho=0.95$, and
+$r_{\min}=0.05$. Anomaly benchmarks use $B\in\{0.3,0.5,0.7\}$; the larger
+all-20-fault TEP experiment uses the primary comparison $B=0.5$.
+Sampling seeds are 42, 123, 456,
+789, and 1024. TEP uses a 50-tree class-balanced random forest. Normal-only
+benchmarks use a 100-tree Isolation Forest fitted to at most 20,000 normal
+training observations; its threshold is the 99th percentile of training
+anomaly scores. These values are fixed across datasets and are not selected
+from test outcomes.
+
+Every acquisition call records the actual retained-mask count, available values,
+allowed integer quota, and excess. Results sum those ledgers, and a verifier
+independently reconciles every test total. Payload bytes assume four bytes per
+transmitted numeric value; they do not measure a network encoding or packet
+traffic. Full Data has a separately counted full observation mask.
+
+Threshold sensitivity evaluates the predeclared training-score quantiles
+0.95, 0.975, 0.99, 0.995, and 0.999 for every anomaly method and seed. The primary
+quantile remains 0.99; no test outcome chooses a preferred threshold. Complete
+point, event, distortion, and communication results for both detector protocols
+and all budgets appear in the supplementary material.
+
+\section{Results}
+
+\IfFileExists{tables/causal_summary.tex}{
+\input{tables/causal_summary.tex}
+}{
+The generated result table is unavailable. Run \texttt{make revised-tables}
+before compiling the submission copy; legacy results must not be substituted.
+}
+
+\section{Discussion}
+
+The PCA score should be interpreted as retained-subspace participation, not as
+a direct measure of fault relevance or conditional redundancy. Consequently,
+the method may be useful when dominant covariance structure aligns with
+measurement utility, but variance or uniform allocation may be preferable when
+low-variance channels contain rare diagnostic signals. Results are therefore
+reported by dataset, fault/event, and bandwidth rather than collapsed into a
+universal superiority statement.
+
+The strict protocol updates PCA from reconstructed data and can accumulate
+feedback bias. Periodic exploration, missing-data subspace tracking, or a local
+full-rate gateway are possible extensions, but they change the information or
+communication model and require separate evaluation. Similarly, delayed
+linear interpolation can improve offline reconstruction but cannot support
+zero-delay monitoring claims.
+
+The component count has a precise interpretation in the revised formulation.
+When $k=d$, the raw score is the marginal variance of the same accumulated
+covariance. This identity does not make the smoothed historical method identical
+to the preceding-window Variance baseline.
+For $k<d$, it discounts variance lying outside the retained subspace. This may
+remove nuisance variation, but it may also suppress an independent channel
+whose low-variance behaviour is safety critical. A minimum target rate reduces complete
+starvation in full windows but does not make the unsupervised score task-optimal. Conditional
+redundancy or supervised relevance would require a different score and a
+different claim.
+
+Measurement and detection rankings need not agree. A strategy can reduce RMSE
+by preserving high-energy signals yet remove a small diagnostic transient, or
+increase RMSE while leaving a detector's decision boundary intact. For this
+reason, the paper does not use F1 as a surrogate for measurement fidelity and
+does not use reconstruction error as proof of fault-detection utility. Both are
+reported alongside event recall and delay.
+
+\section{Limitations}
+
+The study uses replayed public data rather than a physical sensor network.
+The low full-rate anomaly F1 scores limit conclusions about practical diagnostic
+quality: the Isolation Forest is a fixed evaluation consumer, not an optimized
+anomaly detector. Threshold sensitivity exposes this dependence but does not
+establish deployment adequacy.
+Payload counts omit protocol headers unless explicitly added for a deployment.
+The public replay datasets provide no sensor-calibration uncertainty metadata,
+so the study reports reconstruction distortion but not a metrological
+uncertainty budget.
+PCA captures second-order linear structure only. The score is unsupervised and
+need not align with rare faults. Normal-only anomaly benchmarks require a
+detector different from supervised TEP classification. Hardware timing and
+energy measurements remain necessary before claiming embedded deployment
+readiness.
+
+Internal validity is improved by causal timing, common reconstruction, common
+integer quotas, and train-only preprocessing, but results still depend on the
+chosen downstream detectors and global parameter setting. Construct validity
+is limited because payload values do not include packet headers, acknowledgments,
+clock synchronization, or control messages. External validity is limited by
+replayed benchmarks, one SMD machine, and the absence of a physical radio or
+industrial fieldbus. These limitations motivate hardware validation and
+multi-machine replication rather than stronger deployment language.
+
+\section{Conclusion}
+
+We formulated PCA-guided sensor-rate allocation as a causal measurement
+problem with an explicit information pattern and hard per-window budget. The
+revised method uses the diagonal of a rank-$k$ covariance approximation, makes
+next-window decisions from past reconstructed observations, and avoids future-
+value interpolation. Its value must be judged jointly by measurement
+distortion, realized communication, event detection, delay, and false alarms.
+The resulting formulation supports a narrower but testable contribution and
+clearly identifies settings in which simpler allocation rules may be better.
+
+\section*{Data and code availability}
+The accompanying source archive contains the causal pipeline, official-partition
+loaders, fixed seeds, regression tests, source/data SHA-256 manifests, measured
+per-window acquisition ledgers, and scripts that regenerate all tables.
+The accompanying archive defines the evaluated revision; repository details
+are supplied on the separate author/title page. Public data are obtained
+from their original repositories under their respective terms.
+
+\clearpage
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

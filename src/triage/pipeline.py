@@ -43,6 +43,12 @@ class TriagePipeline:
         Cumulative variance threshold for adaptive_k scorer.
     k_values : list of int
         Component counts for ensemble scorer.
+    update_source : {"reconstructed", "full"}
+        Data used to update PCA after acquisition. ``reconstructed`` is the
+        strict constrained-sensing model. ``full`` is only appropriate when a
+        local gateway sees full-rate data and the constrained link is upstream.
+    hard_budget : bool
+        Enforce the aggregate communication cap in every window.
     """
 
     def __init__(
@@ -52,12 +58,14 @@ class TriagePipeline:
         budget: float = 0.5,
         forgetting_factor: float = 0.95,
         min_rate: float = 0.05,
-        reconstruction_method: str = "linear",
+        reconstruction_method: str = "forward_fill",
         scorer: str = "pca",
         alpha: float = 0.7,
         sharpness: float = 1.0,
         variance_threshold: float = 0.95,
         k_values: list = None,
+        update_source: str = "reconstructed",
+        hard_budget: bool = True,
     ):
         self.scorer_type = scorer
         if scorer == "hybrid":
@@ -88,12 +96,22 @@ class TriagePipeline:
             budget=budget, min_rate=min_rate, sharpness=sharpness,
         )
         self.reconstruction_method = reconstruction_method
+        if update_source not in {"reconstructed", "full"}:
+            raise ValueError("update_source must be 'reconstructed' or 'full'")
+        if reconstruction_method == "linear":
+            # Linear interpolation is supported for explicitly offline studies,
+            # but the journal-default pipeline is causal forward fill.
+            pass
+        self.update_source = update_source
+        self.hard_budget = hard_budget
         self.window_size = window_size
+        self._next_rates = None
 
         # Logging
         self.importance_log = []
         self.rate_log = []
         self.bandwidth_log = []
+        self.realized_bandwidth_log = []
 
     def process_stream(
         self,
@@ -118,43 +136,68 @@ class TriagePipeline:
         n_windows = n // self.window_size
         reconstructed = np.zeros_like(data, dtype=float)
 
+        # Reconstruction state is reset at each explicit stream boundary.
+        last_values = np.zeros(d, dtype=float)
+
         for w_idx in range(n_windows):
             start = w_idx * self.window_size
             end = start + self.window_size
             window = data[start:end]
 
-            # Step 1: Compute importance scores
-            importance = self.triage.compute_importance(window)
-            self.importance_log.append(importance.copy())
-
-            # Step 2: Allocate rates
-            rates = self.allocator.allocate(importance)
+            # Step 1: Use rates computed only from preceding windows. The first
+            # window is a uniform-budget bootstrap.
+            if self._next_rates is None:
+                rates = np.full(d, self.allocator.budget)
+            else:
+                rates = self._next_rates.copy()
             self.rate_log.append(rates.copy())
             self.bandwidth_log.append(self.allocator.get_effective_bandwidth(rates))
 
-            # Step 3: Apply rates (sub-sample)
+            # Step 2: Acquire/transmit current samples under a hard window cap.
             triaged = self.allocator.apply_rates(
-                window, rates, seed=seed + w_idx
+                window, rates, seed=seed + w_idx, hard_budget=self.hard_budget
             )
+            self.realized_bandwidth_log.append(float(np.isfinite(triaged).mean()))
 
-            # Step 4: Reconstruct
-            recon = reconstruct(triaged, method=self.reconstruction_method)
+            # Step 3: Reconstruct without future observations in causal mode.
+            recon = reconstruct(
+                triaged,
+                method=self.reconstruction_method,
+                initial_values=last_values if self.reconstruction_method == "forward_fill" else None,
+            )
             reconstructed[start:end] = recon
+            last_values = recon[-1].copy()
+
+            # Step 4: Update after the current window, producing rates for the
+            # next window. 'full' models an uplink-constrained gateway that sees
+            # local full-rate data; 'reconstructed' models constrained sensing.
+            update_window = window if self.update_source == "full" else recon
+            importance = self.triage.compute_importance(update_window)
+            self.importance_log.append(importance.copy())
+            self._next_rates = self.allocator.allocate(importance)
 
         # Handle remaining samples (tail < window_size)
         remaining = n % self.window_size
         if remaining > 0:
             start = n_windows * self.window_size
             # Use last known rates if available, else uniform
-            if self.rate_log:
-                rates = self.rate_log[-1]
+            if self._next_rates is not None:
+                rates = self._next_rates.copy()
             else:
                 rates = np.full(d, self.allocator.budget)
 
+            self.rate_log.append(rates.copy())
+            self.bandwidth_log.append(self.allocator.get_effective_bandwidth(rates))
+
             triaged = self.allocator.apply_rates(
-                data[start:], rates, seed=seed + n_windows
+                data[start:], rates, seed=seed + n_windows, hard_budget=self.hard_budget
             )
-            recon = reconstruct(triaged, method=self.reconstruction_method)
+            self.realized_bandwidth_log.append(float(np.isfinite(triaged).mean()))
+            recon = reconstruct(
+                triaged,
+                method=self.reconstruction_method,
+                initial_values=last_values if self.reconstruction_method == "forward_fill" else None,
+            )
             reconstructed[start:] = recon
 
         return reconstructed
@@ -174,6 +217,9 @@ class TriagePipeline:
     def reset(self):
         """Reset pipeline state."""
         self.triage.reset()
+        self._next_rates = None
         self.importance_log.clear()
         self.rate_log.clear()
         self.bandwidth_log.clear()
+        self.realized_bandwidth_log.clear()
+        self.allocator.observation_log.clear()

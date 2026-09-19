@@ -36,6 +36,8 @@ class RateAllocator:
         self.budget = budget
         self.min_rate = min_rate
         self.sharpness = sharpness
+        # Counts come from the actual acquisition mask, not the requested rate.
+        self.observation_log = []
 
     def allocate(self, importance_scores: np.ndarray) -> np.ndarray:
         """Allocate sampling rates proportional to importance.
@@ -86,7 +88,7 @@ class RateAllocator:
         excess = np.maximum(rates - 1.0, 0)
         rates = np.minimum(rates, 1.0)
 
-        if excess.sum() > 0:
+        while excess.sum() > 1e-12:
             # Redistribute excess to channels below 1.0
             below_max = rates < 1.0
             if below_max.any():
@@ -94,12 +96,19 @@ class RateAllocator:
                 sub_scores = scores[below_max]
                 sub_scores = sub_scores / sub_scores.sum() if sub_scores.sum() > 0 else np.ones(below_max.sum()) / below_max.sum()
                 rates[below_max] += sub_scores * redistribute
+                excess = np.maximum(rates - 1.0, 0)
                 rates = np.minimum(rates, 1.0)
+            else:
+                break
 
         return rates
 
     def apply_rates(
-        self, data: np.ndarray, rates: np.ndarray, seed: int = 42
+        self,
+        data: np.ndarray,
+        rates: np.ndarray,
+        seed: int = 42,
+        hard_budget: bool = True,
     ) -> np.ndarray:
         """Apply sampling rates to data by masking samples.
 
@@ -114,6 +123,10 @@ class RateAllocator:
             Per-channel sampling rates.
         seed : int
             Random seed for reproducibility.
+        hard_budget : bool
+            If true, allocate integer channel quotas whose total equals the
+            window budget. If false, use independent Bernoulli sampling and
+            enforce the budget only in expectation.
 
         Returns
         -------
@@ -122,7 +135,57 @@ class RateAllocator:
         """
         rng = np.random.RandomState(seed)
         n, d = data.shape
-        mask = rng.random((n, d)) < rates[np.newaxis, :]
+        if not np.isfinite(data).all():
+            raise ValueError("Acquisition input must contain only finite measurements")
+        if not np.isfinite(rates).all():
+            raise ValueError("Sampling rates must be finite")
+        if hard_budget:
+            # Convert expected rates into integer per-channel quotas while
+            # enforcing the aggregate window budget exactly (up to flooring).
+            target_total = min(n * d, int(np.floor(self.budget * n * d)))
+            expected = np.clip(rates, 0.0, 1.0) * n
+            quotas = np.floor(expected).astype(int)
+            quotas = np.minimum(quotas, n)
+
+            remainder = target_total - int(quotas.sum())
+            if remainder > 0:
+                fractions = expected - quotas
+                order = np.argsort(-fractions)
+                while remainder > 0:
+                    eligible = order[quotas[order] < n]
+                    if len(eligible) == 0:
+                        break
+                    take = eligible[:remainder]
+                    quotas[take] += 1
+                    remainder -= len(take)
+            elif remainder < 0:
+                fractions = expected - quotas
+                order = np.argsort(fractions)
+                while remainder < 0:
+                    eligible = order[quotas[order] > 0]
+                    if len(eligible) == 0:
+                        break
+                    take = eligible[: min(-remainder, len(eligible))]
+                    quotas[take] -= 1
+                    remainder += len(take)
+
+            mask = np.zeros((n, d), dtype=bool)
+            for j, quota in enumerate(quotas):
+                if quota:
+                    keep = rng.choice(n, size=quota, replace=False)
+                    mask[keep, j] = True
+        else:
+            mask = rng.random((n, d)) < rates[np.newaxis, :]
+        transmitted = int(mask.sum())
+        allowed = int(np.floor(self.budget * n * d))
+        self.observation_log.append({
+            "window_samples": n,
+            "channels": d,
+            "available_values": int(mask.size),
+            "transmitted_values": transmitted,
+            "allowed_values": allowed,
+            "excess_values": max(0, transmitted - allowed),
+        })
         triaged = data.copy().astype(float)
         triaged[~mask] = np.nan
         return triaged
