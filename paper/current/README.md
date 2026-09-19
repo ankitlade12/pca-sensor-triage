@@ -1,7 +1,8 @@
 # Current manuscript
 
-`manuscript.pdf` and `ESM_1.pdf` are byte-identical copies of the September 17
-Journal of Signal Processing Systems preparation package. This directory does
+`manuscript.pdf` includes the September 19 PDF bookmark correction to the
+Journal of Signal Processing Systems preparation package. `ESM_1.pdf` retains
+the September 17 supplementary results. Scientific content is unchanged. This directory does
 not establish whether the author completed a journal submission.
 
 Compile the editable manuscript here with `latexmk -pdf main.tex`.
